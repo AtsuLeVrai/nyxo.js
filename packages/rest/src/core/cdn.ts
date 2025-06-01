@@ -550,7 +550,7 @@ export const ANIMATED_HASH = /^a_/;
  * @param input - The input to validate
  * @returns The validated and parsed input
  * @throws {Error} Error with user-friendly message if validation fails
- * @private
+ * @internal
  */
 function validateWithZod<T extends z.ZodType>(
   schema: T,

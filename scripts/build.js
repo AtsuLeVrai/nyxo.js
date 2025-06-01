@@ -1,15 +1,10 @@
 import fs from "node:fs";
-import { builtinModules } from "node:module";
+import module from "node:module";
 import path from "node:path";
 import apiExtractor from "@microsoft/api-extractor";
-import commonjs from "@rollup/plugin-commonjs";
-import json from "@rollup/plugin-json";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
+import esbuild from "esbuild";
 import prettyBytes from "pretty-bytes";
-import { rollup } from "rollup";
-import cleanup from "rollup-plugin-cleanup";
-import { swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 import winston from "winston";
 
@@ -82,8 +77,8 @@ const Logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-// Creates a smart external function for Rollup that automatically determines which modules should be treated as external dependencies.
-function createSmartExternalFunction(pkg) {
+// Creates external dependencies configuration for esbuild
+function createExternalConfig(pkg) {
   // Collect all project dependencies
   const projectDependencies = new Set([
     ...Object.keys(pkg.dependencies || {}),
@@ -93,184 +88,45 @@ function createSmartExternalFunction(pkg) {
 
   // Node.js built-in modules (with and without node: prefix)
   const nodeBuiltins = new Set([
-    ...builtinModules,
-    ...builtinModules.map((builtin) => `node:${builtin}`),
+    ...module.builtinModules,
+    ...module.builtinModules.map((builtin) => `node:${builtin}`),
   ]);
 
-  // Extracts the package name from an import ID, handling scoped packages
-  function getPackageName(importId) {
-    if (importId.startsWith("@")) {
-      // Scoped package: @scope/package-name/sub-path -> @scope/package-name
-      const parts = importId.split("/");
-      return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : importId;
-    }
-    // Regular package: package-name/sub-path -> package-name
-    return importId.split("/")[0];
-  }
-
-  // The external function that Rollup will call for each import
-  return function isExternal(id, _parentId, isResolved) {
-    // 1. Node.js built-in modules are always external
-    if (nodeBuiltins.has(id)) {
-      return true;
-    }
-
-    // 2. Direct dependency match
-    if (projectDependencies.has(id)) {
-      return true;
-    }
-
-    // 3. Sub-import of a dependency (e.g., lodash/get, @aws-sdk/client-s3/commands)
-    const packageName = getPackageName(id);
-    if (packageName !== id && projectDependencies.has(packageName)) {
-      return true;
-    }
-
-    // 4. If resolved and in node_modules, treat as external
-    if (isResolved && id.includes("node_modules")) {
-      return true;
-    }
-
-    // 5. External absolute paths (outside project directory)
-    if (isResolved && path.isAbsolute(id) && !id.startsWith(process.cwd())) {
-      return true;
-    }
-
-    // 6. Relative imports and local files are internal
-    if (id.startsWith(".") || id.startsWith("/")) {
-      return false;
-    }
-
-    // 7. Default: assume external for unknown packages
-    // This is safer for most cases as it prevents bundling unknown dependencies
-    return false;
-  };
+  // Combine all external dependencies
+  return [...Array.from(nodeBuiltins), ...Array.from(projectDependencies)];
 }
 
-// Build JavaScript bundles with Rollup and SWC3
-async function buildWithRollup(paths, pkg) {
-  Logger.debug("Building bundles with Rollup + SWC3");
+// Build JavaScript bundles with esbuild (ESM only)
+async function buildWithEsbuild(paths, pkg) {
+  Logger.debug("Building ESM bundle with esbuild");
 
   // Get external dependencies to exclude from the bundle
-  const external = createSmartExternalFunction(pkg);
+  const external = createExternalConfig(pkg);
 
-  // Common Rollup input options
-  const inputOptions = {
-    input: path.resolve(paths.src, "index.ts"),
-    external,
-    plugins: [
-      nodeResolve({
-        preferBuiltins: true,
-        exportConditions: ["node"],
-      }),
-      commonjs(),
-      json(),
-      swc({
-        jsc: {
-          parser: {
-            syntax: "typescript",
-            tsx: false,
-            decorators: true,
-            dynamicImport: true,
-            privateMethod: true,
-            importMeta: true,
-            preserveAllComments: false,
-            topLevelAwait: true,
-          },
-          target: "esnext",
-          loose: false,
-          externalHelpers: false,
-          keepClassNames: true,
-          transform: {
-            decoratorVersion: "2022-03",
-            decoratorMetadata: true,
-            optimizer: {
-              simplify: true,
-            },
-          },
-          output: {
-            charset: "utf8",
-          },
-        },
-        module: {
-          type: "es6",
-          strict: true,
-          strictMode: true,
-          lazy: false,
-          noInterop: true,
-          preserveImportMeta: true,
-          ignoreDynamic: false,
-        },
-        minify: false,
-        inlineSourcesContent: true,
-        isModule: true,
-      }),
-      cleanup({
-        comments: "none",
-        extensions: ["js", "ts", "tsx"],
-      }),
-    ],
-    onwarn: (warning, warn) => {
-      // Suppress certain warnings
-      if (warning.code === "THIS_IS_UNDEFINED") {
-        return;
-      }
-      if (warning.code === "MISSING_EXPORT") {
-        return;
-      }
-      if (warning.code === "CIRCULAR_DEPENDENCY") {
-        return;
-      }
-      if (warning.code === "INVALID_ANNOTATION") {
-        return;
-      }
-      warn(warning);
-    },
-  };
+  try {
+    await esbuild.build({
+      entryPoints: [path.resolve(paths.src, "index.ts")],
+      outfile: path.resolve(paths.dist, "index.js"),
+      bundle: true,
+      platform: "node",
+      target: "esnext",
+      format: "esm",
+      external,
+      allowOverwrite: true,
+      logLevel: "warning",
+      tsconfig: paths.tsconfig,
+      legalComments: "none",
+    });
 
-  // Build configurations
-  const builds = [
-    {
-      ...inputOptions,
-      output: {
-        file: path.resolve(paths.dist, "index.js"),
-        format: "esm",
-        sourcemap: false,
-        exports: "auto",
-      },
-    },
-    {
-      ...inputOptions,
-      output: {
-        file: path.resolve(paths.dist, "index.cjs"),
-        format: "cjs",
-        sourcemap: false,
-        exports: "auto",
-      },
-    },
-  ];
+    const stats = fs.statSync(path.resolve(paths.dist, "index.js"));
+    Logger.info(`ESM bundle generated (${prettyBytes(stats.size)})`);
 
-  // Build all configurations
-  const results = await Promise.all(
-    builds.map(async (config) => {
-      const bundle = await rollup(config);
-      try {
-        await bundle.write(config.output);
-        return config.output.file;
-      } finally {
-        await bundle.close();
-      }
-    }),
-  );
-
-  // Get file sizes and log results
-  for (const filePath of results) {
-    const stats = fs.statSync(filePath);
-    const format = path.extname(filePath) === ".cjs" ? "CJS" : "ESM";
-    Logger.info(`${format} bundle generated (${prettyBytes(stats.size)})`);
+    Logger.success("ESM bundle created successfully");
+    return true;
+  } catch (error) {
+    Logger.error("esbuild failed:", error.message);
+    return false;
   }
-
-  return true;
 }
 
 // Generate TypeScript declaration files
@@ -374,8 +230,6 @@ async function bundleDeclarations(paths) {
 
     dtsRollup: {
       enabled: true,
-      untrimmedFilePath: "",
-      betaTrimmedFilePath: "",
       publicTrimmedFilePath: path.resolve(paths.dist, "index.d.ts"),
     },
 
@@ -432,7 +286,7 @@ async function build() {
   // Read package.json
   const pkg = JSON.parse(fs.readFileSync(paths.package, "utf-8"));
 
-  Logger.debug("Starting build process");
+  Logger.debug("Starting ESM-only build process with esbuild");
 
   // Step 1: Clean directories
   await Promise.all([
@@ -446,14 +300,14 @@ async function build() {
     fs.promises.mkdir(paths.temp, { recursive: true }),
   ]);
 
-  // Step 2: Build bundles with Rollup and generate types in parallel
+  // Step 2: Build bundle with esbuild and generate types in parallel
   const [bundlesSuccess, typesSuccess] = await Promise.all([
-    buildWithRollup(paths, pkg),
+    buildWithEsbuild(paths, pkg),
     generateTypeDeclarations(paths),
   ]);
 
   if (!bundlesSuccess) {
-    throw new Error("Bundle creation failed");
+    throw new Error("ESM bundle creation failed");
   }
 
   if (!typesSuccess) {
@@ -465,7 +319,7 @@ async function build() {
 
   // Build summary
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-  Logger.success(`Build completed successfully in ${duration}s`);
+  Logger.success(`ESM-only build completed successfully in ${duration}s`);
 
   return true;
 }

@@ -150,35 +150,35 @@ export class HeartbeatManager {
   /**
    * NodeJS interval reference for the recurring heartbeat timer
    * Used to clean up the interval when the heartbeat manager is destroyed
-   * @private
+   * @internal
    */
   #interval: NodeJS.Timeout | null = null;
 
   /**
    * NodeJS timeout reference for pending reconnection attempts
    * Used to track and manage reconnection state
-   * @private
+   * @internal
    */
   #reconnectTimeout: NodeJS.Timeout | null = null;
 
   /**
    * Initial timeout reference for the first heartbeat send
    * Used to implement jitter on the first heartbeat
-   * @private
+   * @internal
    */
   #initialTimeout: NodeJS.Timeout | null = null;
 
   /**
    * Reference to the parent Gateway instance
    * Used to send heartbeats and emit events
-   * @private
+   * @internal
    */
   readonly #gateway: Gateway;
 
   /**
    * Configuration options for the heartbeat manager
    * Controls behavior like retry attempts and reconnection delays
-   * @private
+   * @internal
    */
   readonly #options: HeartbeatOptions;
 
@@ -357,7 +357,7 @@ export class HeartbeatManager {
    * server load spikes (thundering herd problem).
    *
    * @param interval - Heartbeat interval in milliseconds
-   * @private
+   * @internal
    */
   #startHeartbeat(interval: number): void {
     // Clean up existing timers and reset state
@@ -388,7 +388,7 @@ export class HeartbeatManager {
    * Called when Discord acknowledges a heartbeat, indicating
    * the connection is healthy.
    *
-   * @private
+   * @internal
    */
   #handleAck(): void {
     // Mark the heartbeat as acknowledged
@@ -408,7 +408,7 @@ export class HeartbeatManager {
    * A zombied connection is one where the client can send data but not receive,
    * or vice versa, and needs to be terminated and re-established.
    *
-   * @private
+   * @internal
    */
   #handleMissedHeartbeat(): void {
     // Increment missed heartbeat counter
@@ -443,7 +443,7 @@ export class HeartbeatManager {
    * This method sets up a delayed reconnection attempt to avoid connection storms
    * and implements the reconnect delay specified in options.
    *
-   * @private
+   * @internal
    */
   #handleReconnect(): void {
     // Only set up reconnection if there isn't one already in progress

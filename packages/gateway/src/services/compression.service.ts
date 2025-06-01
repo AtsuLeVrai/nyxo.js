@@ -23,7 +23,7 @@ const ZLIB_FLUSH = Buffer.from([0x00, 0x00, 0xff, 0xff]);
  * Setting this too high consumes more memory but reduces allocations.
  * Setting this too low increases allocations but uses less memory.
  * 5 provides a good balance for typical Gateway message patterns.
- * @private
+ * @internal
  */
 const BUFFER_POOL_SIZE = 5;
 
@@ -34,7 +34,7 @@ const BUFFER_POOL_SIZE = 5;
  *
  * This size (128KB) matches the chunk size used in Zlib decompression
  * for consistency and handles most Gateway messages without resizing.
- * @private
+ * @internal
  */
 const BUFFER_CHUNK_SIZE = 128 * 1024; // 128KB
 
@@ -92,14 +92,14 @@ export class CompressionService {
   /**
    * The Zstandard decompression stream instance if using zstd-stream
    * Maintains state between successive calls to decompress()
-   * @private
+   * @internal
    */
   #zstdStream: fzstd.Decompress | null = null;
 
   /**
    * The Zlib inflate stream instance if using zlib-stream
    * Maintains decompression context between messages
-   * @private
+   * @internal
    */
   #zlibInflate: zlibSync.Inflate | null = null;
 
@@ -108,7 +108,7 @@ export class CompressionService {
    * Used to accumulate partial outputs before combining them.
    * This is necessary because Zstandard's streaming API can emit
    * multiple output chunks for a single input push.
-   * @private
+   * @internal
    */
   #chunks: Uint8Array[] = [];
 
@@ -119,7 +119,7 @@ export class CompressionService {
    *
    * The pool operates on a round-robin basis, cycling through available
    * buffers for each decompression operation.
-   * @private
+   * @internal
    */
   readonly #bufferPool: Buffer[] = [];
 
@@ -129,7 +129,7 @@ export class CompressionService {
    * strategy for buffer allocation.
    *
    * Incremented after each buffer use and wraps around when reaching the pool size.
-   * @private
+   * @internal
    */
   #poolIndex = 0;
 
@@ -325,7 +325,7 @@ export class CompressionService {
    * decompression efficiency.
    *
    * @throws {Error} If the zlib-sync module is not available or initialization fails
-   * @private
+   * @internal
    */
   async #initializeZlib(): Promise<void> {
     // Attempt to dynamically import the zlib-sync module
@@ -367,7 +367,7 @@ export class CompressionService {
    * which will later be combined into complete messages.
    *
    * @throws {Error} If the fzstd module is not available or initialization fails
-   * @private
+   * @internal
    */
   async #initializeZstd(): Promise<void> {
     // Attempt to dynamically import the fzstd module
@@ -407,7 +407,7 @@ export class CompressionService {
    * @param data - The compressed data buffer
    * @returns The decompressed data, or an empty buffer if the message is incomplete
    * @throws {Error} If Zlib decompression fails with detailed error information
-   * @private
+   * @internal
    */
   #decompressZlib(data: Buffer): Buffer {
     if (!this.#zlibInflate) {
@@ -443,7 +443,7 @@ export class CompressionService {
    *
    * @param data - The compressed data buffer
    * @returns The decompressed data, or an empty buffer if no output was produced
-   * @private
+   * @internal
    */
   #decompressZstd(data: Buffer): Buffer {
     if (!this.#zstdStream) {
@@ -497,7 +497,7 @@ export class CompressionService {
    *
    * @param minSize - Minimum size needed for the buffer
    * @returns A buffer of at least the requested size
-   * @private
+   * @internal
    */
   #getBufferFromPool(minSize: number): Buffer {
     // Initialize pool if first use

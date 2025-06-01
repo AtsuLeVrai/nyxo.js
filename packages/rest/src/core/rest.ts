@@ -474,7 +474,7 @@ export class Rest extends EventEmitter<RestEvents> {
   /**
    * HTTP connection pool for making requests.
    * Manages connections to Discord API for optimal performance.
-   * @private
+   * @internal
    */
   readonly pool: Pool;
 
@@ -507,7 +507,7 @@ export class Rest extends EventEmitter<RestEvents> {
    * Initializes the HTTP pool, rate limiter, and retry manager.
    *
    * @param options - Configuration options for the REST client
-   * @throws {Error} Error if options validation fails
+   * @throws Error Error if options validation fails
    */
   constructor(options: z.input<typeof RestOptions>) {
     super();
@@ -547,7 +547,7 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @param options - Complete request options including path, method, and optional body
    * @returns Promise resolving to the parsed response data
-   * @throws {Error} Error for failed requests or rate limit issues that can't be resolved
+   * @throws Error Error for failed requests or rate limit issues that can't be resolved
    */
   async request<T>(options: HttpRequestOptions): Promise<T> {
     // Generate a unique request ID for tracking
@@ -695,7 +695,7 @@ export class Rest extends EventEmitter<RestEvents> {
    * @param options - Original request options
    * @param requestId - Unique identifier for the request
    * @returns An Error object with formatted message
-   * @private
+   * @internal
    */
   #createErrorFromResponse<T>(
     response: HttpResponse<T>,
@@ -760,7 +760,7 @@ export class Rest extends EventEmitter<RestEvents> {
    * @param options - Request options with complete configuration
    * @param requestId - Unique identifier for tracking this request
    * @returns Promise resolving to a normalized HTTP response
-   * @private
+   * @internal
    */
   async #makeHttpRequest<T>(
     options: HttpRequestOptions,
@@ -874,7 +874,7 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @param error - Object to check for error structure
    * @returns Whether the object follows the Discord error format
-   * @private
+   * @internal
    */
   #isJsonErrorEntity(error: unknown): error is JsonErrorResponse {
     return (
@@ -894,7 +894,7 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @param options - Request options containing optional headers
    * @returns Complete headers object ready for request
-   * @private
+   * @internal
    */
   #buildRequestHeaders(options: HttpRequestOptions): Record<string, string> {
     const headers: Record<string, string> = {
@@ -926,7 +926,7 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @param options - Request options containing files
    * @returns Promise resolving to prepared request options
-   * @private
+   * @internal
    */
   async #handleFileUpload(
     options: HttpRequestOptions,
@@ -955,7 +955,7 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @param errors - The errors object containing field-specific errors
    * @returns A formatted string of errors or undefined if no errors
-   * @private
+   * @internal
    */
   #formatFieldErrors(errors?: Record<string, unknown>): string | undefined {
     if (!errors) {
@@ -992,7 +992,7 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @param path - API path to analyze
    * @returns The resource type (e.g., "channels", "guilds", "users") or undefined if not found
-   * @private
+   * @internal
    */
   #extractResourceType(path?: string): string | undefined {
     if (!path) {
@@ -1010,7 +1010,7 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @param path - API path to analyze
    * @returns The resource ID (Discord snowflake) or undefined if not found
-   * @private
+   * @internal
    */
   #extractResourceId(path?: string): string | undefined {
     if (!path) {

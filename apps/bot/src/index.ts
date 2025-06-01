@@ -53,9 +53,6 @@ const client = new Client({
   ] /* TODO: Temporary bypass with build:prod */ as number[],
   compressionType: "zstd-stream",
   encodingType: "etf",
-  shard: {
-    totalShards: "auto",
-  },
 });
 
 /**

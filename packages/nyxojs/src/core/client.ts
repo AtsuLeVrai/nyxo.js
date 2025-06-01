@@ -66,7 +66,7 @@ export class Client extends EventEmitter<ClientEvents> {
 
   /**
    * Client configuration options
-   * @private
+   * @internal
    */
   readonly #options: ClientOptions;
 

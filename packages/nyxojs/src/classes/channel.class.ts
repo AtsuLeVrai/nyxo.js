@@ -2,6 +2,7 @@ import {
   type AnyChannelEntity,
   type AutoArchiveDuration,
   BitField,
+  type BitwisePermissionFlags,
   type ChannelEntity,
   ChannelFlags,
   ChannelType,
@@ -44,17 +45,6 @@ import { User } from "./user.class.js";
 import { Webhook } from "./webhook.class.js";
 
 /**
- * Thread Member flags as a bitfield.
- * These flags provide additional configuration options for thread members.
- */
-export enum ThreadMemberFlags {
-  /**
-   * Member has muted notifications for the thread.
-   */
-  Muted = 1 << 0,
-}
-
-/**
  * Represents a user's membership in a Discord thread.
  *
  * The ThreadMember class encapsulates a user's status, permissions, and
@@ -63,29 +53,14 @@ export enum ThreadMemberFlags {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#thread-member-object}
  */
-@Cacheable("threadMembers")
+@Cacheable<GuildBased<ThreadMemberEntity>>(
+  "threadMembers",
+  (entity) => `${entity.guild_id}:${entity.id}:${entity.user_id}`,
+)
 export class ThreadMember
   extends BaseClass<GuildBased<ThreadMemberEntity>>
   implements Enforce<PropsToCamel<GuildBased<ThreadMemberEntity>>>
 {
-  /**
-   * Cached user instance for this thread member.
-   * @private
-   */
-  #user: User | null = null;
-
-  /**
-   * Cached guild member instance for this thread member.
-   * @private
-   */
-  #guildMember: GuildMember | null = null;
-
-  /**
-   * Cached thread instance for this thread member.
-   * @private
-   */
-  #thread: AnyThreadChannel | null = null;
-
   /**
    * Gets the ID of the thread this membership belongs to.
    *
@@ -93,9 +68,7 @@ export class ThreadMember
    *
    * @returns The thread ID as a Snowflake string, or undefined if not available
    */
-  get id(): Snowflake | undefined {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the guild this thread member belongs to.
@@ -104,9 +77,7 @@ export class ThreadMember
    *
    * @returns The guild ID as a Snowflake string, or undefined if not available
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the ID of the user who is a member of the thread.
@@ -115,9 +86,7 @@ export class ThreadMember
    *
    * @returns The user ID as a Snowflake string, or undefined if not available
    */
-  get userId(): Snowflake | undefined {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the timestamp when the user last joined the thread.
@@ -127,9 +96,7 @@ export class ThreadMember
    *
    * @returns The join timestamp as an ISO8601 string
    */
-  get joinTimestamp(): string {
-    return this.rawData.join_timestamp;
-  }
+  readonly joinTimestamp = this.rawData.join_timestamp;
 
   /**
    * Gets the flags for this thread member.
@@ -139,9 +106,7 @@ export class ThreadMember
    *
    * @returns A BitField of thread member flags
    */
-  get flags(): BitField<ThreadMemberFlags> {
-    return new BitField<ThreadMemberFlags>(this.rawData.flags ?? 0n);
-  }
+  readonly flags = new BitField<number>(this.rawData.flags);
 
   /**
    * Gets the guild member object associated with this thread member.
@@ -151,14 +116,12 @@ export class ThreadMember
    *
    * @returns The guild member entity, or undefined if not available
    */
-  get member(): GuildMember | undefined {
-    return this.rawData.member
-      ? new GuildMember(this.client, {
-          ...this.rawData.member,
-          guild_id: this.guildId,
-        })
-      : undefined;
-  }
+  readonly member = this.rawData.member
+    ? new GuildMember(this.client, {
+        ...this.rawData.member,
+        guild_id: this.guildId,
+      })
+    : undefined;
 
   /**
    * Gets the Date object representing when this user joined the thread.
@@ -179,31 +142,16 @@ export class ThreadMember
   }
 
   /**
-   * Checks if the thread member has notifications muted for the thread.
-   *
-   * @returns True if notifications are muted, false otherwise
-   */
-  get isMuted(): boolean {
-    return this.flags.has(ThreadMemberFlags.Muted);
-  }
-
-  /**
    * Gets the User instance if it has been cached.
    *
    * @returns The User instance, or undefined if not cached
    */
   get user(): User | undefined {
-    if (this.#user) {
-      return this.#user;
+    if (!this.member?.user) {
+      return undefined;
     }
 
-    // If we have member data with user info, create a User instance
-    if (this.member?.user) {
-      this.#user = this.member.user;
-      return this.#user;
-    }
-
-    return undefined;
+    return this.member.user;
   }
 
   /**
@@ -226,18 +174,13 @@ export class ThreadMember
    * @throws Error if the user ID is not available or the user cannot be fetched
    */
   async fetchUser(): Promise<User> {
-    if (this.#user) {
-      return this.#user;
-    }
-
     if (!this.userId) {
       throw new Error("User ID is not available for this thread member");
     }
 
     try {
       const userData = await this.client.rest.users.fetchUser(this.userId);
-      this.#user = new User(this.client, userData);
-      return this.#user;
+      return new User(this.client, userData);
     } catch (error) {
       throw new Error(`Failed to fetch user for thread member: ${error}`);
     }
@@ -253,42 +196,18 @@ export class ThreadMember
    * @throws Error if the user or guild information is not available
    */
   async fetchGuildMember(guildId: Snowflake): Promise<GuildMember> {
-    if (this.#guildMember) {
-      return this.#guildMember;
-    }
-
     if (!this.userId) {
       throw new Error("User ID is not available for this thread member");
     }
 
     try {
       const user = await this.fetchUser();
-      this.#guildMember = await user.fetchGuildMember(guildId);
-      return this.#guildMember;
+      return await user.fetchGuildMember(guildId);
     } catch (error) {
       throw new Error(
         `Failed to fetch guild member for thread member: ${error}`,
       );
     }
-  }
-
-  /**
-   * Gets the GuildMember instance if it has been cached or is available in the raw data.
-   *
-   * @param guildId - The ID of the guild the member belongs to
-   * @returns The GuildMember instance, or undefined if not available
-   */
-  getGuildMember(guildId?: Snowflake): GuildMember | undefined {
-    if (this.#guildMember) {
-      return this.#guildMember;
-    }
-
-    if (this.member && guildId) {
-      this.#guildMember = this.member;
-      return this.#guildMember;
-    }
-
-    return undefined;
   }
 
   /**
@@ -298,10 +217,6 @@ export class ThreadMember
    * @throws Error if the thread ID is not available or the thread cannot be fetched
    */
   async fetchThread(): Promise<AnyThreadChannel> {
-    if (this.#thread) {
-      return this.#thread;
-    }
-
     if (!this.id) {
       throw new Error("Thread ID is not available");
     }
@@ -314,8 +229,7 @@ export class ThreadMember
         throw new Error(`Channel with ID ${this.id} is not a thread`);
       }
 
-      this.#thread = channel as AnyThreadChannel;
-      return this.#thread;
+      return channel as AnyThreadChannel;
     } catch (error) {
       throw new Error(`Failed to fetch thread: ${error}`);
     }
@@ -351,16 +265,6 @@ export class ThreadMember
   override toString(): FormattedUser | `Unknown User` {
     return this.userId ? formatUser(this.userId) : "Unknown User";
   }
-
-  /**
-   * Checks if this thread member has a specific flag.
-   *
-   * @param flag - The flag to check for
-   * @returns True if the member has the flag, false otherwise
-   */
-  hasFlag(flag: ThreadMemberFlags): boolean {
-    return this.flags.has(flag);
-  }
 }
 
 /**
@@ -380,12 +284,6 @@ export class Channel
   implements Enforce<PropsToCamel<ChannelEntity>>
 {
   /**
-   * Cached guild instance for this channel.
-   * @private
-   */
-  #guild: Guild | null = null;
-
-  /**
    * Gets the unique ID of this channel.
    *
    * This ID is permanent and will not change for the lifetime of the channel.
@@ -393,9 +291,7 @@ export class Channel
    *
    * @returns The channel's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the type of this channel.
@@ -405,9 +301,7 @@ export class Channel
    *
    * @returns The channel type as an enum value
    */
-  get type(): ChannelType {
-    return this.rawData.type;
-  }
+  readonly type = this.rawData.type;
 
   /**
    * Gets the ID of the guild that this channel belongs to, if applicable.
@@ -416,9 +310,7 @@ export class Channel
    *
    * @returns The guild ID as a Snowflake string, or undefined if not in a guild
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the position of this channel in the guild's channel list.
@@ -428,9 +320,7 @@ export class Channel
    *
    * @returns The channel's position, or undefined if not applicable
    */
-  get position(): number | undefined {
-    return this.rawData.position;
-  }
+  readonly position = this.rawData.position;
 
   /**
    * Gets the permission overwrites for this channel.
@@ -440,9 +330,7 @@ export class Channel
    *
    * @returns An array of permission overwrites, or undefined if none
    */
-  get permissionOverwrites(): OverwriteEntity[] | undefined {
-    return this.rawData.permission_overwrites;
-  }
+  readonly permissionOverwrites = this.rawData.permission_overwrites;
 
   /**
    * Gets the name of this channel.
@@ -452,9 +340,7 @@ export class Channel
    *
    * @returns The channel's name, or null/undefined if not applicable
    */
-  get name(): string | null | undefined {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the topic of this channel.
@@ -464,9 +350,7 @@ export class Channel
    *
    * @returns The channel's topic, or undefined if not set
    */
-  get topic(): string | undefined {
-    return this.rawData.topic;
-  }
+  readonly topic = this.rawData.topic;
 
   /**
    * Checks if this channel is marked as NSFW (Not Safe For Work).
@@ -475,9 +359,7 @@ export class Channel
    *
    * @returns True if the channel is NSFW, false otherwise or if not applicable
    */
-  get nsfw(): boolean | undefined {
-    return this.rawData.nsfw;
-  }
+  readonly nsfw = Boolean(this.rawData.nsfw);
 
   /**
    * Gets the ID of the last message sent in this channel.
@@ -487,9 +369,7 @@ export class Channel
    *
    * @returns The last message ID, or null/undefined if not applicable
    */
-  get lastMessageId(): Snowflake | null | undefined {
-    return this.rawData.last_message_id;
-  }
+  readonly lastMessageId = this.rawData.last_message_id;
 
   /**
    * Gets the bitrate of the voice channel, in bits per second.
@@ -499,9 +379,7 @@ export class Channel
    *
    * @returns The bitrate in bits per second, or undefined if not a voice channel
    */
-  get bitrate(): number | undefined {
-    return this.rawData.bitrate;
-  }
+  readonly bitrate = this.rawData.bitrate;
 
   /**
    * Gets the user limit of the voice channel.
@@ -511,9 +389,7 @@ export class Channel
    *
    * @returns The user limit, or undefined if not a voice channel
    */
-  get userLimit(): number | undefined {
-    return this.rawData.user_limit;
-  }
+  readonly userLimit = this.rawData.user_limit;
 
   /**
    * Gets the rate limit per user (slowmode) for this channel.
@@ -523,9 +399,7 @@ export class Channel
    *
    * @returns The rate limit in seconds, or undefined if not applicable
    */
-  get rateLimitPerUser(): number | undefined {
-    return this.rawData.rate_limit_per_user;
-  }
+  readonly rateLimitPerUser = this.rawData.rate_limit_per_user;
 
   /**
    * Gets the users who are recipients of this direct message.
@@ -534,9 +408,9 @@ export class Channel
    *
    * @returns An array of user objects, or undefined if not a DM channel
    */
-  get recipients(): User[] | undefined {
-    return this.rawData.recipients?.map((user) => new User(this.client, user));
-  }
+  readonly recipients = this.rawData.recipients?.map(
+    (user) => new User(this.client, user),
+  );
 
   /**
    * Gets the icon hash of the group DM channel.
@@ -545,9 +419,7 @@ export class Channel
    *
    * @returns The icon hash, or null/undefined if not set or not applicable
    */
-  get icon(): string | null | undefined {
-    return this.rawData.icon;
-  }
+  readonly icon = this.rawData.icon;
 
   /**
    * Gets the ID of the creator of this channel.
@@ -556,9 +428,7 @@ export class Channel
    *
    * @returns The creator's user ID, or undefined if not applicable
    */
-  get ownerId(): Snowflake | undefined {
-    return this.rawData.owner_id;
-  }
+  readonly ownerId = this.rawData.owner_id;
 
   /**
    * Gets the application ID of the group DM creator if it was created by a bot.
@@ -567,9 +437,7 @@ export class Channel
    *
    * @returns The application ID, or undefined if not applicable
    */
-  get applicationId(): Snowflake | undefined {
-    return this.rawData.application_id;
-  }
+  readonly applicationId = this.rawData.application_id;
 
   /**
    * Checks if this channel is managed by an application.
@@ -578,9 +446,7 @@ export class Channel
    *
    * @returns True if the channel is managed, false otherwise or if not applicable
    */
-  get managed(): boolean | undefined {
-    return this.rawData.managed;
-  }
+  readonly managed = Boolean(this.rawData.managed);
 
   /**
    * Gets the ID of the parent category or text channel for threads.
@@ -590,9 +456,7 @@ export class Channel
    *
    * @returns The parent ID, or null/undefined if not in a category or not a thread
    */
-  get parentId(): Snowflake | null | undefined {
-    return this.rawData.parent_id;
-  }
+  readonly parentId = this.rawData.parent_id;
 
   /**
    * Gets the timestamp of when the last pinned message was pinned.
@@ -601,9 +465,7 @@ export class Channel
    *
    * @returns The last pin timestamp, or null/undefined if no pins or not applicable
    */
-  get lastPinTimestamp(): string | null | undefined {
-    return this.rawData.last_pin_timestamp;
-  }
+  readonly lastPinTimestamp = this.rawData.last_pin_timestamp;
 
   /**
    * Gets the voice region ID for the voice channel.
@@ -613,9 +475,7 @@ export class Channel
    *
    * @returns The region ID, or null/undefined if automatic or not a voice channel
    */
-  get rtcRegion(): string | null | undefined {
-    return this.rawData.rtc_region;
-  }
+  readonly rtcRegion = this.rawData.rtc_region;
 
   /**
    * Gets the video quality mode for the voice channel.
@@ -624,9 +484,7 @@ export class Channel
    *
    * @returns The video quality mode, or undefined if not a voice channel
    */
-  get videoQualityMode(): VideoQualityMode | undefined {
-    return this.rawData.video_quality_mode;
-  }
+  readonly videoQualityMode = this.rawData.video_quality_mode;
 
   /**
    * Gets the number of messages in a thread.
@@ -635,9 +493,7 @@ export class Channel
    *
    * @returns The message count, or undefined if not a thread
    */
-  get messageCount(): number | undefined {
-    return this.rawData.message_count;
-  }
+  readonly messageCount = this.rawData.message_count;
 
   /**
    * Gets the approximate number of members in a thread.
@@ -646,9 +502,7 @@ export class Channel
    *
    * @returns The member count, or undefined if not a thread
    */
-  get memberCount(): number | undefined {
-    return this.rawData.member_count;
-  }
+  readonly memberCount = this.rawData.member_count;
 
   /**
    * Gets the thread-specific metadata.
@@ -657,18 +511,19 @@ export class Channel
    *
    * @returns The thread metadata, or undefined if not a thread
    */
-  get threadMetadata(): ThreadMetadataEntity | undefined {
-    return this.rawData.thread_metadata;
-  }
+  readonly threadMetadata = this.rawData.thread_metadata;
 
   /**
    * Gets the thread member object for the current user if they've joined the thread.
    *
    * @returns The thread member object, or undefined if not applicable
    */
-  get member(): ThreadMemberEntity | undefined {
-    return this.rawData.member;
-  }
+  readonly member = this.rawData.member
+    ? new ThreadMember(this.client, {
+        ...this.rawData.member,
+        guild_id: this.guildId as string,
+      })
+    : undefined;
 
   /**
    * Gets the default auto archive duration for newly created threads.
@@ -678,9 +533,8 @@ export class Channel
    *
    * @returns The default auto archive duration, or undefined if not applicable
    */
-  get defaultAutoArchiveDuration(): AutoArchiveDuration | undefined {
-    return this.rawData.default_auto_archive_duration;
-  }
+  readonly defaultAutoArchiveDuration =
+    this.rawData.default_auto_archive_duration;
 
   /**
    * Gets the computed permissions for the current user in this channel.
@@ -689,9 +543,9 @@ export class Channel
    *
    * @returns The permissions string, or undefined if not available
    */
-  get permissions(): string | undefined {
-    return this.rawData.permissions;
-  }
+  readonly permissions = new BitField<BitwisePermissionFlags>(
+    this.rawData.permissions ?? 0n,
+  );
 
   /**
    * Gets the channel flags.
@@ -700,9 +554,7 @@ export class Channel
    *
    * @returns The channel flags
    */
-  get flags(): BitField<ChannelFlags> {
-    return new BitField<ChannelFlags>(this.rawData.flags ?? 0n);
-  }
+  readonly flags = new BitField<ChannelFlags>(this.rawData.flags);
 
   /**
    * Gets the total number of messages ever sent in a thread.
@@ -711,9 +563,7 @@ export class Channel
    *
    * @returns The total message count, or undefined if not a thread
    */
-  get totalMessageSent(): number | undefined {
-    return this.rawData.total_message_sent;
-  }
+  readonly totalMessageSent = this.rawData.total_message_sent;
 
   /**
    * Gets the tags available in a forum or media channel.
@@ -722,27 +572,21 @@ export class Channel
    *
    * @returns An array of forum tags, or undefined if not a forum/media channel
    */
-  get availableTags(): ForumTagEntity[] | undefined {
-    return this.rawData.available_tags;
-  }
+  readonly availableTags = this.rawData.available_tags;
 
   /**
    * Gets the IDs of tags applied to a thread in a forum or media channel.
    *
    * @returns An array of tag IDs, or undefined if not applicable
    */
-  get appliedTags(): Snowflake[] | undefined {
-    return this.rawData.applied_tags;
-  }
+  readonly appliedTags = this.rawData.applied_tags;
 
   /**
    * Gets the default emoji for the add reaction button on forum threads.
    *
    * @returns The default reaction emoji object, or null/undefined if not set
    */
-  get defaultReactionEmoji(): DefaultReactionEntity | null | undefined {
-    return this.rawData.default_reaction_emoji;
-  }
+  readonly defaultReactionEmoji = this.rawData.default_reaction_emoji;
 
   /**
    * Gets the default rate limit per user for newly created threads.
@@ -751,9 +595,8 @@ export class Channel
    *
    * @returns The default rate limit in seconds, or undefined if not applicable
    */
-  get defaultThreadRateLimitPerUser(): number | undefined {
-    return this.rawData.default_thread_rate_limit_per_user;
-  }
+  readonly defaultThreadRateLimitPerUser =
+    this.rawData.default_thread_rate_limit_per_user;
 
   /**
    * Gets the default sort order for forum posts.
@@ -762,9 +605,7 @@ export class Channel
    *
    * @returns The sort order, or null/undefined if not set
    */
-  get defaultSortOrder(): SortOrderType | null | undefined {
-    return this.rawData.default_sort_order;
-  }
+  readonly defaultSortOrder = this.rawData.default_sort_order;
 
   /**
    * Gets the default forum layout view.
@@ -773,9 +614,7 @@ export class Channel
    *
    * @returns The forum layout type, or undefined if not a forum channel
    */
-  get defaultForumLayout(): ForumLayoutType | undefined {
-    return this.rawData.default_forum_layout;
-  }
+  readonly defaultForumLayout = this.rawData.default_forum_layout;
 
   /**
    * Gets the date when this channel was created.
@@ -885,19 +724,8 @@ export class Channel
     if (!this.isGuildChannel) {
       return true;
     }
-    if (!this.guild) {
-      return false;
-    }
-    return true; // In a full implementation, this would check permissions
-  }
 
-  /**
-   * Gets the guild that this channel belongs to, if cached.
-   *
-   * @returns The Guild instance, or undefined if not in a guild or not cached
-   */
-  get guild(): Guild | undefined {
-    return this.#guild ?? undefined;
+    return true; // In a full implementation, this would check permissions
   }
 
   /**
@@ -911,16 +739,11 @@ export class Channel
       throw new Error("This channel does not belong to a guild");
     }
 
-    if (this.#guild) {
-      return this.#guild;
-    }
-
     try {
       const guild = await this.client.rest.guilds.fetchGuild(
         this.guildId as Snowflake,
       );
-      this.#guild = new Guild(this.client, guild);
-      return this.#guild;
+      return new Guild(this.client, guild);
     } catch (error) {
       throw new Error(`Failed to fetch guild for channel: ${error}`);
     }
@@ -1514,6 +1337,7 @@ export interface VoiceBasedChannel extends Channel {
  * This interface extends the TextBasedChannel interface with properties and methods
  * specific to thread channels.
  */
+// @ts-expect-error
 export interface ThreadChannel extends TextBasedChannel {
   /**
    * The thread-specific metadata.
@@ -1594,6 +1418,7 @@ export class GuildTextChannel
    *
    * @returns The channel type (GuildText)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GuildText {
     return ChannelType.GuildText;
   }
@@ -1723,6 +1548,7 @@ export class DmChannel
    *
    * @returns The channel type (Dm)
    */
+  // @ts-expect-error
   override get type(): ChannelType.Dm {
     return ChannelType.Dm;
   }
@@ -1774,6 +1600,7 @@ export class GuildVoiceChannel
    *
    * @returns The channel type (GuildVoice)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GuildVoice {
     return ChannelType.GuildVoice;
   }
@@ -1876,6 +1703,7 @@ export class GroupDmChannel
    *
    * @returns The channel type (GroupDm)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GroupDm {
     return ChannelType.GroupDm;
   }
@@ -1967,6 +1795,7 @@ export class GuildCategoryChannel extends Channel implements GuildChannel {
    *
    * @returns The channel type (GuildCategory)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GuildCategory {
     return ChannelType.GuildCategory;
   }
@@ -2054,6 +1883,7 @@ export class GuildAnnouncementChannel
    *
    * @returns The channel type (GuildAnnouncement)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GuildAnnouncement {
     return ChannelType.GuildAnnouncement;
   }
@@ -2121,6 +1951,7 @@ export class AnnouncementThreadChannel
    *
    * @returns The channel type (AnnouncementThread)
    */
+  // @ts-expect-error
   override get type(): ChannelType.AnnouncementThread {
     return ChannelType.AnnouncementThread;
   }
@@ -2262,6 +2093,7 @@ export class PublicThreadChannel
    *
    * @returns The channel type (PublicThread)
    */
+  // @ts-expect-error
   override get type(): ChannelType.PublicThread {
     return ChannelType.PublicThread;
   }
@@ -2417,6 +2249,7 @@ export class PrivateThreadChannel
    *
    * @returns The channel type (PrivateThread)
    */
+  // @ts-expect-error
   override get type(): ChannelType.PrivateThread {
     return ChannelType.PrivateThread;
   }
@@ -2586,6 +2419,7 @@ export class GuildStageVoiceChannel
    *
    * @returns The channel type (GuildStageVoice)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GuildStageVoice {
     return ChannelType.GuildStageVoice;
   }
@@ -2663,6 +2497,7 @@ export class GuildForumChannel extends Channel implements GuildChannel {
    *
    * @returns The channel type (GuildForum)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GuildForum {
     return ChannelType.GuildForum;
   }
@@ -2781,6 +2616,7 @@ export class GuildMediaChannel extends Channel implements GuildChannel {
    *
    * @returns The channel type (GuildMedia)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GuildMedia {
     return ChannelType.GuildMedia;
   }
@@ -2905,6 +2741,7 @@ export class GuildDirectoryChannel extends Channel implements GuildChannel {
    *
    * @returns The channel type (GuildDirectory)
    */
+  // @ts-expect-error
   override get type(): ChannelType.GuildDirectory {
     return ChannelType.GuildDirectory;
   }

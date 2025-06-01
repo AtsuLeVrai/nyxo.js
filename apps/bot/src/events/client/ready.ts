@@ -33,7 +33,7 @@ export default defineEvent({
     }
 
     // Log the number of guilds the bot is in
-    console.log(`[GUILDS] Connected to ${client.cache.guilds.size} guilds`);
+    console.log(`[GUILDS] Connected to ${ready.guilds.length} guilds`);
 
     // Wait for 10 seconds before logging memory usage statistics
     await sleep(10000);

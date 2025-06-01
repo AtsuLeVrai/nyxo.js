@@ -68,6 +68,8 @@ export default defineSlashCommand({
 
     const user = await interaction.getUser("user");
 
+    const cache = client.cache.channels.size;
+
     // Create an aesthetic embed with the latency information
     const embed = new EmbedBuilder()
       .setTitle("🏓 Pong!")
@@ -90,6 +92,11 @@ export default defineSlashCommand({
           value: user
             ? `${user.toString()} - ${roundtripLatency}ms`
             : "No user specified",
+          inline: true,
+        },
+        {
+          name: "Guild Cache Size",
+          value: `${cache} guilds`,
           inline: true,
         },
       )

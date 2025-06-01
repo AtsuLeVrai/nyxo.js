@@ -1,5 +1,5 @@
 import { sleep } from "@nyxojs/core";
-import { Store } from "@nyxojs/store";
+import { Store, StoreOptions } from "@nyxojs/store";
 import { z } from "zod/v4";
 import type { Rest } from "../core/index.js";
 import type { HttpMethod, RateLimitHitEvent } from "../types/index.js";
@@ -115,48 +115,34 @@ export interface RateLimitResult {
  * Configuration options for the rate limit manager.
  * Controls how rate limits are tracked and managed.
  */
-export const RateLimitOptions = z.object({
+export const RateLimitOptions = StoreOptions.extend({
   /**
    * Cleanup interval in milliseconds.
    * Controls how often expired buckets are removed from memory.
    * @default 60000 (1 minute)
    */
-  cleanupInterval: z.number().int().min(0).default(60000),
+  cleanupInterval: z.number().int().positive().default(60000),
 
   /**
    * Safety margin in milliseconds to apply when approaching reset.
    * Adds buffer to prevent accidental rate limit violations.
    * @default 100 (reduced from 500)
    */
-  safetyMarginMs: z.number().int().min(0).default(100),
+  safetyMargin: z.number().int().positive().default(100),
 
   /**
    * Maximum invalid requests allowed in a 10-minute window.
    * Prevents Cloudflare bans from excessive invalid requests.
    * @default 10000 (Discord limit)
    */
-  maxInvalidRequests: z.number().int().min(0).max(10000).default(10000),
+  maxInvalidRequests: z.number().int().positive().max(10000).default(10000),
 
   /**
    * Maximum global requests per second.
    * Controls overall request rate to Discord API.
    * @default 50 (Discord limit)
    */
-  maxGlobalRequestsPerSecond: z.number().int().min(0).default(50),
-
-  /**
-   * Maximum number of buckets to keep in memory.
-   * Limits memory usage for long-running applications.
-   * @default 1000
-   */
-  maxBuckets: z.number().int().min(100).default(1000),
-
-  /**
-   * Default TTL for rate limit cache entries in milliseconds.
-   * Controls expiration of cached rate limit results.
-   * @default 100
-   */
-  ratelimitCacheTtl: z.number().int().min(0).default(100),
+  maxGlobalRequestsPerSecond: z.number().int().positive().default(50),
 });
 
 export type RateLimitOptions = z.infer<typeof RateLimitOptions>;
@@ -223,22 +209,16 @@ export class RateLimitManager {
     this.#options = options;
 
     // Initialize Stores with appropriate options
-    this.buckets = new Store<string, RateLimitBucket>({
-      maxSize: this.#options.maxBuckets,
-      evictionStrategy: "lru",
-      expirationCheckInterval: this.#options.cleanupInterval,
-    });
+    this.buckets = new Store<string, RateLimitBucket>(this.#options);
 
     this.routeBuckets = new Store<string, string>({
-      maxSize: this.#options.maxBuckets * 2, // Routes may outnumber buckets
-      evictionStrategy: "lru",
-      expirationCheckInterval: this.#options.cleanupInterval,
+      ...this.#options,
+      maxSize: this.#options.maxSize * 2, // Routes may outnumber buckets
     });
 
     this.#rateLimitCache = new Store<string, RateLimitResult>({
+      ...this.#options,
       maxSize: 1000,
-      ttl: this.#options.ratelimitCacheTtl,
-      evictionStrategy: "lru",
     });
   }
 
@@ -498,7 +478,7 @@ export class RateLimitManager {
    * Used for Cloudflare ban prevention.
    *
    * @param now - Current timestamp
-   * @private
+   * @internal
    */
   #trackInvalidRequest(now: number): void {
     const windowDuration = 600_000; // 10 minutes
@@ -518,7 +498,7 @@ export class RateLimitManager {
    * Tracks overall request rate to prevent global rate limits.
    *
    * @param now - Current timestamp
-   * @private
+   * @internal
    */
   #updateGlobalRequestCount(now: number): void {
     const windowDuration = 1000; // 1 second window
@@ -540,7 +520,7 @@ export class RateLimitManager {
    * @param requestId - Unique identifier for this request
    * @param now - Current timestamp
    * @returns Rate limit check result
-   * @private
+   * @internal
    */
   #checkInvalidRequestLimit(requestId: string, now: number): RateLimitResult {
     const windowDuration = 600_000; // 10 minutes
@@ -584,7 +564,7 @@ export class RateLimitManager {
    * @param requestId - Unique identifier for this request
    * @param now - Current timestamp
    * @returns Rate limit check result
-   * @private
+   * @internal
    */
   #checkGlobalRateLimit(requestId: string, now: number): RateLimitResult {
     const windowDuration = 1000; // 1 second window
@@ -633,7 +613,7 @@ export class RateLimitManager {
    * @param requestId - Unique identifier for this request
    * @param now - Current timestamp
    * @returns Rate limit check result
-   * @private
+   * @internal
    */
   #checkBucketLimit(
     bucket: RateLimitBucket,
@@ -678,8 +658,8 @@ export class RateLimitManager {
     // Use smaller margin for high-capacity buckets
     const adaptiveSafetyMargin =
       bucket.limit > 10
-        ? Math.min(50, this.#options.safetyMarginMs)
-        : this.#options.safetyMarginMs;
+        ? Math.min(50, this.#options.safetyMargin)
+        : this.#options.safetyMargin;
 
     // Safety margin when approaching reset
     if (bucket.remaining === 1 && bucket.reset - now < adaptiveSafetyMargin) {
@@ -721,7 +701,7 @@ export class RateLimitManager {
    * @param requestId - Unique identifier for this request
    * @param now - Current timestamp
    * @returns Rate limit check result
-   * @private
+   * @internal
    */
   #checkEmojiRouteLimit(
     bucket: RateLimitBucket,
@@ -771,7 +751,7 @@ export class RateLimitManager {
    * @param requestId - Unique identifier for this request
    * @param now - Current timestamp
    * @returns Rate limit result
-   * @private
+   * @internal
    */
   #handleRateLimitExceeded(
     path: string,
@@ -822,7 +802,7 @@ export class RateLimitManager {
    * @param requestId - Unique identifier for this request
    * @param now - Current timestamp
    * @returns Rate limit result
-   * @private
+   * @internal
    */
   #updateBucket(
     bucketHash: string,
@@ -884,7 +864,7 @@ export class RateLimitManager {
    *
    * @param params - Parameters for the rate limit hit event
    * @param now - Current timestamp
-   * @private
+   * @internal
    */
   #emitRateLimitHit(
     params: Omit<RateLimitHitEvent, "timestamp">,

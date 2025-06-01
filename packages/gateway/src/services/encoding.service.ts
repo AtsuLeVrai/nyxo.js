@@ -79,7 +79,7 @@ export class EncodingService {
    * The erlpack module reference if available
    * Used for ETF encoding/decoding operations
    * Null if not initialized or using JSON encoding
-   * @private
+   * @internal
    */
   #erlpack: typeof erlpack | null = null;
 
@@ -281,7 +281,7 @@ export class EncodingService {
    *
    * @param data - The encoded payload to validate (Buffer or string)
    * @throws {Error} If the payload exceeds the maximum size limit, with detailed size information
-   * @private
+   * @internal
    */
   #validatePayloadSize(data: Buffer | string): void {
     // Calculate the size in bytes

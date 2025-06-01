@@ -1,43 +1,26 @@
 import {
   type AnyChannelEntity,
-  type AvatarDecorationDataEntity,
   type BanEntity,
   BitField,
-  type DefaultMessageNotificationLevel,
-  type ExplicitContentFilterLevel,
   type FormattedChannel,
   type GuildEntity,
   GuildFeature,
   type GuildMemberEntity,
+  type GuildMemberFlags,
   type GuildOnboardingEntity,
   type GuildWidgetEntity,
   type GuildWidgetSettingsEntity,
-  type IncidentsDataEntity,
-  type IntegrationAccountEntity,
-  type IntegrationApplicationEntity,
   type IntegrationEntity,
-  type IntegrationExpirationBehavior,
-  type IntegrationType,
   type InviteWithMetadataEntity,
-  type Locale,
-  type MfaLevel,
-  type NsfwLevel,
-  type OAuth2Scope,
-  type PremiumTier,
   type Snowflake,
   SnowflakeUtil,
   type SystemChannelFlags,
-  type VerificationLevel,
   type VoiceRegionEntity,
   type VoiceStateEntity,
   type WelcomeScreenEntity,
   formatChannel,
 } from "@nyxojs/core";
-import type {
-  GuildBanEntity,
-  GuildCreateEntity,
-  PresenceEntity,
-} from "@nyxojs/gateway";
+import type { GuildBanEntity, GuildCreateEntity } from "@nyxojs/gateway";
 import type {
   ChannelPositionsUpdateOptions,
   GetGuildPruneCountQuerySchema,
@@ -82,46 +65,32 @@ import { VoiceState } from "./voice.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#ban-object}
  */
-@Cacheable<BanEntity>("bans", (data) => data.user.id)
+@Cacheable<BanEntity | GuildBanEntity>("bans", (data) => data.user.id)
 export class Ban
   extends BaseClass<BanEntity | GuildBanEntity>
   implements Enforce<PropsToCamel<BanEntity & GuildBanEntity>>
 {
   /**
-   * The cached User object for the banned user.
-   * @private
-   */
-  #user: User | null = null;
-
-  /**
    * Gets the reason for the ban.
    *
    * @returns The ban reason, or null if no reason was provided
    */
-  get reason(): string | null {
-    return (this.rawData as BanEntity).reason;
-  }
+  readonly reason = "reason" in this.rawData ? this.rawData.reason : null;
 
   /**
    * Gets the ID of the guild where the ban occurred.
    *
    * @returns The guild's ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return (this.rawData as GuildBanEntity).guild_id;
-  }
+  readonly guildId =
+    "guild_id" in this.rawData ? this.rawData.guild_id : undefined;
 
   /**
    * Gets the User object for the banned user.
    *
    * @returns The User instance
    */
-  get user(): User {
-    if (!this.#user) {
-      this.#user = new User(this.client, this.rawData.user);
-    }
-    return this.#user;
-  }
+  readonly user = new User(this.client, this.rawData.user);
 
   /**
    * Gets the ID of the banned user.
@@ -140,6 +109,10 @@ export class Ban
    * @returns A promise resolving to true if successful, false otherwise
    */
   async remove(guildId = this.guildId, reason?: string): Promise<boolean> {
+    if (!guildId) {
+      throw new Error("Guild ID is required to remove a ban.");
+    }
+
     try {
       await this.client.rest.guilds.removeGuildBan(
         guildId,
@@ -168,170 +141,125 @@ export class Integration
   implements Enforce<PropsToCamel<IntegrationEntity>>
 {
   /**
-   * The cached User object for the integration's user.
-   * @private
-   */
-  #user: User | null = null;
-
-  /**
    * Gets the integration's unique identifier.
    *
    * @returns The integration's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the guild this integration belongs to.
    *
    * @returns The guild's ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the integration name.
    *
    * @returns The name of the integration
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the integration type.
    *
    * @returns The type of integration (twitch, youtube, discord, guild_subscription)
    */
-  get type(): IntegrationType {
-    return this.rawData.type;
-  }
+  readonly type = this.rawData.type;
 
   /**
    * Checks if this integration is enabled.
    *
    * @returns True if the integration is enabled, false otherwise
    */
-  get enabled(): boolean {
-    return this.rawData.enabled;
-  }
+  readonly enabled = Boolean(this.rawData.enabled);
 
   /**
    * Checks if this integration is syncing.
    *
    * @returns True if the integration is syncing, undefined if unknown
    */
-  get syncing(): boolean | undefined {
-    return this.rawData.syncing;
-  }
+  readonly syncing = Boolean(this.rawData.syncing);
 
   /**
    * Gets the ID of the role that subscribers receive.
    *
    * @returns The role ID, or undefined if not set
    */
-  get roleId(): Snowflake | undefined {
-    return this.rawData.role_id;
-  }
+  readonly roleId = this.rawData.role_id;
 
   /**
    * Checks if emoticons should be synced for this integration.
    *
    * @returns True if emoticons should be synced, undefined if not applicable
    */
-  get enableEmoticons(): boolean | undefined {
-    return this.rawData.enable_emoticons;
-  }
+  readonly enableEmoticons = Boolean(this.rawData.enable_emoticons);
 
   /**
    * Gets the behavior when subscriptions expire.
    *
    * @returns The expiration behavior, or undefined if not set
    */
-  get expireBehavior(): IntegrationExpirationBehavior | undefined {
-    return this.rawData.expire_behavior;
-  }
+  readonly expireBehavior = this.rawData.expire_behavior;
 
   /**
    * Gets the grace period (in days) before expiring subscribers.
    *
    * @returns The grace period in days, or undefined if not set
    */
-  get expireGracePeriod(): number | undefined {
-    return this.rawData.expire_grace_period;
-  }
+  readonly expireGracePeriod = this.rawData.expire_grace_period;
 
   /**
    * Gets the User object for the integration's user, if available.
    *
    * @returns The User instance, or undefined if not available
    */
-  get user(): User | undefined {
-    if (!this.rawData.user) {
-      return undefined;
-    }
-
-    if (!this.#user) {
-      this.#user = new User(this.client, this.rawData.user);
-    }
-    return this.#user;
-  }
+  readonly user = this.rawData.user
+    ? new User(this.client, this.rawData.user)
+    : undefined;
 
   /**
    * Gets the IntegrationAccount instance for this integration.
    *
    * @returns The IntegrationAccount instance
    */
-  get account(): IntegrationAccountEntity {
-    return this.rawData.account;
-  }
+  readonly account = this.rawData.account;
 
   /**
    * Gets the ISO8601 timestamp when this integration was last synced.
    *
    * @returns The last synced timestamp, or undefined if not available
    */
-  get syncedAt(): string | undefined {
-    return this.rawData.synced_at;
-  }
+  readonly syncedAt = this.rawData.synced_at;
 
   /**
    * Gets the number of subscribers this integration has.
    *
    * @returns The subscriber count, or undefined if not available
    */
-  get subscriberCount(): number | undefined {
-    return this.rawData.subscriber_count;
-  }
+  readonly subscriberCount = this.rawData.subscriber_count;
 
   /**
    * Checks if this integration has been revoked.
    *
    * @returns True if the integration has been revoked, undefined if unknown
    */
-  get revoked(): boolean | undefined {
-    return this.rawData.revoked;
-  }
+  readonly revoked = Boolean(this.rawData.revoked);
 
   /**
    * Gets the IntegrationApplication instance for Discord integrations.
    *
    * @returns The IntegrationApplication instance, or undefined if not applicable
    */
-  get application(): IntegrationApplicationEntity | undefined {
-    return this.rawData.application;
-  }
+  readonly application = this.rawData.application;
 
   /**
    * Gets the OAuth2 scopes that the application has been authorized for.
    *
    * @returns Array of OAuth2 scope strings, or undefined if not applicable
    */
-  get scopes(): OAuth2Scope[] | undefined {
-    return this.rawData.scopes;
-  }
+  readonly scopes = this.rawData.scopes;
 
   /**
    * Gets the Date object representing when this integration was last synced.
@@ -435,154 +363,110 @@ export class GuildMember
   implements Enforce<PropsToCamel<GuildMemberEntity>>
 {
   /**
-   * The guild this member belongs to.
-   * @private
-   */
-  #guild: Guild | null = null;
-
-  /**
-   * The user object for this guild member.
-   * @private
-   */
-  #user: User | null = null;
-
-  /**
    * Gets the ID of the guild this member belongs to.
    *
    * @returns The guild's snowflake ID
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the user object for this guild member.
    *
    * @returns The User instance representing this member
    */
-  get user(): User {
-    if (!this.#user) {
-      this.#user = new User(this.client, this.rawData.user);
-    }
-    return this.#user;
-  }
+  readonly user = new User(this.client, this.rawData.user);
 
   /**
    * Gets the member's custom nickname in the guild.
    *
    * @returns The member's nickname, or null if not set
    */
-  get nick(): string | null {
-    return this.rawData.nick ?? null;
-  }
+  readonly nick = this.rawData.nick;
 
   /**
    * Gets the member's guild-specific avatar hash.
    *
    * @returns The avatar hash, or null if using global user avatar
    */
-  get avatar(): string | null {
-    return this.rawData.avatar ?? null;
-  }
+  readonly avatar = this.rawData.avatar;
 
   /**
    * Gets the member's guild-specific banner hash.
    *
    * @returns The banner hash, or null if not set
    */
-  get banner(): string | null {
-    return this.rawData.banner ?? null;
-  }
+  readonly banner = this.rawData.banner;
 
   /**
    * Gets the array of role IDs assigned to this member.
    *
    * @returns Array of role snowflake IDs
    */
-  get roles(): Snowflake[] {
-    return this.rawData.roles;
-  }
+  readonly roles = this.rawData.roles;
 
   /**
    * Gets the ISO8601 timestamp when the member joined the guild.
    *
    * @returns The join date timestamp string
    */
-  get joinedAt(): string {
-    return this.rawData.joined_at;
-  }
+  readonly joinedAt = this.rawData.joined_at;
 
   /**
    * Gets the ISO8601 timestamp when the member started boosting the guild.
    *
    * @returns The boost start timestamp, or null if not boosting
    */
-  get premiumSince(): string | null {
-    return this.rawData.premium_since ?? null;
-  }
+  readonly premiumSince = this.rawData.premium_since;
 
   /**
    * Checks if the member is deafened in voice channels.
    *
    * @returns True if the member is deafened, false otherwise
    */
-  get deaf(): boolean {
-    return this.rawData.deaf;
-  }
+  readonly deaf = Boolean(this.rawData.deaf);
 
   /**
    * Checks if the member is muted in voice channels.
    *
    * @returns True if the member is muted, false otherwise
    */
-  get mute(): boolean {
-    return this.rawData.mute;
-  }
+  readonly mute = Boolean(this.rawData.mute);
 
   /**
    * Gets the member flags bitfield.
    *
    * @returns The member flags as a number
    */
-  get flags(): number {
-    return this.rawData.flags;
-  }
+  readonly flags = new BitField<GuildMemberFlags>(this.rawData.flags);
 
   /**
    * Checks if the member is pending membership screening.
    *
    * @returns True if the member hasn't passed membership screening, false otherwise
    */
-  get pending(): boolean {
-    return Boolean(this.rawData.pending);
-  }
+  readonly pending = Boolean(this.rawData.pending);
 
   /**
    * Gets the total permissions of the member in the guild, including all role permissions.
    *
    * @returns The permissions string, or undefined if not available
    */
-  get permissions(): string | undefined {
-    return this.rawData.permissions;
-  }
+  readonly permissions = this.rawData.permissions;
 
   /**
    * Gets the ISO8601 timestamp when the member's timeout will expire.
    *
    * @returns The timeout expiry timestamp, or null if not timed out
    */
-  get communicationDisabledUntil(): string | null {
-    return this.rawData.communication_disabled_until ?? null;
-  }
+  readonly communicationDisabledUntil =
+    this.rawData.communication_disabled_until;
 
   /**
    * Gets the member's avatar decoration data.
    *
    * @returns The avatar decoration data, or null if not set
    */
-  get avatarDecorationData(): AvatarDecorationDataEntity | null | undefined {
-    return this.rawData.avatar_decoration_data;
-  }
+  readonly avatarDecorationData = this.rawData.avatar_decoration_data;
 
   /**
    * Gets the Date object representing when this member joined the guild.
@@ -721,13 +605,8 @@ export class GuildMember
    * @returns A promise resolving to the Guild instance
    */
   async getGuild(): Promise<Guild> {
-    if (this.#guild) {
-      return this.#guild;
-    }
-
     const guildEntity = await this.client.rest.guilds.fetchGuild(this.guildId);
-    this.#guild = new Guild(this.client, guildEntity as GuildCreateEntity);
-    return this.#guild;
+    return new Guild(this.client, guildEntity as GuildCreateEntity);
   }
 
   /**
@@ -920,429 +799,336 @@ export class Guild
   implements Enforce<PropsToCamel<GuildEntity & GuildCreateEntity>>
 {
   /**
-   * BitField for system channel flags
-   * @private
-   */
-  #systemChannelFlags: BitField<SystemChannelFlags> | null = null;
-
-  /**
    * Gets the guild's unique identifier (Snowflake).
    *
    * @returns The guild's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the guild's name.
    *
    * @returns The name of the guild
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the guild's icon hash.
    *
    * @returns The icon hash, or null if no icon is set
    */
-  get icon(): string | null {
-    return this.rawData.icon;
-  }
+  readonly icon = this.rawData.icon;
 
   /**
    * Gets the guild's icon hash from the template object.
    *
    * @returns The icon hash, or null if not available or not set
    */
-  get iconHash(): string | null | undefined {
-    return this.rawData.icon_hash;
-  }
+  readonly iconHash = this.rawData.icon_hash;
 
   /**
    * Gets the guild's invite splash background hash.
    *
    * @returns The splash hash, or null if not set
    */
-  get splash(): string | null {
-    return this.rawData.splash;
-  }
+  readonly splash = this.rawData.splash;
 
   /**
    * Gets the guild's discovery splash hash.
    *
    * @returns The discovery splash hash, or null if not set
    */
-  get discoverySplash(): string | null {
-    return this.rawData.discovery_splash;
-  }
+  readonly discoverySplash = this.rawData.discovery_splash;
 
   /**
    * Checks if the current user is the owner of the guild.
    *
    * @returns True if the current user is the owner, undefined if unknown
    */
-  get owner(): boolean | undefined {
-    return this.rawData.owner;
-  }
+  readonly owner = Boolean(this.rawData.owner);
 
   /**
    * Gets the ID of the guild owner.
    *
    * @returns The owner's ID as a Snowflake string
    */
-  get ownerId(): Snowflake {
-    return this.rawData.owner_id;
-  }
+  readonly ownerId = this.rawData.owner_id;
 
   /**
    * Gets the permissions of the current user in the guild.
    *
    * @returns The permissions string, or undefined if not available
    */
-  get permissions(): string | undefined {
-    return this.rawData.permissions;
-  }
+  readonly permissions = this.rawData.permissions;
 
   /**
    * Gets the guild's voice region ID (deprecated).
    *
    * @returns The region ID, or null if not set
    */
-  get region(): string | null | undefined {
-    return this.rawData.region;
-  }
+  readonly region = this.rawData.region;
 
   /**
    * Gets the ID of the AFK channel.
    *
    * @returns The AFK channel ID, or null if not set
    */
-  get afkChannelId(): Snowflake | null {
-    return this.rawData.afk_channel_id;
-  }
+  readonly afkChannelId = this.rawData.afk_channel_id;
 
   /**
    * Gets the AFK timeout in seconds.
    *
    * @returns The AFK timeout in seconds
    */
-  get afkTimeout(): 60 | 300 | 900 | 1800 | 3600 {
-    return this.rawData.afk_timeout;
-  }
+  readonly afkTimeout = this.rawData.afk_timeout;
 
   /**
    * Checks if the guild widget is enabled.
    *
    * @returns True if enabled, undefined if unknown
    */
-  get widgetEnabled(): boolean | undefined {
-    return this.rawData.widget_enabled;
-  }
+  readonly widgetEnabled = Boolean(this.rawData.widget_enabled);
 
   /**
    * Gets the ID of the channel where widget generates invites.
    *
    * @returns The widget channel ID, or null if not set
    */
-  get widgetChannelId(): Snowflake | null | undefined {
-    return this.rawData.widget_channel_id;
-  }
+  readonly widgetChannelId = this.rawData.widget_channel_id;
 
   /**
    * Gets the verification level required for the guild.
    *
    * @returns The verification level
    */
-  get verificationLevel(): VerificationLevel {
-    return this.rawData.verification_level;
-  }
+  readonly verificationLevel = this.rawData.verification_level;
 
   /**
    * Gets the default message notification level.
    *
    * @returns The default message notification level
    */
-  get defaultMessageNotifications(): DefaultMessageNotificationLevel {
-    return this.rawData.default_message_notifications;
-  }
+  readonly defaultMessageNotifications =
+    this.rawData.default_message_notifications;
 
   /**
    * Gets the explicit content filter level.
    *
    * @returns The explicit content filter level
    */
-  get explicitContentFilter(): ExplicitContentFilterLevel {
-    return this.rawData.explicit_content_filter;
-  }
+  readonly explicitContentFilter = this.rawData.explicit_content_filter;
 
   /**
    * Gets the array of roles in the guild.
    *
    * @returns Array of role objects
    */
-  get roles(): Role[] {
-    return this.rawData.roles.map(
-      (role) =>
-        new Role(this.client, {
-          ...role,
-          guild_id: this.id,
-        }),
-    );
-  }
+  readonly roles = this.rawData.roles.map(
+    (role) =>
+      new Role(this.client, {
+        ...role,
+        guild_id: this.id,
+      }),
+  );
 
   /**
    * Gets the array of custom emojis in the guild.
    *
    * @returns Array of emoji objects
    */
-  get emojis(): Emoji[] {
-    return this.rawData.emojis.map(
-      (emoji) =>
-        new Emoji(this.client, {
-          ...emoji,
-          guild_id: this.id,
-        }),
-    );
-  }
+  readonly emojis = this.rawData.emojis.map(
+    (emoji) =>
+      new Emoji(this.client, {
+        ...emoji,
+        guild_id: this.id,
+      }),
+  );
 
   /**
    * Gets the array of enabled features in the guild.
    *
    * @returns Array of guild feature strings
    */
-  get features(): GuildFeature[] {
-    return this.rawData.features;
-  }
+  readonly features = this.rawData.features;
 
   /**
    * Gets the required MFA level for the guild.
    *
    * @returns The MFA level
    */
-  get mfaLevel(): MfaLevel {
-    return this.rawData.mfa_level;
-  }
+  readonly mfaLevel = this.rawData.mfa_level;
 
   /**
    * Gets the application ID of the guild creator, if bot-created.
    *
    * @returns The application ID, or null if not bot-created
    */
-  get applicationId(): Snowflake | null {
-    return this.rawData.application_id;
-  }
+  readonly applicationId = this.rawData.application_id;
 
   /**
    * Gets the ID of the system channel.
    *
    * @returns The system channel ID, or null if not set
    */
-  get systemChannelId(): Snowflake | null {
-    return this.rawData.system_channel_id;
-  }
+  readonly systemChannelId = this.rawData.system_channel_id;
 
   /**
    * Gets the system channel flags as a BitField.
    *
    * @returns A BitField of system channel flags
    */
-  get systemChannelFlags(): BitField<SystemChannelFlags> {
-    if (!this.#systemChannelFlags) {
-      this.#systemChannelFlags = new BitField<SystemChannelFlags>(
-        this.rawData.system_channel_flags,
-      );
-    }
-    return this.#systemChannelFlags;
-  }
+  readonly systemChannelFlags = new BitField<SystemChannelFlags>(
+    this.rawData.system_channel_flags,
+  );
 
   /**
    * Gets the ID of the rules channel.
    *
    * @returns The rules channel ID, or null if not set
    */
-  get rulesChannelId(): Snowflake | null {
-    return this.rawData.rules_channel_id;
-  }
+  readonly rulesChannelId = this.rawData.rules_channel_id;
 
   /**
    * Gets the maximum number of presences for the guild.
    *
    * @returns The max presences, or null if not limited
    */
-  get maxPresences(): number | null | undefined {
-    return this.rawData.max_presences;
-  }
+  readonly maxPresences = this.rawData.max_presences;
 
   /**
    * Gets the maximum number of members for the guild.
    *
    * @returns The max members
    */
-  get maxMembers(): number {
-    return this.rawData.max_members;
-  }
+  readonly maxMembers = this.rawData.max_members;
 
   /**
    * Gets the vanity URL code for the guild.
    *
    * @returns The vanity URL code, or null if not set
    */
-  get vanityUrlCode(): string | null {
-    return this.rawData.vanity_url_code;
-  }
+  readonly vanityUrlCode = this.rawData.vanity_url_code;
 
   /**
    * Gets the description of the guild.
    *
    * @returns The description, or null if not set
    */
-  get description(): string | null {
-    return this.rawData.description;
-  }
+  readonly description = this.rawData.description;
 
   /**
    * Gets the guild's banner hash.
    *
    * @returns The banner hash, or null if not set
    */
-  get banner(): string | null {
-    return this.rawData.banner;
-  }
+  readonly banner = this.rawData.banner;
 
   /**
    * Gets the premium tier (Server Boost level) of the guild.
    *
    * @returns The premium tier
    */
-  get premiumTier(): PremiumTier {
-    return this.rawData.premium_tier;
-  }
+  readonly premiumTier = this.rawData.premium_tier;
 
   /**
    * Gets the number of boosts the guild currently has.
    *
    * @returns The number of boosts, or undefined if unknown
    */
-  get premiumSubscriptionCount(): number | undefined {
-    return this.rawData.premium_subscription_count;
-  }
+  readonly premiumSubscriptionCount = this.rawData.premium_subscription_count;
 
   /**
    * Gets the preferred locale of the guild.
    *
    * @returns The preferred locale
    */
-  get preferredLocale(): Locale {
-    return this.rawData.preferred_locale;
-  }
+  readonly preferredLocale = this.rawData.preferred_locale;
 
   /**
    * Gets the ID of the public updates channel.
    *
    * @returns The public updates channel ID, or null if not set
    */
-  get publicUpdatesChannelId(): Snowflake | null {
-    return this.rawData.public_updates_channel_id;
-  }
+  readonly publicUpdatesChannelId = this.rawData.public_updates_channel_id;
 
   /**
    * Gets the maximum number of users in a video channel.
    *
    * @returns The max video channel users, or undefined if unknown
    */
-  get maxVideoChannelUsers(): number | undefined {
-    return this.rawData.max_video_channel_users;
-  }
+  readonly maxVideoChannelUsers = this.rawData.max_video_channel_users;
 
   /**
    * Gets the maximum number of users in a stage video channel.
    *
    * @returns The max stage video channel users, or undefined if unknown
    */
-  get maxStageVideoChannelUsers(): number | undefined {
-    return this.rawData.max_stage_video_channel_users;
-  }
+  readonly maxStageVideoChannelUsers =
+    this.rawData.max_stage_video_channel_users;
 
   /**
    * Gets the approximate number of members in the guild.
    *
    * @returns The approximate member count, or undefined if unknown
    */
-  get approximateMemberCount(): number | undefined {
-    return this.rawData.approximate_member_count;
-  }
+  readonly approximateMemberCount = this.rawData.approximate_member_count;
 
   /**
    * Gets the approximate number of online members in the guild.
    *
    * @returns The approximate presence count, or undefined if unknown
    */
-  get approximatePresenceCount(): number | undefined {
-    return this.rawData.approximate_presence_count;
-  }
+  readonly approximatePresenceCount = this.rawData.approximate_presence_count;
 
   /**
    * Gets the welcome screen settings for the guild.
    *
    * @returns The welcome screen object, or undefined if not set
    */
-  get welcomeScreen(): WelcomeScreenEntity | undefined {
-    return this.rawData.welcome_screen;
-  }
+  readonly welcomeScreen = this.rawData.welcome_screen;
 
   /**
    * Gets the NSFW level of the guild.
    *
    * @returns The NSFW level
    */
-  get nsfwLevel(): NsfwLevel {
-    return this.rawData.nsfw_level;
-  }
+  readonly nsfwLevel = this.rawData.nsfw_level;
 
   /**
    * Gets the array of custom stickers in the guild.
    *
    * @returns Array of sticker objects, or undefined if unknown
    */
-  get stickers(): Sticker[] | undefined {
-    return this.rawData.stickers?.map(
-      (sticker) =>
-        new Sticker(this.client, {
-          ...sticker,
-          guild_id: this.id,
-        }),
-    );
-  }
+  readonly stickers = this.rawData.stickers?.map(
+    (sticker) =>
+      new Sticker(this.client, {
+        ...sticker,
+        guild_id: this.id,
+      }),
+  );
 
   /**
    * Checks if the boost progress bar is enabled.
    *
    * @returns True if enabled, false otherwise
    */
-  get premiumProgressBarEnabled(): boolean {
-    return this.rawData.premium_progress_bar_enabled;
-  }
+  readonly premiumProgressBarEnabled = Boolean(
+    this.rawData.premium_progress_bar_enabled,
+  );
 
   /**
    * Gets the ID of the safety alerts channel.
    *
    * @returns The safety alerts channel ID, or null if not set
    */
-  get safetyAlertsChannelId(): Snowflake | null {
-    return this.rawData.safety_alerts_channel_id;
-  }
+  readonly safetyAlertsChannelId = this.rawData.safety_alerts_channel_id;
 
   /**
    * Gets the incidents data for the guild.
    *
    * @returns The incidents data object, or undefined if not available
    */
-  get incidentsData(): IncidentsDataEntity | null | undefined {
-    return this.rawData.incidents_data;
-  }
+  readonly incidentsData = this.rawData.incidents_data;
 
   /**
    * Gets the array of voice states for members currently in voice channels.
@@ -1350,11 +1136,12 @@ export class Guild
    *
    * @returns Array of voice state objects, or undefined if not available
    */
-  get voiceStates(): VoiceState[] | undefined {
-    return (this.rawData as GuildCreateEntity).voice_states?.map(
-      (state) => new VoiceState(this.client, state as VoiceStateEntity),
-    );
-  }
+  readonly voiceStates =
+    "voice_states" in this.rawData
+      ? this.rawData.voice_states.map(
+          (state) => new VoiceState(this.client, state as VoiceStateEntity),
+        )
+      : undefined;
 
   /**
    * Gets the array of guild member objects for members in the guild.
@@ -1362,15 +1149,16 @@ export class Guild
    *
    * @returns Array of guild member objects, or undefined if not available
    */
-  get members(): GuildMember[] | undefined {
-    return (this.rawData as GuildCreateEntity).members?.map(
-      (member) =>
-        new GuildMember(this.client, {
-          ...member,
-          guild_id: this.id,
-        }),
-    );
-  }
+  readonly members =
+    "members" in this.rawData
+      ? this.rawData.members.map(
+          (member) =>
+            new GuildMember(this.client, {
+              ...member,
+              guild_id: this.id,
+            }),
+        )
+      : undefined;
 
   /**
    * Gets the array of channel objects for all channels in the guild.
@@ -1378,11 +1166,12 @@ export class Guild
    *
    * @returns Array of channel objects, or undefined if not available
    */
-  get channels(): AnyChannel[] | undefined {
-    return (this.rawData as GuildCreateEntity).channels?.map((channel) =>
-      channelFactory(this.client, channel),
-    );
-  }
+  readonly channels =
+    "channels" in this.rawData
+      ? this.rawData.channels.map((channel) =>
+          channelFactory(this.client, channel),
+        )
+      : undefined;
 
   /**
    * Gets the array of thread channel objects for all active threads in the guild.
@@ -1390,11 +1179,12 @@ export class Guild
    *
    * @returns Array of thread channel objects, or undefined if not available
    */
-  get threads(): AnyThreadChannel[] | undefined {
-    return (this.rawData as GuildCreateEntity).threads?.map(
-      (thread) => channelFactory(this.client, thread) as AnyThreadChannel,
-    );
-  }
+  readonly threads =
+    "threads" in this.rawData
+      ? this.rawData.threads.map(
+          (thread) => channelFactory(this.client, thread) as AnyThreadChannel,
+        )
+      : undefined;
 
   /**
    * Gets the array of partial presence updates for members in the guild.
@@ -1402,9 +1192,8 @@ export class Guild
    *
    * @returns Array of presence objects, or undefined if not available
    */
-  get presences(): Partial<PresenceEntity>[] | undefined {
-    return (this.rawData as GuildCreateEntity).presences;
-  }
+  readonly presences =
+    "presences" in this.rawData ? this.rawData.presences : undefined;
 
   /**
    * Gets the array of stage instance objects for active stages in the guild.
@@ -1412,11 +1201,12 @@ export class Guild
    *
    * @returns Array of stage instance objects, or undefined if not available
    */
-  get stageInstances(): StageInstance[] | undefined {
-    return (this.rawData as GuildCreateEntity).stage_instances?.map(
-      (stageInstance) => new StageInstance(this.client, stageInstance),
-    );
-  }
+  readonly stageInstances =
+    "stage_instances" in this.rawData
+      ? this.rawData.stage_instances.map(
+          (stageInstance) => new StageInstance(this.client, stageInstance),
+        )
+      : undefined;
 
   /**
    * Gets the array of scheduled event objects for upcoming events in the guild.
@@ -1424,11 +1214,12 @@ export class Guild
    *
    * @returns Array of scheduled event objects, or undefined if not available
    */
-  get guildScheduledEvents(): ScheduledEvent[] | undefined {
-    return (this.rawData as GuildCreateEntity).guild_scheduled_events?.map(
-      (event) => new ScheduledEvent(this.client, event),
-    );
-  }
+  readonly guildScheduledEvents =
+    "guild_scheduled_events" in this.rawData
+      ? this.rawData.guild_scheduled_events.map(
+          (event) => new ScheduledEvent(this.client, event),
+        )
+      : undefined;
 
   /**
    * Gets the array of soundboard sound objects available in the guild.
@@ -1436,47 +1227,44 @@ export class Guild
    *
    * @returns Array of soundboard sound objects, or undefined if not available
    */
-  get soundboardSounds(): SoundboardSound[] | undefined {
-    return (this.rawData as GuildCreateEntity).soundboard_sounds?.map(
-      (sound) => new SoundboardSound(this.client, sound),
-    );
-  }
+  readonly soundboardSounds =
+    "soundboard_sounds" in this.rawData
+      ? this.rawData.soundboard_sounds.map(
+          (sound) => new SoundboardSound(this.client, sound),
+        )
+      : undefined;
 
   /**
    * Gets the ISO8601 timestamp of when the current user joined the guild.
    *
    * @returns The joined at timestamp, or undefined if not available
    */
-  get joinedAt(): string | undefined {
-    return (this.rawData as GuildCreateEntity).joined_at;
-  }
+  readonly joinedAt =
+    "joined_at" in this.rawData ? this.rawData.joined_at : undefined;
 
   /**
    * Checks if the guild is considered "large".
    *
    * @returns True if the guild is large, undefined if unknown
    */
-  get large(): boolean | undefined {
-    return (this.rawData as GuildCreateEntity).large;
-  }
+  readonly large = "large" in this.rawData ? this.rawData.large : undefined;
 
   /**
    * Checks if the guild is unavailable due to an outage.
    *
    * @returns True if unavailable, undefined if not
    */
-  get unavailable(): boolean | undefined {
-    return (this.rawData as GuildCreateEntity).unavailable;
-  }
+  readonly unavailable = Boolean(
+    "unavailable" in this.rawData ? this.rawData.unavailable : undefined,
+  );
 
   /**
    * Gets the total number of members in the guild.
    *
    * @returns The member count, or undefined if unknown
    */
-  get memberCount(): number | undefined {
-    return (this.rawData as GuildCreateEntity).member_count;
-  }
+  readonly memberCount =
+    "member_count" in this.rawData ? this.rawData.member_count : undefined;
 
   /**
    * Gets the Date object representing when the current user joined this guild.
@@ -2037,7 +1825,7 @@ export class Guild
    *
    * @returns A promise resolving to an array of voice region objects
    */
-  async fetchVoiceRegions(): Promise<VoiceRegionEntity[]> {
+  fetchVoiceRegions(): Promise<VoiceRegionEntity[]> {
     return this.client.rest.guilds.fetchGuildVoiceRegions(this.id);
   }
 
@@ -2046,7 +1834,7 @@ export class Guild
    *
    * @returns A promise resolving to an array of invite objects with metadata
    */
-  async fetchInvites(): Promise<InviteWithMetadataEntity[]> {
+  fetchInvites(): Promise<InviteWithMetadataEntity[]> {
     return this.client.rest.guilds.fetchGuildInvites(this.id);
   }
 
@@ -2055,7 +1843,7 @@ export class Guild
    *
    * @returns A promise resolving to an array of integration objects
    */
-  async fetchIntegrations(): Promise<IntegrationEntity[]> {
+  fetchIntegrations(): Promise<IntegrationEntity[]> {
     return this.client.rest.guilds.fetchGuildIntegrations(this.id);
   }
 
@@ -2087,7 +1875,7 @@ export class Guild
    *
    * @returns A promise resolving to the guild widget settings object
    */
-  async fetchWidgetSettings(): Promise<GuildWidgetSettingsEntity> {
+  fetchWidgetSettings(): Promise<GuildWidgetSettingsEntity> {
     return this.client.rest.guilds.fetchGuildWidgetSettings(this.id);
   }
 
@@ -2098,7 +1886,7 @@ export class Guild
    * @param reason - Reason for modifying the widget (for audit logs)
    * @returns A promise resolving to the updated guild widget settings object
    */
-  async updateWidget(
+  updateWidget(
     options: GuildWidgetUpdateOptions,
     reason?: string,
   ): Promise<GuildWidgetSettingsEntity> {
@@ -2110,7 +1898,7 @@ export class Guild
    *
    * @returns A promise resolving to the guild widget object
    */
-  async fetchWidget(): Promise<GuildWidgetEntity> {
+  fetchWidget(): Promise<GuildWidgetEntity> {
     return this.client.rest.guilds.fetchGuildWidget(this.id);
   }
 
@@ -2119,9 +1907,7 @@ export class Guild
    *
    * @returns A promise resolving to an object with the vanity URL code and usage count
    */
-  async fetchVanityUrl(): Promise<
-    Pick<InviteWithMetadataEntity, "code" | "uses">
-  > {
+  fetchVanityUrl(): Promise<Pick<InviteWithMetadataEntity, "code" | "uses">> {
     return this.client.rest.guilds.fetchGuildVanityUrl(this.id);
   }
 
@@ -2130,7 +1916,7 @@ export class Guild
    *
    * @returns A promise resolving to the welcome screen object
    */
-  async fetchWelcomeScreen(): Promise<WelcomeScreenEntity> {
+  fetchWelcomeScreen(): Promise<WelcomeScreenEntity> {
     return this.client.rest.guilds.fetchGuildWelcomeScreen(this.id);
   }
 
@@ -2141,7 +1927,7 @@ export class Guild
    * @param reason - Reason for modifying the welcome screen (for audit logs)
    * @returns A promise resolving to the updated welcome screen object
    */
-  async updateWelcomeScreen(
+  updateWelcomeScreen(
     options: GuildWelcomeScreenUpdateOptions,
     reason?: string,
   ): Promise<WelcomeScreenEntity> {
@@ -2157,7 +1943,7 @@ export class Guild
    *
    * @returns A promise resolving to the guild onboarding object
    */
-  async fetchOnboarding(): Promise<GuildOnboardingEntity> {
+  fetchOnboarding(): Promise<GuildOnboardingEntity> {
     return this.client.rest.guilds.fetchGuildOnboarding(this.id);
   }
 
@@ -2168,7 +1954,7 @@ export class Guild
    * @param reason - Reason for modifying the onboarding (for audit logs)
    * @returns A promise resolving to the updated guild onboarding object
    */
-  async updateOnboarding(
+  updateOnboarding(
     options: GuildOnboardingUpdateOptions,
     reason?: string,
   ): Promise<GuildOnboardingEntity> {

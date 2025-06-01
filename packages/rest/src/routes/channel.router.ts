@@ -544,7 +544,7 @@ export class ChannelRouter extends BaseRouter {
     /**
      * Route for managing a specific member of a thread.
      * @param channelId - The ID of the thread
-     * @param userId - The ID of the user, or "@me" for the current user
+     * @param userId - The ID of the user, or `@me` for the current user
      */
     channelThreadMemberEndpoint: (channelId: Snowflake, userId: Snowflake) =>
       `/channels/${channelId}/thread-members/${userId}` as const,

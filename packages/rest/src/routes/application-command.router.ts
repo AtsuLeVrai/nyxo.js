@@ -34,7 +34,7 @@ export interface CommandPermissionsUpdateOptions {
 export interface GlobalCommandCreateOptions {
   /**
    * Name of the command (1-32 characters).
-   * Must match the regex pattern ^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$
+   * Must match the regex pattern: `^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$`
    * Used when invoking the command with a slash or in the UI.
    */
   name: string;

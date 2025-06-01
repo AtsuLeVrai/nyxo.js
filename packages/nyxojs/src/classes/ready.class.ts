@@ -1,9 +1,8 @@
-import type { ApplicationEntity, GuildEntity } from "@nyxojs/core";
+import type { ApplicationEntity } from "@nyxojs/core";
 import type { ReadyEntity } from "@nyxojs/gateway";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce, PropsToCamel } from "../types/index.js";
 import { Application } from "./application.class.js";
-import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
 
 /**
@@ -54,9 +53,7 @@ export class Ready
    *
    * @returns Array of unavailable guild objects
    */
-  readonly guilds = this.rawData.guilds.map(
-    (guild) => new Guild(this.client, guild as unknown as GuildEntity),
-  );
+  readonly guilds = this.rawData.guilds;
 
   /**
    * Gets the session ID for this connection.

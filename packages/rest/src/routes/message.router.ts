@@ -185,7 +185,7 @@ export interface MessageCreateV2Options extends MessageCreateBaseOptions {
 
   /**
    * Message flags combined as a bitfield.
-   * Must include the IS_COMPONENTS_V2 flag (1 << 15).
+   * Must include the IS_COMPONENTS_V2 flag (`1 << 15`).
    */
   flags: MessageFlags;
 }
@@ -341,7 +341,7 @@ export interface MessageUpdateV2Options extends MessageUpdateBaseOptions {
 
   /**
    * Message flags combined as a bitfield.
-   * Must include the IS_COMPONENTS_V2 flag (1 << 15).
+   * Must include the IS_COMPONENTS_V2 flag (`1 << 15`).
    */
   flags: MessageFlags;
 }
@@ -432,7 +432,7 @@ export class MessageRouter extends BaseRouter {
      * @param channelId - The ID of the channel
      * @param messageId - The ID of the message
      * @param emoji - The emoji to react with (URL encoded)
-     * @param userId - The ID of the user (defaults to @me for current user)
+     * @param userId - The ID of the user (defaults to `@me` for current user)
      */
     userReactionEndpoint: (
       channelId: Snowflake,

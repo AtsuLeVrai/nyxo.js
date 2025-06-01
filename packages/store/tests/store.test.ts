@@ -36,7 +36,7 @@ describe("Store", () => {
         maxSize: 5,
         ttl: 1000,
         evictionStrategy: "lru",
-        expirationCheckInterval: 5000,
+        sweepInterval: 5000,
       };
       const store = new Store<string, number>(options);
 
@@ -338,7 +338,7 @@ describe("Store", () => {
       // Create store with TTL and very short cleanup interval
       const cleanupStore = new Store<string, number>(null, {
         ttl: 1000,
-        expirationCheckInterval: 1000,
+        sweepInterval: 1000,
       });
 
       cleanupStore.set("key1", 1);

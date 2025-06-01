@@ -1,5 +1,5 @@
 import { deepmerge } from "deepmerge-ts";
-import { get, unset } from "lodash-es";
+import { cloneDeep, get, unset } from "lodash-es";
 import { z } from "zod/v4";
 import { LruTracker } from "./lru-tracker.js";
 
@@ -12,11 +12,11 @@ export type StoreKey = string | number | symbol;
  * A predicate used for finding or filtering items in the store.
  * Can be either a function that evaluates each item or a partial object pattern to match against.
  *
- * @template K - The type of keys in the store
- * @template V - The type of values in the store
+ * @typeParam K - The type of keys in the store
+ * @typeParam V - The type of values in the store
  */
 export type StorePredicate<K extends StoreKey, V> =
-  | ((value: V, key: K, map: Store<K, V>) => boolean)
+  | ((value: V, key: K) => boolean)
   | Partial<V>;
 
 /**
@@ -35,20 +35,20 @@ export const StoreOptions = z.object({
    *
    * @default 10000
    */
-  maxSize: z.number().int().min(0).default(10000),
+  maxSize: z.number().int().nonnegative().default(10000),
 
   /**
    * Time-to-live duration in milliseconds after which items are considered expired.
    *
    * Once an item exceeds its TTL, it will be removed:
    * - Immediately when accessed via get()
-   * - During periodic cleanup based on expirationCheckInterval
+   * - During periodic sweep operations based on sweepInterval
    *
    * Set to 0 to disable expiration (items will remain until evicted by maxSize).
    *
    * @default 0 (no expiration)
    */
-  ttl: z.number().int().min(0).default(0),
+  ttl: z.number().int().nonnegative().default(0),
 
   /**
    * Algorithm to determine which items to remove when maxSize is reached.
@@ -66,14 +66,14 @@ export const StoreOptions = z.object({
   evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
 
   /**
-   * Interval in milliseconds at which the store automatically checks for and removes expired items.
+   * Interval in milliseconds at which the store automatically sweeps for and removes expired items.
    *
-   * This background cleanup process ensures expired items are removed even if they're
+   * This background sweep process ensures expired items are removed even if they're
    * never accessed again, preventing memory leaks with time-based expiration.
    *
    * Lower values:
    * - More responsive TTL enforcement
-   * - Higher CPU overhead due to frequent cleanup cycles
+   * - Higher CPU overhead due to frequent sweep cycles
    *
    * Higher values:
    * - Lower CPU overhead
@@ -83,7 +83,7 @@ export const StoreOptions = z.object({
    *
    * @default 15000 (15 seconds)
    */
-  expirationCheckInterval: z.number().int().min(1000).default(15000),
+  sweepInterval: z.number().int().positive().min(1000).default(15000),
 });
 
 export type StoreOptions = z.infer<typeof StoreOptions>;
@@ -93,91 +93,75 @@ export type StoreOptions = z.infer<typeof StoreOptions>;
  * and object manipulation capabilities.
  *
  * **Memory Management**: This implementation includes comprehensive memory leak prevention:
- * - Automatic cleanup of internal references
- * - Proper disposal of LRU tracker nodes
+ * - Automatic sweep of expired items and internal references
+ * - Proper disposal of LRU tracker nodes with reference cleanup
  * - WeakRef-based interval management to prevent strong reference cycles
- * - Comprehensive cleanup methods with Symbol.dispose support
+ * - Comprehensive resource management with Symbol.dispose support
  *
- * @template K - The type of keys in the store, must be string, number, or symbol
- * @template V - The type of values in the store
- * @extends {Map<K, V>}
+ * **Performance Characteristics**:
+ * - O(1) get, set, has, delete operations
+ * - O(1) LRU eviction when using LRU strategy
+ * - O(n) sweep operations for expired item removal
+ * - O(n) find, filter operations
  *
- * @example
- * // Create a simple store
- * const userStore = new Store<string, User>();
+ * **Lifecycle**: After calling destroy(), the store remains functional for basic operations
+ * but automatic TTL sweeping is disabled. This allows for graceful degradation rather than
+ * throwing errors on every operation.
  *
- * @example
- * // Create a store with options
- * const cache = new Store<string, any>(null, {
- *   maxSize: 1000,
- *   ttl: 60 * 1000, // 1 minute
- *   evictionStrategy: "lru"
- * });
+ * @typeParam K - The type of keys in the store, must be string, number, or symbol
+ * @typeParam V - The type of values in the store
  *
- * @example
- * // Proper cleanup when done
- * using store = new Store<string, any>({ maxSize: 100 });
- * // Store will be automatically disposed when it goes out of scope
+ * @remarks
+ * This class extends the built-in Map\<K, V\> class
  */
 export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
-   * Map to track expiration times for items with TTL
-   * @private
+   * Map to track expiration times for items with TTL.
+   * Key: store key, Value: expiration timestamp in milliseconds
+   * @internal
    */
-  readonly #ttlMap = new Map<K, number>();
+  #ttlMap = new Map<K, number>();
 
   /**
-   * LRU tracker to manage access times for the LRU eviction strategy
-   * @private
+   * LRU tracker to manage access times for the LRU eviction strategy.
+   * Only initialized when using LRU eviction and maxSize > 0
+   * @internal
    */
-  readonly #lruTracker: LruTracker<K> | null = null;
+  #lruTracker: LruTracker<K> | null = null;
+
+  /**
+   * Timer ID for the periodic sweep interval that removes expired items.
+   * Set to null when sweep is disabled or store is destroyed.
+   * @internal
+   */
+  #sweepInterval: NodeJS.Timeout | null = null;
+
+  /**
+   * WeakRef to this instance for use in interval callbacks to prevent memory leaks
+   * @internal
+   */
+  #selfRef: WeakRef<Store<K, V>> | null = null;
+
+  /**
+   * FinalizationRegistry to clean up the sweep interval when the store is garbage collected.
+   * @internal
+   */
+  #cleanupRegistry = new FinalizationRegistry((intervalId: NodeJS.Timeout) =>
+    clearInterval(intervalId),
+  );
 
   /**
    * Parsed and validated options for this Store instance
-   * @private
+   * @internal
    */
   readonly #options: StoreOptions;
 
   /**
-   * Cleanup interval ID
-   * @private
-   */
-  #cleanupInterval: NodeJS.Timeout | null = null;
-
-  /**
-   * Flag to track if the store has been disposed
-   * @private
-   */
-  #disposed = false;
-
-  /**
-   * WeakRef to this instance for use in interval callbacks
-   * @private
-   */
-  readonly #selfRef: WeakRef<Store<K, V>>;
-
-  /**
-   * Creates a new Store instance.
+   * Creates a new Store instance with optional initial entries and configuration.
    *
    * @param entriesOrOptions - Initial entries to populate the store with, or configuration options
    * @param maybeOptions - Configuration options for the store (used only if first parameter is entries)
-   * @throws {Error} If the provided options fail validation
-   *
-   * @example
-   * // Create empty store with default options
-   * const store1 = new Store();
-   *
-   * @example
-   * // Create store with initial entries
-   * const store2 = new Store([['key1', 'value1'], ['key2', 'value2']]);
-   *
-   * @example
-   * // Create store with custom options
-   * const store3 = new Store({ maxSize: 500, ttl: 60000 });
-   *
-   * @example
-   * // Create store with both initial entries and custom options
-   * const store4 = new Store([['key1', 'value1']], { maxSize: 500 });
+   * @throws Error If the provided options fail validation or are incompatible
    */
   constructor(
     entriesOrOptions?:
@@ -187,9 +171,6 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     maybeOptions?: z.input<typeof StoreOptions>,
   ) {
     super();
-
-    // Create WeakRef to self to prevent strong reference cycles in intervals
-    this.#selfRef = new WeakRef(this);
 
     // Helper functions for type checks
     const isEntriesArray = (
@@ -205,7 +186,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       return obj !== null && typeof obj === "object" && !Array.isArray(obj);
     };
 
-    // Determine actual parameters
+    // Determine actual parameters based on overloaded constructor
     let actualEntries: readonly (readonly [K, V])[] | null | undefined = null;
     let actualOptions: z.input<typeof StoreOptions> = {};
 
@@ -228,10 +209,17 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       );
     }
 
+    // Initialize options with defaults
+    let parsedOptions: StoreOptions;
+
     // Validate options and merge with defaults
     try {
-      this.#options = StoreOptions.parse(actualOptions);
+      parsedOptions = StoreOptions.parse(actualOptions);
     } catch (error) {
+      // If options validation fails, clean up the store
+      this.destroy();
+
+      // If validation fails, rethrow the error with additional context
       if (error instanceof z.ZodError) {
         // Convert Zod validation errors to more readable format
         throw new Error(z.prettifyError(error));
@@ -241,62 +229,32 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       throw error;
     }
 
-    // Set up LRU tracker if using LRU eviction strategy
-    if (this.#options.evictionStrategy === "lru" && this.#options.maxSize > 0) {
-      this.#lruTracker = new LruTracker<K>(this.#options.maxSize);
-    }
+    this.#options = parsedOptions;
 
     // Add initial entries if provided
     if (actualEntries) {
       this.#bulkSet(actualEntries);
     }
 
-    // Set up cleanup interval if TTL is enabled
+    // Set up periodic sweep interval if TTL is enabled
     if (this.#options.ttl > 0) {
-      this.#startCleanupInterval();
+      this.#startSweepInterval();
     }
   }
 
   /**
-   * Returns the current configuration options for this store.
-   * @returns A copy of the store options
-   */
-  get options(): StoreOptions {
-    return { ...this.#options };
-  }
-
-  /**
-   * Returns whether the store has been disposed.
-   * @returns true if the store has been disposed, false otherwise
-   */
-  get isDisposed(): boolean {
-    return this.#disposed;
-  }
-
-  /**
-   * Adds or updates a value in the store.
+   * Adds or updates a value in the store with intelligent merging behavior.
    * If the key already exists and both the existing and new values are objects,
    * performs a deep merge. Otherwise, replaces the existing value.
    *
    * @param key - The key to add or update
    * @param value - The value to add or merge with existing value
-   * @returns The Store instance for chaining
-   * @throws {Error} If the store has been disposed
-   *
-   * @example
-   * // Add a new item
-   * store.add('user1', { name: 'John', age: 30 });
-   *
-   * @example
-   * // Update an existing item by merging
-   * store.add('user1', { email: 'john@example.com' });
-   * // Now 'user1' contains { name: 'John', age: 30, email: 'john@example.com' }
+   * @returns The Store instance for method chaining
    */
   add(key: K, value: V | Partial<V>): this {
-    this.#checkDisposed();
-
     if (this.has(key)) {
       const existingValue = this.get(key) as V;
+      // Perform deep merge if both values are objects
       if (
         typeof existingValue === "object" &&
         existingValue !== null &&
@@ -316,23 +274,14 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
   /**
    * Removes specific properties from an object stored at the given key.
+   * Uses lodash unset and cloneDeep for deep property path support.
    *
    * @param key - The key of the item to modify
-   * @param paths - The property path(s) to remove
-   * @returns The Store instance for chaining
-   * @throws {Error} If the key doesn't exist, the value is not an object, or the store has been disposed
-   *
-   * @example
-   * // Remove a single property
-   * store.remove('user1', 'email');
-   *
-   * @example
-   * // Remove multiple properties
-   * store.remove('user1', ['age', 'address.street']);
+   * @param paths - The property path(s) to remove (supports dot notation for nested properties)
+   * @returns The Store instance for method chaining
+   * @throws Error If the key doesn't exist or the value is not an object
    */
   remove(key: K, paths: (keyof V | string)[] | string | keyof V): this {
-    this.#checkDisposed();
-
     if (!this.has(key)) {
       throw new Error(`Key not found: ${String(key)}`);
     }
@@ -344,9 +293,11 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       );
     }
 
-    const newValue = { ...(value as object) };
+    // Create shallow copy to avoid modifying the original object
+    const newValue = cloneDeep(value);
     const pathsArray = Array.isArray(paths) ? paths : [paths];
 
+    // Remove each specified path using lodash unset
     for (const path of pathsArray) {
       unset(newValue, path as string);
     }
@@ -357,25 +308,15 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
   /**
    * Finds the first value in the store that matches the provided predicate.
+   * Supports both function predicates and object pattern matching.
    *
    * @param predicate - A function or pattern object to match against
    * @returns The first matching value, or undefined if no match is found
-   * @throws {Error} If the store has been disposed
-   *
-   * @example
-   * // Find using a function predicate
-   * const user = store.find((value, key) => value.age > 30);
-   *
-   * @example
-   * // Find using a pattern object
-   * const user = store.find({ role: 'admin' });
    */
   find(predicate: StorePredicate<K, V>): V | undefined {
-    this.#checkDisposed();
-
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
-        if (predicate(value, key, this)) {
+        if (predicate(value, key)) {
           this.#updateAccessTime(key);
           return value;
         }
@@ -383,6 +324,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       return undefined;
     }
 
+    // Handle object pattern matching
     const entries = Object.entries(predicate);
     for (const [key, value] of this) {
       if (this.#matchesPattern(value, entries)) {
@@ -395,24 +337,18 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
   /**
    * Returns all values in the store that match the provided predicate.
+   * Updates access times for all matching keys when using LRU eviction.
    *
    * @param predicate - A function or pattern object to match against
-   * @returns Array of matching values
-   * @throws {Error} If the store has been disposed
-   *
-   * @example
-   * // Find all users over 30
-   * const olderUsers = store.findAll(user => user.age > 30);
+   * @returns Array of matching values (empty array if no matches)
    */
   findAll(predicate: StorePredicate<K, V>): V[] {
-    this.#checkDisposed();
-
     const results: V[] = [];
 
     // Collect all matching values
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
-        if (predicate(value, key, this)) {
+        if (predicate(value, key)) {
           this.#updateAccessTime(key);
           results.push(value);
         }
@@ -432,33 +368,24 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
   /**
    * Returns a new Store containing all entries that match the provided predicate.
+   * The new store inherits the same configuration options as the current store.
    *
    * @param predicate - A function or pattern object to match against
    * @returns A new Store instance containing the matching entries
-   * @throws {Error} If the store has been disposed
-   *
-   * @example
-   * // Filter using a function predicate
-   * const adminUsers = store.filter((value, key) => value.role === 'admin');
-   *
-   * @example
-   * // Filter using a pattern object
-   * const activeUsers = store.filter({ status: 'active' });
    */
   filter(predicate: StorePredicate<K, V>): Store<K, V> {
-    this.#checkDisposed();
-
     const newStore = new Store<K, V>(null, this.#options);
 
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
-        if (predicate(value, key, this)) {
+        if (predicate(value, key)) {
           newStore.set(key, value);
         }
       }
       return newStore;
     }
 
+    // Handle object pattern matching
     const entries = Object.entries(predicate);
     for (const [key, value] of this) {
       if (this.#matchesPattern(value, entries)) {
@@ -469,11 +396,164 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
-   * Retrieves a value from the store.
+   * Sets a value in the store with a specific TTL (Time-To-Live).
+   * Overrides any existing TTL for the key.
+   *
+   * @param key - The key to set
+   * @param value - The value to store
+   * @param ttl - Time to live in milliseconds
+   * @returns The Store instance for method chaining
+   * @throws Error If TTL is negative
+   */
+  setWithTtl(key: K, value: V, ttl: number): this {
+    if (ttl < 0) {
+      throw new Error(`TTL cannot be negative: ${ttl}`);
+    }
+
+    const expiryTime = Date.now() + ttl;
+    this.#ttlMap.set(key, expiryTime);
+    return this.set(key, value);
+  }
+
+  /**
+   * Checks if an item has expired based on its TTL.
+   *
+   * @param key - The key to check
+   * @returns true if the item has expired, false otherwise
+   */
+  isExpired(key: K): boolean {
+    const expiry = this.#ttlMap.get(key);
+    if (expiry === undefined) {
+      // If no TTL is set and the global TTL is greater than 0,
+      // use the global TTL as the default for existing keys
+      if (this.#options.ttl > 0 && super.has(key) && !this.#ttlMap.has(key)) {
+        // For existing keys without explicit TTL, set TTL based on defaults
+        this.#ttlMap.set(key, Date.now() + this.#options.ttl);
+        return false;
+      }
+      return false;
+    }
+    return Date.now() >= expiry;
+  }
+
+  /**
+   * Maps each value in the store to a new value using the provided callback function.
+   * Similar to Array.map but for Store values.
+   *
+   * @param callback - Function to execute on each entry
+   * @returns Array containing the results of the callback function
+   */
+  map<R>(callback: (value: V, key: K, store: this) => R): R[] {
+    return Array.from(this, ([key, value]) => callback(value, key, this));
+  }
+
+  /**
+   * Returns a new Store with entries sorted according to the provided compare function.
+   * The new store inherits the same configuration options.
+   *
+   * @param compareFn - Function to determine the sort order (compares values)
+   * @returns A new Store instance with sorted entries
+   */
+  sort(compareFn?: (a: V, b: V) => number): Store<K, V> {
+    const sorted = [...this.entries()].sort(
+      ([, a], [, b]) => compareFn?.(a, b) ?? String(a).localeCompare(String(b)),
+    );
+    return new Store(sorted, this.#options);
+  }
+
+  /**
+   * Returns a subset of values for pagination support.
+   *
+   * @param page - The page number (0-based)
+   * @param pageSize - The number of items per page
+   * @returns Array of values for the requested page
+   * @throws Error If page is negative or pageSize is not positive
+   */
+  slice(page = 0, pageSize = 10): V[] {
+    if (page < 0) {
+      throw new Error(`Page number cannot be negative: ${page}`);
+    }
+    if (pageSize <= 0) {
+      throw new Error(`Page size must be positive: ${pageSize}`);
+    }
+
+    return [...this.values()].slice(page * pageSize, (page + 1) * pageSize);
+  }
+
+  /**
+   * Returns all values in the store as an array.
+   * Convenience method for converting store values to array format.
+   *
+   * @returns Array of all values in the store
+   */
+  toArray(): V[] {
+    return [...this.values()];
+  }
+
+  /**
+   * Returns all keys in the store as an array.
+   * Convenience method for converting store keys to array format.
+   *
+   * @returns Array of all keys in the store
+   */
+  keysArray(): K[] {
+    return [...this.keys()];
+  }
+
+  /**
+   * Returns all entries in the store as an array of [key, value] pairs.
+   * Convenience method for converting store entries to array format.
+   *
+   * @returns Array of all entries in the store
+   */
+  entriesArray(): [K, V][] {
+    return [...this.entries()];
+  }
+
+  /**
+   * Stops automatic TTL sweeping and cleans up resources.
+   * The store remains functional for basic operations after calling this method,
+   * but expired items will only be removed when explicitly accessed.
+   *
+   * @remarks
+   * - Stops the sweep interval timer to prevent memory leaks
+   * - Clears all internal data structures and metadata
+   * - Properly disposes of LRU tracker resources with reference cleanup
+   * - Breaks circular references by nullifying WeakRef to prevent memory leaks
+   * - Nullifies all internal maps and options to ensure complete cleanup
+   * - Store remains usable for get/set operations (graceful degradation)
+   */
+  destroy(): void {
+    // Stop periodic sweep interval
+    if (this.#sweepInterval) {
+      clearInterval(this.#sweepInterval);
+      this.#sweepInterval = null;
+    }
+
+    // If using LRU eviction, dispose of the tracker
+    if (this.#lruTracker) {
+      this.#lruTracker.clear();
+      this.#lruTracker = null;
+    }
+
+    // Clear the TTL map to remove all expiration tracking
+    if (this.#ttlMap) {
+      this.#ttlMap.clear();
+      this.#ttlMap = null as any;
+    }
+
+    // Clear all data
+    super.clear();
+
+    // Dispose of WeakRef to self to prevent memory leaks
+    this.#selfRef = null;
+  }
+
+  /**
+   * Retrieves a value from the store with automatic expiration handling.
    *
    * @param key - The key to look up
    * @returns The value associated with the key, or undefined if not found or expired
-   * @throws {Error} If the store has been disposed
    *
    * @remarks
    * - Automatically removes the item if it has expired
@@ -482,8 +562,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @override Overrides Map.get
    */
   override get(key: K): V | undefined {
-    this.#checkDisposed();
-
+    // Check expiration first and remove if expired
     if (this.isExpired(key)) {
       this.delete(key);
       return undefined;
@@ -502,7 +581,6 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param key - The key to check
    * @returns true if the key exists and is not expired, false otherwise
-   * @throws {Error} If the store has been disposed
    *
    * @remarks
    * - Automatically removes the item if it has expired
@@ -511,8 +589,6 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @override Overrides Map.has
    */
   override has(key: K): boolean {
-    this.#checkDisposed();
-
     // First check if the item has expired
     if (this.isExpired(key)) {
       // If expired, delete it and return false
@@ -525,72 +601,21 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
-   * Sets a value in the store with a specific TTL (Time-To-Live).
+   * Sets a value in the store with automatic eviction and TTL management.
    *
    * @param key - The key to set
    * @param value - The value to store
-   * @param ttl - Time to live in milliseconds
-   * @returns The Store instance for chaining
-   * @throws {Error} If TTL is negative or the store has been disposed
-   *
-   * @example
-   * // Set a value that expires after 5 minutes
-   * store.setWithTtl('session', { token: 'abc123' }, 5 * 60 * 1000);
-   */
-  setWithTtl(key: K, value: V, ttl: number): this {
-    this.#checkDisposed();
-
-    if (ttl < 0) {
-      throw new Error(`TTL cannot be negative: ${ttl}`);
-    }
-
-    const expiryTime = Date.now() + ttl;
-    this.#ttlMap.set(key, expiryTime);
-    return this.set(key, value);
-  }
-
-  /**
-   * Checks if an item has expired.
-   *
-   * @param key - The key to check
-   * @returns true if the item has expired, false otherwise
-   * @throws {Error} If the store has been disposed
-   */
-  isExpired(key: K): boolean {
-    this.#checkDisposed();
-
-    const expiry = this.#ttlMap.get(key);
-    if (expiry === undefined) {
-      // If no TTL is set and the global TTL is greater than 0,
-      // use the global TTL as the default
-      if (this.#options.ttl > 0 && super.has(key) && !this.#ttlMap.has(key)) {
-        // For existing keys without explicit TTL, set TTL based on defaults
-        this.#ttlMap.set(key, Date.now() + this.#options.ttl);
-        return false;
-      }
-      return false;
-    }
-    return Date.now() >= expiry;
-  }
-
-  /**
-   * Sets a value in the store.
-   *
-   * @param key - The key to set
-   * @param value - The value to store
-   * @returns The Store instance for chaining
-   * @throws {Error} If the store has been disposed
+   * @returns The Store instance for method chaining
    *
    * @remarks
    * - May trigger item eviction if the store size exceeds maxSize
    * - Updates the access time for the key when using LRU eviction strategy
+   * - Applies default TTL if global TTL is configured and no custom TTL exists
    *
    * @override Overrides Map.set
    */
   override set(key: K, value: V): this {
-    this.#checkDisposed();
-
-    // Ensure there's room for the new item
+    // Ensure there's room for the new item by evicting if necessary
     if (
       this.#options.maxSize > 0 &&
       this.size >= this.#options.maxSize &&
@@ -610,200 +635,59 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
-   * Removes an item from the store.
+   * Removes an item from the store and all associated metadata.
    *
    * @param key - The key to delete
    * @returns true if an element was removed, false otherwise
-   * @throws {Error} If the store has been disposed
    *
    * @remarks
-   * Also removes the key from internal TTL and LRU trackers
+   * Also removes the key from internal TTL and LRU trackers to prevent memory leaks
    *
    * @override Overrides Map.delete
    */
   override delete(key: K): boolean {
-    this.#checkDisposed();
-
+    // Clean up associated metadata
     this.#ttlMap.delete(key);
     this.#lruTracker?.delete(key);
     return super.delete(key);
   }
 
   /**
-   * Removes all items from the store.
-   *
-   * @throws {Error} If the store has been disposed
+   * Removes all items from the store and clears all associated metadata.
    *
    * @remarks
-   * Also clears the internal TTL and LRU trackers
+   * Also clears the internal TTL and LRU trackers to prevent memory leaks
    *
    * @override Overrides Map.clear
    */
   override clear(): void {
-    this.#checkDisposed();
-
     super.clear();
-    this.#ttlMap.clear();
-    this.#lruTracker?.clear();
-  }
 
-  /**
-   * Maps each value in the store to a new value using the provided callback function.
-   *
-   * @param callback - Function to execute on each entry
-   * @param callback.value - The current value being processed
-   * @param callback.key - The key of the current value being processed
-   * @param callback.store - The store instance
-   * @returns Array containing the results of the callback function
-   * @throws {Error} If the store has been disposed
-   *
-   * @example
-   * // Get an array of all user names
-   * const userNames = store.map(user => user.name);
-   */
-  map<R>(callback: (value: V, key: K, store: this) => R): R[] {
-    this.#checkDisposed();
-
-    return Array.from(this, ([key, value]) => callback(value, key, this));
-  }
-
-  /**
-   * Returns a new Store with entries sorted according to the provided compare function.
-   *
-   * @param compareFn - Function to determine the sort order
-   * @returns A new Store instance with sorted entries
-   * @throws {Error} If the store has been disposed
-   *
-   * @example
-   * // Sort users by age
-   * const sortedUsers = store.sort((a, b) => a.age - b.age);
-   */
-  sort(compareFn?: (a: V, b: V) => number): Store<K, V> {
-    this.#checkDisposed();
-
-    const sorted = [...this.entries()].sort(
-      ([, a], [, b]) => compareFn?.(a, b) ?? String(a).localeCompare(String(b)),
-    );
-    return new Store(sorted, this.#options);
-  }
-
-  /**
-   * Returns a subset of values for pagination.
-   *
-   * @param page - The page number (0-based)
-   * @param pageSize - The number of items per page
-   * @returns Array of values for the requested page
-   * @throws {Error} If page is negative, pageSize is not positive, or the store has been disposed
-   *
-   * @example
-   * // Get the first page with 10 items per page
-   * const firstPage = store.slice(0, 10);
-   *
-   * // Get the second page
-   * const secondPage = store.slice(1, 10);
-   */
-  slice(page = 0, pageSize = 10): V[] {
-    this.#checkDisposed();
-
-    if (page < 0) {
-      throw new Error(`Page number cannot be negative: ${page}`);
-    }
-    if (pageSize <= 0) {
-      throw new Error(`Page size must be positive: ${pageSize}`);
+    // Clear all metadata maps
+    if (this.#ttlMap && typeof this.#ttlMap.clear === "function") {
+      this.#ttlMap.clear();
     }
 
-    return [...this.values()].slice(page * pageSize, (page + 1) * pageSize);
-  }
-
-  /**
-   * Returns all values in the store as an array.
-   *
-   * @returns Array of all values in the store
-   * @throws {Error} If the store has been disposed
-   */
-  toArray(): V[] {
-    this.#checkDisposed();
-    return [...this.values()];
-  }
-
-  /**
-   * Returns all keys in the store as an array.
-   *
-   * @returns Array of all keys in the store
-   * @throws {Error} If the store has been disposed
-   */
-  keysArray(): K[] {
-    this.#checkDisposed();
-    return [...this.keys()];
-  }
-
-  /**
-   * Returns all entries in the store as an array of [key, value] pairs.
-   *
-   * @returns Array of all entries in the store
-   * @throws {Error} If the store has been disposed
-   */
-  entriesArray(): [K, V][] {
-    this.#checkDisposed();
-    return [...this.entries()];
-  }
-
-  /**
-   * Cleans up all resources used by the store and prevents further operations.
-   * This method should be called when the store is no longer needed to prevent memory leaks.
-   *
-   * @remarks
-   * - Stops the cleanup interval timer
-   * - Clears all internal data structures
-   * - Properly disposes of LRU tracker resources
-   * - Marks the store as disposed to prevent further use
-   *
-   * @example
-   * // Manual cleanup
-   * const store = new Store({ maxSize: 100, ttl: 60000 });
-   * // ... use store ...
-   * store.destroy();
-   *
-   * @example
-   * // Automatic cleanup with using declaration
-   * using store = new Store({ maxSize: 100 });
-   * // Store will be automatically destroyed when it goes out of scope
-   */
-  destroy(): void {
-    if (this.#disposed) {
-      return;
+    // Clear the LRU tracker if it exists
+    if (this.#lruTracker && typeof this.#lruTracker.clear === "function") {
+      this.#lruTracker.clear();
     }
-
-    // Stop cleanup interval
-    if (this.#cleanupInterval) {
-      clearInterval(this.#cleanupInterval);
-      this.#cleanupInterval = null;
-    }
-
-    // Clear all data and properly dispose of LRU tracker
-    this.clear();
-
-    // Mark as disposed
-    this.#disposed = true;
   }
 
   /**
-   * Symbol.dispose implementation for automatic cleanup in `using` declarations.
-   * This is part of the explicit resource management proposal.
-   *
-   * @example
-   * using store = new Store({ maxSize: 100 });
-   * // Store will be automatically disposed when it goes out of scope
+   * Symbol.dispose implementation for automatic resource management.
+   * This is part of the explicit resource management proposal (using declarations).
+   * Automatically called when the store goes out of scope in a using declaration.
    */
   [Symbol.dispose](): void {
     this.destroy();
   }
 
   /**
-   * Sets multiple entries in the store at once.
+   * Sets multiple entries in the store at once with optimized batch processing.
    *
    * @param entries - The entries to set
-   * @private
+   * @internal
    */
   #bulkSet(entries: readonly (readonly [K, V])[]): void {
     for (const [key, value] of entries) {
@@ -812,55 +696,70 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
-   * Starts an interval to periodically clean up expired items.
-   * Uses WeakRef to prevent the interval from holding a strong reference to the store.
+   * Starts a periodic interval to sweep expired items from the store.
+   * Uses WeakRef to prevent the interval from holding a strong reference to the store,
+   * which could prevent garbage collection.
    *
-   * @private
+   * @internal
    */
-  #startCleanupInterval(): void {
-    const cleanupInterval = Math.max(
-      Math.min(this.#options.ttl / 2, 60000),
-      this.#options.expirationCheckInterval,
-    );
+  #startSweepInterval(): void {
+    // Ensure selfRef is initialized to prevent strong reference cycles
+    if (!this.#selfRef) {
+      this.#selfRef = new WeakRef(this);
+    }
 
     // Use WeakRef to prevent strong reference cycle
     const storeRef = this.#selfRef;
 
-    this.#cleanupInterval = setInterval(() => {
-      const store = storeRef.deref();
-      if (store && !store.#disposed) {
-        store.#cleanup();
-      } else if (this.#cleanupInterval) {
-        // Store has been garbage collected or disposed, clear the interval
-        clearInterval(this.#cleanupInterval);
-      }
-    }, cleanupInterval);
+    const intervalId = setInterval(() => {
+      const store = storeRef?.deref();
 
-    // Force an immediate cleanup run
-    this.#cleanup();
+      // If store has been garbage collected, clear the interval
+      if (!store) {
+        clearInterval(intervalId);
+        return;
+      }
+
+      // Check if this interval is still the active one (not replaced by destroy/restart)
+      if (store.#sweepInterval === intervalId) {
+        // Store still exists and this is the active interval, perform sweep
+        store.#sweep();
+      } else {
+        // This interval has been replaced or store was destroyed, clean up
+        clearInterval(intervalId);
+      }
+    }, this.#options.sweepInterval);
+
+    // Store the interval ID
+    this.#sweepInterval = intervalId;
+
+    // Register the interval for cleanup when the store is garbage collected
+    this.#cleanupRegistry.register(this, intervalId);
   }
 
   /**
-   * Removes all expired items from the store.
+   * Performs a sweep operation to remove all expired items from the store.
+   * This is a batch operation that identifies and removes multiple expired items efficiently.
    *
-   * @private
+   * @internal
    */
-  #cleanup(): void {
-    if (this.#disposed) {
+  #sweep(): void {
+    // Early exit if sweep has been disabled
+    if (!this.#sweepInterval) {
       return;
     }
 
     const now = Date.now();
     const expiredKeys: K[] = [];
 
-    // First, identify all expired keys
+    // First, identify all expired keys to avoid modifying maps during iteration
     for (const [key, expiry] of this.#ttlMap.entries()) {
       if (now >= expiry) {
         expiredKeys.push(key);
       }
     }
 
-    // Then, remove them
+    // Then, remove all expired keys in a batch operation
     for (const key of expiredKeys) {
       this.delete(key);
     }
@@ -868,21 +767,27 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
   /**
    * Updates the last access time for a key when using the LRU eviction strategy.
+   * This ensures recently accessed items are less likely to be evicted.
    *
    * @param key - The key that was accessed
-   * @private
+   * @internal
    */
   #updateAccessTime(key: K): void {
-    if (this.#options.evictionStrategy === "lru" && this.#lruTracker) {
-      this.#lruTracker.touch(key);
+    if (this.#options.evictionStrategy === "lru") {
+      // Ensure LRU tracker is initialized if using LRU eviction
+      if (!this.#lruTracker && this.#options.maxSize > 0) {
+        this.#lruTracker = new LruTracker<K>(this.#options.maxSize);
+      }
+
+      this.#lruTracker?.touch(key);
     }
   }
 
   /**
    * Evicts an item if the store has reached its maximum size.
-   * Uses the configured eviction strategy (LRU or FIFO).
+   * Uses the configured eviction strategy (LRU or FIFO) to determine which item to remove.
    *
-   * @private
+   * @internal
    */
   #evict(): void {
     if (this.#options.maxSize <= 0 || this.size < this.#options.maxSize) {
@@ -897,9 +802,10 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
-   * Evicts the least recently used item.
+   * Evicts the least recently used item using the LRU tracker.
+   * Falls back to FIFO eviction if LRU tracker is unavailable or empty.
    *
-   * @private
+   * @internal
    */
   #evictLru(): void {
     if (!this.#lruTracker || this.#lruTracker.size === 0) {
@@ -919,8 +825,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
   /**
    * Evicts the first item added to the store (First-In-First-Out).
+   * This is the fallback eviction strategy and the default for "fifo" configuration.
    *
-   * @private
+   * @internal
    */
   #evictFifo(): void {
     const firstKey = this.keys().next().value;
@@ -930,12 +837,13 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
-   * Checks if a value matches a pattern of key-value pairs.
+   * Checks if a value matches a pattern of key-value pairs using lodash get for deep property access.
+   * Supports array matching and contains operations.
    *
    * @param value - The value to check
-   * @param pattern - The pattern to match against
+   * @param pattern - The pattern to match against as [path, expectedValue] pairs
    * @returns true if the value matches the pattern, false otherwise
-   * @private
+   * @internal
    */
   #matchesPattern(value: V, pattern: [string, unknown][]): boolean {
     if (typeof value !== "object" || value === null) {
@@ -945,7 +853,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     return pattern.every(([path, expectedValue]) => {
       const actualValue = get(value, path);
 
-      // Handle array contains checks
+      // Handle array contains checks for more flexible matching
       if (Array.isArray(actualValue)) {
         if (Array.isArray(expectedValue)) {
           // Check if arrays are equal (all elements match)
@@ -961,17 +869,5 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       // Default equality check
       return actualValue === expectedValue;
     });
-  }
-
-  /**
-   * Checks if the store has been disposed and throws an error if it has.
-   *
-   * @throws {Error} If the store has been disposed
-   * @private
-   */
-  #checkDisposed(): void {
-    if (this.#disposed) {
-      throw new Error("Store has been disposed and cannot be used");
-    }
   }
 }

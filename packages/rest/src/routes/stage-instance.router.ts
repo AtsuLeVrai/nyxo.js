@@ -31,7 +31,7 @@ export interface StageCreateOptions {
   privacy_level?: StageInstancePrivacyLevel;
 
   /**
-   * Whether to notify @everyone that a Stage instance has started.
+   * Whether to notify `@everyone` that a Stage instance has started.
    * Requires the MENTION_EVERYONE permission.
    */
   send_start_notification?: boolean;

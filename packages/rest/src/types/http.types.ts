@@ -39,7 +39,7 @@ export interface HttpRequestOptions {
 
   /**
    * Request headers as key-value pairs.
-   * Example: { "Content-Type": "application/json" }
+   * Example: \{ "Content-Type": "application/json" \}
    */
   headers?: Record<string, string>;
 
@@ -66,7 +66,7 @@ export interface HttpRequestOptions {
  * Structured response from an HTTP request with parsed data.
  * Provides a unified format for handling API responses.
  *
- * @template T - Type of the parsed response data
+ * @typeParam T - Type of the parsed response data
  */
 export interface HttpResponse<T> {
   /**

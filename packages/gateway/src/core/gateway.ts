@@ -241,14 +241,14 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Current WebSocket connection to Discord Gateway
    * Handles the underlying WebSocket communication protocol
    * Set to null when disconnected
-   * @private
+   * @internal
    */
   #ws: WebSocket | null = null;
 
   /**
    * Tracks the current state of the Gateway connection
    * Used to manage connection lifecycle and prevent invalid operations
-   * @private
+   * @internal
    */
   #state: ConnectionState = "disconnected";
 
@@ -256,7 +256,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Stores critical session data needed for connection management
    * Contains session ID, resume URL, sequence number, and ready timestamp
    * Used for session resumption and connection metrics
-   * @private
+   * @internal
    */
   #session: SessionInfo = {
     id: null,
@@ -269,21 +269,21 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Tracks the number of reconnection attempts
    * Used for implementing exponential backoff strategy
    * Reset when connection is successfully established
-   * @private
+   * @internal
    */
   #reconnectCount = 0;
 
   /**
    * Discord REST API client
    * Used for gateway URL discovery and other API requests
-   * @private
+   * @internal
    */
   readonly #rest: Rest;
 
   /**
    * Gateway configuration options
    * Controls gateway behavior, timeouts, retry logic, etc.
-   * @private
+   * @internal
    */
   readonly #options: GatewayOptions;
 
@@ -706,7 +706,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * event handlers, and waits for the connection to open.
    *
    * @param url - Base Gateway URL from Discord
-   * @private
+   * @internal
    */
   async #connectToGateway(url: string): Promise<void> {
     try {
@@ -755,7 +755,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * this method waits for Discord to confirm the authentication with either
    * a READY or RESUMED event.
    *
-   * @private
+   * @internal
    */
   async #waitForReady(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
@@ -802,7 +802,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * messages received from Discord's Gateway.
    *
    * @param data - Raw message data from WebSocket
-   * @private
+   * @internal
    */
   async #handleMessage(data: Buffer): Promise<void> {
     // Decompress the data if compression is enabled
@@ -830,7 +830,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * This is the central dispatcher for all Gateway events and operations.
    *
    * @param payload - Decoded Gateway payload
-   * @private
+   * @internal
    */
   async #processPayload(payload: PayloadEntity): Promise<void> {
     // Process the payload based on its opcode
@@ -878,7 +878,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * It contains the heartbeat interval and triggers the authentication flow.
    *
    * @param hello - Hello payload data including heartbeat_interval
-   * @private
+   * @internal
    */
   async #handleHello(hello: HelloEntity): Promise<void> {
     // Start heartbeats with the interval provided by Discord
@@ -902,7 +902,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * The identify payload authenticates the bot with Discord and
    * establishes the session parameters like intents and compression.
    *
-   * @private
+   * @internal
    */
   async #sendIdentify(): Promise<void> {
     // Construct the identify payload with authentication and connection parameters
@@ -939,7 +939,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * The resume payload attempts to continue an existing session after
    * a disconnection, allowing the bot to receive missed events.
    *
-   * @private
+   * @internal
    */
   #sendResume(): void {
     // Check that we have a session ID to resume
@@ -965,7 +965,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * The payload includes a boolean indicating if the session is resumable.
    *
    * @param resumable - Whether the session is resumable
-   * @private
+   * @internal
    */
   async #handleInvalidSession(resumable: boolean): Promise<void> {
     // Emit event with session invalidation details
@@ -1003,7 +1003,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * The Reconnect opcode indicates Discord wants the bot to reconnect,
    * typically due to maintenance or server migration.
    *
-   * @private
+   * @internal
    */
   async #handleReconnect(): Promise<void> {
     // Check if we can resume the session after reconnecting
@@ -1032,7 +1032,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param code - WebSocket close code
    * @param reason - Close reason provided by the server
-   * @private
+   * @internal
    */
   async #handleClose(code: number, reason: string): Promise<void> {
     this.emit("wsClose", code, reason);
@@ -1105,7 +1105,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * to the appropriate handlers and event emitters.
    *
    * @param payload - Dispatch payload
-   * @private
+   * @internal
    */
   #handleDispatchEvent(payload: PayloadEntity): void {
     // Ensure the payload has an event type
@@ -1155,7 +1155,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * a successful connection to Discord.
    *
    * @param data - Ready payload data
-   * @private
+   * @internal
    */
   #handleReadyEvent(data: ReadyEntity): void {
     // Update session information from the READY payload
@@ -1196,7 +1196,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * The RESUMED event confirms a successful session resumption
    * after a disconnection.
    *
-   * @private
+   * @internal
    */
   #handleResumedEvent(): void {
     // Update state to ready as the session is now active
@@ -1223,7 +1223,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * become available after an outage.
    *
    * @param data - Guild create data
-   * @private
+   * @internal
    */
   #handleGuildCreate(data: GuildCreateEntity): void {
     // Update shard guild mappings if sharding is enabled and guild is available
@@ -1239,7 +1239,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * become unavailable due to an outage.
    *
    * @param data - Guild delete data
-   * @private
+   * @internal
    */
   #handleGuildDelete(data: UnavailableGuildEntity): void {
     // Update shard guild mappings if sharding is enabled
@@ -1254,7 +1254,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Uses the resume URL provided by Discord to attempt to resume
    * an existing session after a disconnection.
    *
-   * @private
+   * @internal
    */
   async #attemptResume(): Promise<void> {
     // Verify we have the required data to resume
@@ -1287,7 +1287,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param code - Close code to send
    * @param reason - Optional close reason
-   * @private
+   * @internal
    */
   #closeWebSocket(code?: number, reason?: string): void {
     const ws = this.#ws;
@@ -1318,7 +1318,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param baseUrl - Base Gateway URL
    * @returns Complete Gateway URL with parameters
-   * @private
+   * @internal
    */
   #buildGatewayUrl(baseUrl: string): string {
     // Add required query parameters
@@ -1343,7 +1343,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * attempt a session resumption.
    *
    * @returns True if the session can be resumed
-   * @private
+   * @internal
    */
   #canResume(): boolean {
     // Need both a session ID and a sequence number > 0 to resume
@@ -1358,7 +1358,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param code - WebSocket close code
    * @returns True if session should be resumed
-   * @private
+   * @internal
    */
   #shouldResume(code: number): boolean {
     // Check if it's a clean closure (1000, 1001) or a non-resumable code
@@ -1372,7 +1372,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Resets all session data, preventing resumption and preparing
    * for a fresh connection.
    *
-   * @private
+   * @internal
    */
   #clearSession(): void {
     // Reset all session information
@@ -1391,7 +1391,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * using the configured backoff schedule.
    *
    * @returns Delay in milliseconds
-   * @private
+   * @internal
    */
   #getReconnectionDelay(): number {
     const schedule = this.#options.backoffSchedule;

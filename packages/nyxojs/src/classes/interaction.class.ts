@@ -61,31 +61,31 @@ export class Interaction
 {
   /**
    * Cached user instance who triggered this interaction.
-   * @private
+   * @internal
    */
   #user: User | null = null;
 
   /**
    * Cached guild member instance for this interaction.
-   * @private
+   * @internal
    */
   #member: GuildMember | null = null;
 
   /**
    * Cached channel instance where this interaction occurred.
-   * @private
+   * @internal
    */
   #channel: AnyChannel | null = null;
 
   /**
    * Cached guild instance where this interaction occurred.
-   * @private
+   * @internal
    */
   #guild: Guild | null = null;
 
   /**
    * Cached message instance that this interaction is associated with.
-   * @private
+   * @internal
    */
   #message: Message | null = null;
 

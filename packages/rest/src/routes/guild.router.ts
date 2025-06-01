@@ -558,7 +558,7 @@ export interface GuildRoleCreateOptions {
 
   /**
    * Whether the role should be mentionable
-   * If true, anyone can mention this role in messages using @role-name.
+   * If true, anyone can mention this role in messages using `@role-name`.
    */
   mentionable: boolean;
 }

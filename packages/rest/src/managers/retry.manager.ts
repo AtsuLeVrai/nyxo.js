@@ -13,14 +13,14 @@ export const RetryOptions = z.object({
    * Determines how persistent the client should be when facing transient errors.
    * @default 3
    */
-  maxRetries: z.number().int().min(0).default(3),
+  maxRetries: z.number().int().positive().default(3),
 
   /**
    * Base delay between retries in milliseconds.
    * Used as the starting point for exponential backoff calculations.
    * @default 1000
    */
-  baseDelay: z.number().int().min(0).default(1000),
+  baseDelay: z.number().int().positive().default(1000),
 
   /**
    * HTTP status codes that should trigger a retry attempt.
@@ -96,7 +96,7 @@ export class RetryManager {
    * @param method - HTTP method used for the request
    * @param path - API path being requested
    * @returns Promise resolving to the final HTTP response after all retry attempts
-   * @throws {Error} Error if all retry attempts fail
+   * @throws Error Error if all retry attempts fail
    */
   async processResponse<T>(
     makeRequest: () => Promise<HttpResponse<T>>,
@@ -205,7 +205,7 @@ export class RetryManager {
    *
    * @param statusCode - HTTP status code from the response
    * @returns Categorization of the error
-   * @private
+   * @internal
    */
   #categorizeError(statusCode: number): ErrorCategory {
     if (statusCode >= 500 && statusCode < 600) {
@@ -225,7 +225,7 @@ export class RetryManager {
    *
    * @param error - Error that occurred during the request
    * @returns Categorization of the error
-   * @private
+   * @internal
    */
   #categorizeNetworkError(error: Error): ErrorCategory {
     // Check for timeout errors
@@ -260,7 +260,7 @@ export class RetryManager {
    * @param attempt - Current attempt number (1-based)
    * @param errorCategory - Classification of the error
    * @returns Delay in milliseconds to wait before the next retry
-   * @private
+   * @internal
    */
   #calculateDelay(attempt: number, errorCategory: ErrorCategory): number {
     // Base exponential backoff formula: baseDelay * 2^(attempt-1)
@@ -301,7 +301,7 @@ export class RetryManager {
    *
    * @param errors - Array of errors from retry attempts
    * @returns Formatted error summary string
-   * @private
+   * @internal
    */
   #summarizeErrors(errors: Error[]): string {
     if (errors.length === 0) {
@@ -322,7 +322,7 @@ export class RetryManager {
    * Used for tracking, monitoring, and debugging retry patterns.
    *
    * @param params - Event parameters containing retry details
-   * @private
+   * @internal
    */
   #emitRetryEvent(params: Omit<RetryEvent, "timestamp" | "maxAttempts">): void {
     const event: RetryEvent = {

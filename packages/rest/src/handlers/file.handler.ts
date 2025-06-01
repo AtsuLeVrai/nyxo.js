@@ -222,7 +222,7 @@ export const ImageProcessingOptions = z.object({
   maxWidth: z
     .number()
     .int()
-    .min(0)
+    .positive()
     .max(8192) // Reasonable maximum to prevent memory issues
     .default(4096),
 
@@ -233,7 +233,7 @@ export const ImageProcessingOptions = z.object({
   maxHeight: z
     .number()
     .int()
-    .min(0)
+    .positive()
     .max(8192) // Reasonable maximum to prevent memory issues
     .default(4096),
 
@@ -428,8 +428,6 @@ export class FileHandler {
   /**
    * Clears the global Sharp module cache.
    * Useful for freeing memory in long-running applications.
-   *
-   * @static
    */
   clearSharpCache(): void {
     this.#sharpModuleCache = null;
@@ -464,7 +462,7 @@ export class FileHandler {
    *
    * @param input - The file input to convert
    * @returns Promise resolving to buffer containing the file content
-   * @throws {Error} If conversion fails or input is invalid
+   * @throws Error If conversion fails or input is invalid
    *
    * @example
    * ```typescript
@@ -509,7 +507,7 @@ export class FileHandler {
    *
    * @param input - The file input to convert
    * @returns Promise resolving to a properly formatted data URI
-   * @throws {Error} If conversion fails or file is invalid
+   * @throws Error If conversion fails or file is invalid
    *
    * @example
    * ```typescript
@@ -551,7 +549,7 @@ export class FileHandler {
    * @param context - Processing context determining size limits and validation
    * @param options - Optional processing configuration overrides
    * @returns Promise resolving to a fully processed file object
-   * @throws {Error} If processing fails or file violates security policies
+   * @throws Error If processing fails or file violates security policies
    *
    * @example
    * ```typescript
@@ -629,7 +627,7 @@ export class FileHandler {
    * @param context - Processing context for file validation
    * @param options - Optional processing configuration
    * @returns Promise resolving to FormData ready for upload
-   * @throws {Error} If file processing fails or too many files provided
+   * @throws Error If file processing fails or too many files provided
    *
    * @example
    * ```typescript
@@ -737,7 +735,7 @@ export class FileHandler {
 
   /**
    * Validates that the input is a supported file input type.
-   * @private
+   * @internal
    */
   #validateInputType(input: unknown): asserts input is FileInput {
     if (
@@ -766,7 +764,7 @@ export class FileHandler {
 
   /**
    * Validates buffer size against limits.
-   * @private
+   * @internal
    */
   #validateBufferSize(buffer: Buffer): void {
     if (buffer.length > FILE_CONSTANTS.MAX_BUFFER_SIZE) {
@@ -778,7 +776,7 @@ export class FileHandler {
 
   /**
    * Validates file size for the given context.
-   * @private
+   * @internal
    */
   #validateFileSize(buffer: Buffer, context: ProcessingContext): void {
     const maxSize = FILE_CONSTANTS.SIZE_LIMITS[context];
@@ -791,7 +789,7 @@ export class FileHandler {
 
   /**
    * Validates content type for the given context.
-   * @private
+   * @internal
    */
   #validateContentType(contentType: string, context: ProcessingContext): void {
     // Check blocked MIME types
@@ -825,7 +823,7 @@ export class FileHandler {
 
   /**
    * Validates data URI format and content.
-   * @private
+   * @internal
    */
   #validateDataUri(dataUri: string): void {
     const match = dataUri.match(FILE_CONSTANTS.DATA_URI_PATTERN);
@@ -848,7 +846,7 @@ export class FileHandler {
 
   /**
    * Safely converts a stream to buffer with timeout and cleanup.
-   * @private
+   * @internal
    */
   async #streamToBufferSafe(stream: Readable): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
@@ -910,7 +908,7 @@ export class FileHandler {
 
   /**
    * Decodes base64 data URI content.
-   * @private
+   * @internal
    */
   #decodeDataUri(base64Data: string): Buffer {
     try {
@@ -926,7 +924,7 @@ export class FileHandler {
 
   /**
    * Reads file from filesystem path.
-   * @private
+   * @internal
    */
   async #fileToBuffer(filePath: string): Promise<Buffer> {
     try {
@@ -941,7 +939,7 @@ export class FileHandler {
 
   /**
    * Extracts filename from various input types.
-   * @private
+   * @internal
    */
   #extractFilename(input: FileInput): string {
     if (
@@ -958,7 +956,7 @@ export class FileHandler {
 
   /**
    * Sanitizes filename to prevent security issues.
-   * @private
+   * @internal
    */
   #sanitizeFilename(filename: string): string {
     // Remove or replace dangerous characters
@@ -980,7 +978,7 @@ export class FileHandler {
 
   /**
    * Detects content type from filename and buffer content.
-   * @private
+   * @internal
    */
   #detectContentType(filename: string, buffer?: Buffer): string {
     // Try MIME type detection from filename
@@ -1002,7 +1000,7 @@ export class FileHandler {
 
   /**
    * Detects MIME type from file magic numbers.
-   * @private
+   * @internal
    */
   #detectMimeFromMagicNumbers(buffer: Buffer): string | null {
     if (buffer.length < 4) {
@@ -1047,7 +1045,7 @@ export class FileHandler {
 
   /**
    * Creates a data URI from buffer and content type.
-   * @private
+   * @internal
    */
   #createDataUri(buffer: Buffer, contentType: string): DataUri {
     return `data:${contentType};base64,${buffer.toString("base64")}` as DataUri;
@@ -1055,7 +1053,7 @@ export class FileHandler {
 
   /**
    * Generates a safe filename with proper extension.
-   * @private
+   * @internal
    */
   #generateSafeFilename(originalFilename: string, contentType: string): string {
     const baseName = originalFilename.replace(/\.[^/.]+$/, ""); // Remove extension
@@ -1073,7 +1071,7 @@ export class FileHandler {
 
   /**
    * Builds processing options for the given context.
-   * @private
+   * @internal
    */
   #buildProcessingOptions(
     context: ProcessingContext,
@@ -1110,7 +1108,7 @@ export class FileHandler {
 
   /**
    * Optimizes a file (images only) with Sharp.
-   * @private
+   * @internal
    */
   async #optimizeFile(
     buffer: Buffer,
@@ -1226,7 +1224,7 @@ export class FileHandler {
 
   /**
    * Optimizes image by specific format.
-   * @private
+   * @internal
    */
   async #optimizeByFormat(
     image: import("sharp").Sharp,
@@ -1247,7 +1245,7 @@ export class FileHandler {
 
   /**
    * Processes multiple files in batches with concurrency control.
-   * @private
+   * @internal
    */
   async #processFilesBatch(
     files: FileInput[],
@@ -1274,7 +1272,7 @@ export class FileHandler {
 
   /**
    * Appends JSON payload to FormData.
-   * @private
+   * @internal
    */
   async #appendJsonPayload(
     form: FormData,
@@ -1300,7 +1298,7 @@ export class FileHandler {
 
   /**
    * Gets or loads the Sharp module.
-   * @private
+   * @internal
    */
   async #getSharpModule(): Promise<typeof SharpType | null> {
     if (this.#options.cacheSharpModule && this.#sharpModuleCache) {
@@ -1320,7 +1318,7 @@ export class FileHandler {
 
   /**
    * Builds error details for debugging.
-   * @private
+   * @internal
    */
   #buildErrorDetails(input: FileInput, filename?: string): string {
     const details: string[] = [];
@@ -1338,7 +1336,7 @@ export class FileHandler {
 
   /**
    * Acquires an operation slot (concurrency control).
-   * @private
+   * @internal
    */
   async #acquireOperationSlot(): Promise<void> {
     while (this.#activeOperations >= this.#options.maxConcurrentOperations) {
@@ -1361,7 +1359,7 @@ export class FileHandler {
 
   /**
    * Releases an operation slot.
-   * @private
+   * @internal
    */
   #releaseOperationSlot(): void {
     this.#activeOperations = Math.max(0, this.#activeOperations - 1);
@@ -1369,7 +1367,7 @@ export class FileHandler {
 
   /**
    * Checks if the instance has been destroyed.
-   * @private
+   * @internal
    */
   #checkNotDestroyed(): void {
     if (this.#isDestroyed) {

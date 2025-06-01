@@ -219,7 +219,7 @@ export class ShardManager {
   /**
    * Internal map storing all shard instances by their shard ID
    * Keys are shard IDs (0-based indices) and values are ShardData objects.
-   * @private
+   * @internal
    */
   #shards = new Map<number, ShardData>();
 
@@ -227,19 +227,19 @@ export class ShardManager {
    * Mapping between shard IDs and their most recent session IDs
    * Used for session resumption, which is preferred over creating new connections
    * when reconnecting shards.
-   * @private
+   * @internal
    */
   #sessionMap = new Map<number, string>();
 
   /**
    * Reference to the parent Gateway instance
-   * @private
+   * @internal
    */
   readonly #gateway: Gateway;
 
   /**
    * Sharding configuration options for this manager
-   * @private
+   * @internal
    */
   readonly #options: ShardOptions;
 
@@ -619,7 +619,7 @@ export class ShardManager {
    * 2. If totalShards is explicitly configured in options
    * 3. If sharding is forced via the force option
    *
-   * @private
+   * @internal
    */
   #validateSpawnConditions(guildCount: number): boolean {
     const isShardingRequired = guildCount >= this.#options.largeThreshold;
@@ -639,7 +639,7 @@ export class ShardManager {
    * 3. If force option is true but no count specified → Use at least 1 shard
    * 4. Otherwise → Calculate based on guild count (1 shard per largeThreshold guilds)
    *
-   * @private
+   * @internal
    */
   #calculateTotalShards(guildCount: number, recommendedShards: number): number {
     // Use recommended count if auto-sharding is enabled
@@ -668,7 +668,7 @@ export class ShardManager {
    * Rate limit buckets are calculated using: shardId % maxConcurrency
    * Shards in the same bucket share rate limits for IDENTIFY operations
    *
-   * @private
+   * @internal
    */
   #createShardBuckets(totalShards: number): Map<number, number[]> {
     const buckets = new Map<number, number[]>();
@@ -698,7 +698,7 @@ export class ShardManager {
    * 2. Creates all shards within a bucket at once
    * 3. Waits for spawnDelay milliseconds between buckets
    *
-   * @private
+   * @internal
    */
   async #spawnShardBuckets(
     buckets: Map<number, number[]>,
@@ -747,7 +747,7 @@ export class ShardManager {
    * Each status change emits different events and performs different operations
    * to maintain the shard lifecycle.
    *
-   * @private
+   * @internal
    */
   #handleShardStatusChange(
     shardId: number,
@@ -822,7 +822,7 @@ export class ShardManager {
    * Used by getAvailableShard() to find a shard that can perform
    * an IDENTIFY operation without violating Discord's rate limits.
    *
-   * @private
+   * @internal
    */
   #findAvailableShard(): [number, number] | null {
     for (const [shardId, shard] of this.#shards.entries()) {
@@ -860,7 +860,7 @@ export class ShardManager {
    * 3. Waits for that amount of time
    * 4. Updates rate limit counters after waiting
    *
-   * @private
+   * @internal
    */
   async #waitForAvailableBucket(): Promise<void> {
     // Find the next rate limit reset time (earliest among all shards)
@@ -893,7 +893,7 @@ export class ShardManager {
    * After a rate limit window expires, the remaining count is reset to
    * the maximum value and a new reset time is set for the next window.
    *
-   * @private
+   * @internal
    */
   #resetExpiredRateLimits(): void {
     const now = Date.now();
@@ -916,7 +916,7 @@ export class ShardManager {
    * Computes the total number of guilds managed across all shards
    *
    * @returns The combined guild count from all shards
-   * @private
+   * @internal
    */
   #calculateTotalGuildCount(): number {
     return Array.from(this.#shards.values()).reduce(
