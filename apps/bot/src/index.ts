@@ -27,7 +27,6 @@ if (!parsed?.DISCORD_TOKEN) {
  */
 const client = new Client({
   token: parsed.DISCORD_TOKEN,
-  // @ts-ignore
   intents: [
     GatewayIntentsBits.Guilds,
     GatewayIntentsBits.GuildMembers,
@@ -50,7 +49,7 @@ const client = new Client({
     GatewayIntentsBits.AutoModerationExecution,
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
-  ] /* TODO: Temporary bypass with build:prod */ as number[],
+  ],
   compressionType: "zstd-stream",
   encodingType: "etf",
 });
@@ -59,10 +58,7 @@ const client = new Client({
  * Store containing all loaded commands
  * Uses a key-value structure where the key is the command name
  */
-export const commands: Store<string, SlashCommand> = new Store<
-  string,
-  SlashCommand
->();
+export const commands = new Store<string, SlashCommand>();
 
 /**
  * Toggle for registering commands with Discord API
@@ -134,6 +130,7 @@ process.on("uncaughtException", (error) => {
 process.on("SIGINT", async () => {
   console.log("[PROCESS] Shutting down...");
   await client.destroy();
+  commands.destroy();
   console.log("[PROCESS] All connections closed, exiting");
   process.exit(0);
 });

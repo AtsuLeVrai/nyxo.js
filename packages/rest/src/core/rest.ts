@@ -683,7 +683,7 @@ export class Rest extends EventEmitter<RestEvents> {
   async destroy(): Promise<void> {
     await this.pool.close();
     this.rateLimiter.destroy();
-    this.file.destroy();
+    this.file.clear();
     this.removeAllListeners();
   }
 

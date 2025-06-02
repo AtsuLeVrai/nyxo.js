@@ -1,122 +1,323 @@
 # Getting Started with Nyxo.js
 
-<Badge variant="primary" icon="Sparkles" animated>Alpha Release</Badge>
+<FadeIn delay={0.1}>
+    <div className="flex items-center gap-3 mb-8">
+        <Badge variant="primary" icon="Sparkles" animated>Alpha Release</Badge>
+        <Badge variant="info" size="sm">v0.1.0</Badge>
+        <Badge variant="success" size="sm">TypeScript Ready</Badge>
+    </div>
+</FadeIn>
 
-Welcome to the Nyxo.js documentation! Nyxo.js is a next-generation Discord bot framework designed to make Discord bot development more enjoyable, typesafe, and maintainable.
+<FadeIn delay={0.2}>
+    <div
+        className="relative overflow-hidden rounded-2xl border border-primary-500/20 bg-gradient-to-br from-primary-500/10 via-purple-500/5 to-cyan-500/10 p-8 mb-12">
+        <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-primary-500/20 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-cyan-500/20 blur-2xl"></div>
+        <div className="relative">
+            <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
+                <Icon name="Rocket" className="mr-3 h-6 w-6 text-primary-400"/>
+                Welcome to the Future of Discord Bot Development
+            </h2>
+            <p className="text-lg text-slate-300 leading-relaxed">
+                Nyxo.js is a next-generation Discord bot framework designed to make Discord bot development more
+                enjoyable, typesafe, and maintainable. Built from the ground up with modern TypeScript capabilities and
+                developer experience in mind.
+            </p>
+        </div>
+    </div>
+</FadeIn>
 
-<Callout type="info" title="Alpha Stage">
+<Callout type="info" title="Alpha Development Stage">
     Nyxo.js is currently in alpha development stage. APIs might change as we refine the framework.
     Please report any issues or feature requests on our [GitHub repository](https://github.com/AtsuLeVrai/nyxo.js).
+    Your feedback helps us build a better framework for everyone! 🚀
 </Callout>
 
-## Why Nyxo.js?
+## Why Choose Nyxo.js?
 
-Nyxo.js was created to solve common pain points in Discord bot development:
+<FadeIn delay={0.3}>
+    <p className="text-xl text-slate-300 mb-8">
+        Nyxo.js was created to solve common pain points in Discord bot development and bring modern development
+        practices to the Discord ecosystem.
+    </p>
+</FadeIn>
 
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
-    <Card variant="feature">
-        <CardBody>
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-primary-500/10">
-                <Icon name="Type" className="h-5 w-5 text-primary-400"/>
-            </div>
-            <CardTitle>Type Safety</CardTitle>
-            <CardDescription>
-                Built with TypeScript from the ground up for robust type checking and better developer experience.
-            </CardDescription>
-        </CardBody>
-    </Card>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-10">
+    <FadeIn delay={0.4}>
+        <Card variant="feature" className="group hover:border-primary-500/30 transition-all duration-300">
+            <CardBody className="relative overflow-hidden">
+                <div
+                    className="absolute top-0 right-0 h-20 w-20 rounded-full bg-primary-500/10 blur-2xl group-hover:bg-primary-500/20 transition-all duration-300"></div>
+                <div className="relative">
+                    <div
+                        className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/10 group-hover:bg-primary-500/20 transition-all duration-300">
+                        <Icon name="Type" className="h-6 w-6 text-primary-400"/>
+                    </div>
+                    <CardTitle className="text-xl mb-3">100% Type Safety</CardTitle>
+                    <CardDescription className="text-base">
+                        Built with TypeScript from the ground up for robust type checking, intelligent autocompletion,
+                        and an exceptional developer experience that catches errors before they happen.
+                    </CardDescription>
+                </div>
+            </CardBody>
+        </Card>
+    </FadeIn>
 
-    <Card variant="feature">
-        <CardBody>
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-primary-500/10">
-                <Icon name="Package2" className="h-5 w-5 text-primary-400"/>
-            </div>
-            <CardTitle>Modern Architecture</CardTitle>
-            <CardDescription>
-                Modular design with clear separation of concerns for maintainable code.
-            </CardDescription>
-        </CardBody>
-    </Card>
+    <FadeIn delay={0.5}>
+        <Card variant="feature" className="group hover:border-primary-500/30 transition-all duration-300">
+            <CardBody className="relative overflow-hidden">
+                <div
+                    className="absolute top-0 right-0 h-20 w-20 rounded-full bg-cyan-500/10 blur-2xl group-hover:bg-cyan-500/20 transition-all duration-300"></div>
+                <div className="relative">
+                    <div
+                        className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-all duration-300">
+                        <Icon name="Package2" className="h-6 w-6 text-cyan-400"/>
+                    </div>
+                    <CardTitle className="text-xl mb-3">Modern Architecture</CardTitle>
+                    <CardDescription className="text-base">
+                        Modular design with clear separation of concerns, dependency injection, and clean architecture
+                        patterns for maintainable and scalable code.
+                    </CardDescription>
+                </div>
+            </CardBody>
+        </Card>
+    </FadeIn>
 
-    <Card variant="feature">
-        <CardBody>
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-primary-500/10">
-                <Icon name="Bot" className="h-5 w-5 text-primary-400"/>
-            </div>
-            <CardTitle>Discord API Integration</CardTitle>
-            <CardDescription>
-                Designed specifically for Discord with full access to all Discord's features.
-            </CardDescription>
-        </CardBody>
-    </Card>
+    <FadeIn delay={0.6}>
+        <Card variant="feature" className="group hover:border-primary-500/30 transition-all duration-300">
+            <CardBody className="relative overflow-hidden">
+                <div
+                    className="absolute top-0 right-0 h-20 w-20 rounded-full bg-purple-500/10 blur-2xl group-hover:bg-purple-500/20 transition-all duration-300"></div>
+                <div className="relative">
+                    <div
+                        className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 group-hover:bg-purple-500/20 transition-all duration-300">
+                        <Icon name="Bot" className="h-6 w-6 text-purple-400"/>
+                    </div>
+                    <CardTitle className="text-xl mb-3">Discord-First Design</CardTitle>
+                    <CardDescription className="text-base">
+                        Designed specifically for Discord with full access to all Discord features, optimized for
+                        performance, and built with Discord's best practices in mind.
+                    </CardDescription>
+                </div>
+            </CardBody>
+        </Card>
+    </FadeIn>
 
-    <Card variant="feature">
-        <CardBody>
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-primary-500/10">
-                <Icon name="Rocket" className="h-5 w-5 text-primary-400"/>
-            </div>
-            <CardTitle>Developer Experience</CardTitle>
-            <CardDescription>
-                Clear APIs, intuitive patterns, and excellent documentation to help you build faster.
-            </CardDescription>
-        </CardBody>
-    </Card>
+    <FadeIn delay={0.7}>
+        <Card variant="feature" className="group hover:border-primary-500/30 transition-all duration-300">
+            <CardBody className="relative overflow-hidden">
+                <div
+                    className="absolute top-0 right-0 h-20 w-20 rounded-full bg-amber-500/10 blur-2xl group-hover:bg-amber-500/20 transition-all duration-300"></div>
+                <div className="relative">
+                    <div
+                        className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 group-hover:bg-amber-500/20 transition-all duration-300">
+                        <Icon name="Rocket" className="h-6 w-6 text-amber-400"/>
+                    </div>
+                    <CardTitle className="text-xl mb-3">Developer Experience</CardTitle>
+                    <CardDescription className="text-base">
+                        Intuitive APIs, comprehensive documentation, powerful debugging tools, and extensive examples to
+                        help you build faster and more efficiently.
+                    </CardDescription>
+                </div>
+            </CardBody>
+        </Card>
+    </FadeIn>
 </div>
 
 ## Quick Start
 
-Get up and running with Nyxo.js in just a few minutes:
+<FadeIn delay={0.8}>
+    <p className="text-lg text-slate-300 mb-6">
+        Get up and running with Nyxo.js in just a few minutes. Our streamlined setup process gets you from zero to bot
+        in no time.
+    </p>
+</FadeIn>
 
 ### Installation
 
-```bash
-# Using npm
-npm install nyxo.js
+<FadeIn delay={0.9}>
+    <div className="mb-8">
+        <p className="text-slate-300 mb-4">Choose your preferred package manager:</p>
+    </div>
+</FadeIn>
 
-# Using yarn
-yarn add nyxo.js
+<TabGroup>
+    <TabHeading>
+        <TabItem active>npm</TabItem>
+        <TabItem>yarn</TabItem>
+        <TabItem>pnpm</TabItem>
+        <TabItem>bun</TabItem>
+    </TabHeading>
+    <TabContent>
+        ```bash
+        # Install Nyxo.js and its dependencies
+        npm install nyxo.js
 
-# Using pnpm
-pnpm add nyxo.js
-```
+        # Install TypeScript if you haven't already
+        npm install -D typescript @types/node
+        ```
+    </TabContent>
+</TabGroup>
 
 ### Create Your First Bot
 
-Create a new file named `bot.ts` and add the following code:
+<FadeIn delay={1.0}>
+    <p className="text-slate-300 mb-4">
+        Create a new file named <code>bot.ts</code> and add the following code to get started:
+    </p>
+</FadeIn>
 
 ```typescript
-// Be Patient, this is a work in progress
+// Be patient, this is a work in progress!
 ```
+
+<Callout type="success" title="Pro Tip">
+    Don't forget to create a `.env` file with your bot token: `DISCORD_TOKEN=your_bot_token_here`
+    You can get your bot token from the [Discord Developer Portal](https://discord.com/developers/applications).
+</Callout>
 
 ## Next Steps
 
-<div className="flex flex-col md:flex-row gap-4 my-6">
-    <Button href="/docs/installation" variant="primary" icon="ArrowRight">
-        Complete Installation Guide
-    </Button>
+<FadeIn delay={1.1}>
+    <div className="flex flex-col md:flex-row gap-4 my-8">
+        <Button href="/docs/installation" variant="primary" icon="ArrowRight" className="text-base">
+            Complete Installation Guide
+        </Button>
 
-    <Button href="/docs/guides/basic-bot" variant="secondary">
-        Basic Bot Tutorial
-    </Button>
-</div>
+        <Button href="/docs/guides/basic-bot" variant="secondary" className="text-base">
+            Basic Bot Tutorial
+        </Button>
 
-## Framework Features
+        <Button href="/docs/api" variant="outline" className="text-base">
+            API Reference
+        </Button>
+    </div>
+</FadeIn>
 
-Nyxo.js provides a set of features to make Discord bot development easier:
+## Core Framework Features
 
-- **Command Handling** - Create and manage slash commands with ease
-- **Event Handling** - Respond to Discord events in a structured way
-- **Middleware Support** - Add reusable middleware to commands and events
-- **Error Handling** - Robust error handling to keep your bot running smoothly
-- **Type Safety** - Full TypeScript support for a better development experience
-- **Plugin System** - Extend functionality with a modular plugin system
+<FadeIn delay={1.2}>
+    <div
+        className="relative overflow-hidden rounded-xl border border-dark-500/50 bg-gradient-to-r from-dark-700/50 to-dark-600/50 p-8 my-10">
+        <div className="absolute top-0 left-0 h-32 w-32 rounded-full bg-primary-500/10 blur-3xl"></div>
+        <div className="relative">
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
+                <Icon name="Sparkles" className="mr-3 h-6 w-6 text-primary-400"/>
+                What Makes Nyxo.js Special
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-slate-300">
+                <div className="space-y-4">
+                    <div className="flex items-start">
+                        <div className="mr-3 mt-1 h-2 w-2 rounded-full bg-primary-400"></div>
+                        <div>
+                            <strong className="text-white">Command Handling</strong> - Intuitive decorator-based command
+                            registration with automatic validation
+                        </div>
+                    </div>
+                    <div className="flex items-start">
+                        <div className="mr-3 mt-1 h-2 w-2 rounded-full bg-primary-400"></div>
+                        <div>
+                            <strong className="text-white">Event Handling</strong> - Structured event listeners with
+                            automatic error handling
+                        </div>
+                    </div>
+                    <div className="flex items-start">
+                        <div className="mr-3 mt-1 h-2 w-2 rounded-full bg-primary-400"></div>
+                        <div>
+                            <strong className="text-white">Middleware Support</strong> - Reusable middleware for
+                            authentication, logging, and more
+                        </div>
+                    </div>
+                </div>
+                <div className="space-y-4">
+                    <div className="flex items-start">
+                        <div className="mr-3 mt-1 h-2 w-2 rounded-full bg-cyan-400"></div>
+                        <div>
+                            <strong className="text-white">Error Handling</strong> - Robust error handling to keep your
+                            bot running smoothly
+                        </div>
+                    </div>
+                    <div className="flex items-start">
+                        <div className="mr-3 mt-1 h-2 w-2 rounded-full bg-cyan-400"></div>
+                        <div>
+                            <strong className="text-white">Plugin System</strong> - Extend functionality with a modular
+                            plugin architecture
+                        </div>
+                    </div>
+                    <div className="flex items-start">
+                        <div className="mr-3 mt-1 h-2 w-2 rounded-full bg-cyan-400"></div>
+                        <div>
+                            <strong className="text-white">Hot Reload</strong> - Development mode with hot reload for
+                            faster iteration
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</FadeIn>
 
-## Example: Command Registration
+## Advanced Example: Command with Options
 
-Here's a more complete example of registering a command with options:
+<FadeIn delay={1.3}>
+    <p className="text-slate-300 mb-4">
+        Here's a more complete example showing Nyxo.js's powerful command system with options, validation, and error
+        handling:
+    </p>
+</FadeIn>
 
 ```typescript
-// Be Patient, this is a work in progress
+// Be patient, this is a work in progress!
 ```
 
-Continue exploring our documentation to learn more about what Nyxo.js can do!
+## Community & Support
+
+<FadeIn delay={1.4}>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-10">
+        <Card variant="default" className="group hover:border-primary-500/30 transition-all duration-300">
+            <CardBody>
+                <div className="flex items-center mb-4">
+                    <Icon name="MessageSquare" className="h-6 w-6 text-primary-400 mr-3"/>
+                    <CardTitle>Join Our Discord</CardTitle>
+                </div>
+                <CardDescription className="mb-4">
+                    Connect with other developers, get help, and stay updated on the latest Nyxo.js developments.
+                </CardDescription>
+                <Button href="https://discord.gg/hfMzQMbaMg" variant="primary" size="sm" external>
+                    Join Discord Server
+                </Button>
+            </CardBody>
+        </Card>
+
+        <Card variant="default" className="group hover:border-primary-500/30 transition-all duration-300">
+            <CardBody>
+                <div className="flex items-center mb-4">
+                    <Icon name="Github" className="h-6 w-6 text-primary-400 mr-3"/>
+                    <CardTitle>Contribute</CardTitle>
+                </div>
+                <CardDescription className="mb-4">
+                    Nyxo.js is open source! Contribute to the framework, report bugs, or suggest new features.
+                </CardDescription>
+                <Button href="https://github.com/AtsuLeVrai/nyxo.js" variant="outline" size="sm" external>
+                    View on GitHub
+                </Button>
+            </CardBody>
+        </Card>
+    </div>
+</FadeIn>
+
+<FadeIn delay={1.5}>
+    <div className="text-center my-12">
+        <p className="text-lg text-slate-300 mb-6">
+            Ready to build amazing Discord bots? Let's get started! 🚀
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button href="/docs/installation" variant="primary" size="lg" icon="ArrowRight">
+                Start Building Now
+            </Button>
+            <Button href="/docs/examples" variant="secondary" size="lg">
+                Explore Examples
+            </Button>
+        </div>
+    </div>
+</FadeIn>

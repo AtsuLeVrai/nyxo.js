@@ -38,7 +38,7 @@
   "scripts": {
     "build:dev": "rimraf dist && tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json --preserveWatchOutput",
-    "build:prod": "node ../../scripts/build.js",
+    "build:prod": "tsdown",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -46,7 +46,7 @@
     "@nyxojs/rest": "workspace:^",
     "eventemitter3": "^5.0.1",
     "ws": "^8.18.2",
-    "zod": "^3.25.46"
+    "zod": "^3.25.48"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.9",

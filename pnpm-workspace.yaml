@@ -1,15 +1,12 @@
 packages:
   - apps/*
   - packages/*
-  - scripts
 onlyBuiltDependencies:
   - bufferutil
   - erlpack
-  - sharp
   - zlib-sync
 publicHoistPattern:
   - '*bufferutil*'
   - '*erlpack*'
   - '*fzstd*'
-  - '*sharp*'
   - '*zlib-sync*'

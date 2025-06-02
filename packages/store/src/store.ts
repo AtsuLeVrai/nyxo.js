@@ -83,7 +83,7 @@ export const StoreOptions = z.object({
    *
    * @default 15000 (15 seconds)
    */
-  sweepInterval: z.number().int().positive().min(1000).default(15000),
+  sweepInterval: z.number().int().positive().default(15000),
 });
 
 export type StoreOptions = z.infer<typeof StoreOptions>;
@@ -95,7 +95,7 @@ export type StoreOptions = z.infer<typeof StoreOptions>;
  * **Memory Management**: This implementation includes comprehensive memory leak prevention:
  * - Automatic sweep of expired items and internal references
  * - Proper disposal of LRU tracker nodes with reference cleanup
- * - WeakRef-based interval management to prevent strong reference cycles
+ * - Simple timeout-based sweep scheduling to prevent reference cycles
  * - Comprehensive resource management with Symbol.dispose support
  *
  * **Performance Characteristics**:
@@ -130,25 +130,17 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   #lruTracker: LruTracker<K> | null = null;
 
   /**
-   * Timer ID for the periodic sweep interval that removes expired items.
+   * Timeout ID for the next scheduled sweep operation.
    * Set to null when sweep is disabled or store is destroyed.
    * @internal
    */
-  #sweepInterval: NodeJS.Timeout | null = null;
+  #sweepTimeout: NodeJS.Timeout | null = null;
 
   /**
-   * WeakRef to this instance for use in interval callbacks to prevent memory leaks
+   * Flag to track if the store has been destroyed
    * @internal
    */
-  #selfRef: WeakRef<Store<K, V>> | null = null;
-
-  /**
-   * FinalizationRegistry to clean up the sweep interval when the store is garbage collected.
-   * @internal
-   */
-  #cleanupRegistry = new FinalizationRegistry((intervalId: NodeJS.Timeout) =>
-    clearInterval(intervalId),
-  );
+  #isDestroyed = false;
 
   /**
    * Parsed and validated options for this Store instance
@@ -236,9 +228,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       this.#bulkSet(actualEntries);
     }
 
-    // Set up periodic sweep interval if TTL is enabled
+    // Set up periodic sweep if TTL is enabled
     if (this.#options.ttl > 0) {
-      this.#startSweepInterval();
+      this.#scheduleSweep();
     }
   }
 
@@ -516,18 +508,19 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * but expired items will only be removed when explicitly accessed.
    *
    * @remarks
-   * - Stops the sweep interval timer to prevent memory leaks
+   * - Stops the sweep timeout to prevent memory leaks
    * - Clears all internal data structures and metadata
    * - Properly disposes of LRU tracker resources with reference cleanup
-   * - Breaks circular references by nullifying WeakRef to prevent memory leaks
-   * - Nullifies all internal maps and options to ensure complete cleanup
    * - Store remains usable for get/set operations (graceful degradation)
    */
   destroy(): void {
-    // Stop periodic sweep interval
-    if (this.#sweepInterval) {
-      clearInterval(this.#sweepInterval);
-      this.#sweepInterval = null;
+    // Mark as destroyed to prevent new sweep scheduling
+    this.#isDestroyed = true;
+
+    // Stop periodic sweep timeout
+    if (this.#sweepTimeout) {
+      clearTimeout(this.#sweepTimeout);
+      this.#sweepTimeout = null;
     }
 
     // If using LRU eviction, dispose of the tracker
@@ -543,9 +536,6 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
     // Clear all data
     super.clear();
-
-    // Dispose of WeakRef to self to prevent memory leaks
-    this.#selfRef = null;
   }
 
   /**
@@ -557,10 +547,16 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @remarks
    * - Automatically removes the item if it has expired
    * - Updates the access time for the key when using LRU eviction strategy
+   * - Performs occasional passive sweep to clean up expired items
    *
    * @override Overrides Map.get
    */
   override get(key: K): V | undefined {
+    // Perform occasional passive sweep (1% chance to reduce overhead)
+    if (Math.random() < 0.01) {
+      this.#sweep();
+    }
+
     // Check expiration first and remove if expired
     if (this.isExpired(key)) {
       this.delete(key);
@@ -610,6 +606,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * - May trigger item eviction if the store size exceeds maxSize
    * - Updates the access time for the key when using LRU eviction strategy
    * - Applies default TTL if global TTL is configured and no custom TTL exists
+   * - Schedules next sweep operation if TTL is enabled
    *
    * @override Overrides Map.set
    */
@@ -630,6 +627,12 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
     super.set(key, value);
     this.#updateAccessTime(key);
+
+    // Schedule sweep if TTL is enabled and not already scheduled
+    if (this.#options.ttl > 0 && !this.#sweepTimeout && !this.#isDestroyed) {
+      this.#scheduleSweep();
+    }
+
     return this;
   }
 
@@ -695,45 +698,31 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
-   * Starts a periodic interval to sweep expired items from the store.
-   * Uses WeakRef to prevent the interval from holding a strong reference to the store,
-   * which could prevent garbage collection.
+   * Schedules the next sweep operation to remove expired items.
+   * Uses setTimeout instead of setInterval for better resource management.
    *
    * @internal
    */
-  #startSweepInterval(): void {
-    // Ensure selfRef is initialized to prevent strong reference cycles
-    if (!this.#selfRef) {
-      this.#selfRef = new WeakRef(this);
+  #scheduleSweep(): void {
+    // Don't schedule if already destroyed or sweep is already scheduled
+    if (this.#isDestroyed || this.#sweepTimeout) {
+      return;
     }
 
-    // Use WeakRef to prevent strong reference cycle
-    const storeRef = this.#selfRef;
+    this.#sweepTimeout = setTimeout(() => {
+      // Clear the timeout reference
+      this.#sweepTimeout = null;
 
-    const intervalId = setInterval(() => {
-      const store = storeRef?.deref();
+      // Only sweep if not destroyed
+      if (!this.#isDestroyed) {
+        this.#sweep();
 
-      // If store has been garbage collected, clear the interval
-      if (!store) {
-        clearInterval(intervalId);
-        return;
-      }
-
-      // Check if this interval is still the active one (not replaced by destroy/restart)
-      if (store.#sweepInterval === intervalId) {
-        // Store still exists and this is the active interval, perform sweep
-        store.#sweep();
-      } else {
-        // This interval has been replaced or store was destroyed, clean up
-        clearInterval(intervalId);
+        // Reschedule if there are still items with TTL and not destroyed
+        if (this.#ttlMap.size > 0 && !this.#isDestroyed) {
+          this.#scheduleSweep();
+        }
       }
     }, this.#options.sweepInterval);
-
-    // Store the interval ID
-    this.#sweepInterval = intervalId;
-
-    // Register the interval for cleanup when the store is garbage collected
-    this.#cleanupRegistry.register(this, intervalId);
   }
 
   /**
@@ -743,8 +732,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @internal
    */
   #sweep(): void {
-    // Early exit if sweep has been disabled
-    if (!this.#sweepInterval) {
+    // Early exit if destroyed or no TTL items
+    if (this.#isDestroyed || this.#ttlMap.size === 0) {
       return;
     }
 
