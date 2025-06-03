@@ -44,12 +44,13 @@
   "dependencies": {
     "deepmerge-ts": "^7.1.5",
     "lodash-es": "^4.17.21",
-    "zod": "^3.25.48"
+    "zod": "^3.25.49"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.15.29",
     "rimraf": "^6.0.1",
+    "tsdown": "^0.12.6",
     "typescript": "^5.8.3"
   }
 }

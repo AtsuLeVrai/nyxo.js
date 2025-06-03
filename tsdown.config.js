@@ -1,6 +1,4 @@
-import { defineConfig } from "tsdown";
-
-export default defineConfig({
+export default {
   entry: "src/index.ts",
   outDir: "dist",
   format: "esm",
@@ -14,4 +12,4 @@ export default defineConfig({
   dts: {
     sourcemap: false,
   },
-});
+};

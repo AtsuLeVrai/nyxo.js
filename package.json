@@ -23,7 +23,7 @@
     "test:ui": "vitest --ui",
     "test:bench": "vitest bench --run",
     "prepare": "husky",
-    "publish": "pnpm run build:prod && changeset publish",
+    "publish": "pnpm run build:prod && pnpm run type-check && changeset publish",
     "update:submodules": "git submodule update --force --remote"
   },
   "devDependencies": {
@@ -32,7 +32,6 @@
     "@vitest/coverage-v8": "^3.2.0",
     "@vitest/ui": "^3.2.0",
     "husky": "^9.1.7",
-    "tsdown": "^0.12.6",
     "turbo": "^2.5.4",
     "vitest": "^3.2.0"
   }

@@ -25,13 +25,14 @@
       "cache": false,
       "persistent": true
     },
-    "build:prod": {
-      "dependsOn": ["//#biome:check", "^type-check", "^build:prod"],
-      "outputs": ["dist/**"],
+    "type-check": {
+      "dependsOn": ["//#biome:check"],
+      "outputs": [],
       "cache": true
     },
-    "type-check": {
-      "outputs": [],
+    "build:prod": {
+      "dependsOn": ["//#biome:check", "^build:prod"],
+      "outputs": ["dist/**"],
       "cache": true
     }
   }
