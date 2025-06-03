@@ -1,4 +1,3 @@
-import { clearTimeout } from "node:timers";
 import { ApiVersion } from "@nyxojs/core";
 import { EventEmitter } from "eventemitter3";
 import { Pool } from "undici";

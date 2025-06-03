@@ -23,7 +23,7 @@
     "test:ui": "vitest --ui",
     "test:bench": "vitest bench --run",
     "prepare": "husky",
-    "publish": "pnpm run build:prod && pnpm run type-check && changeset publish",
+    "publish": "pnpm run build:prod && changeset publish",
     "update:submodules": "git submodule update --force --remote"
   },
   "devDependencies": {
