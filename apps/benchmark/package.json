@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxojs/benchmark",
+  "private": true,
+  "description": "Performance benchmarking suite for Discord bot libraries",
+  "readme": "README.md",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AtsuLeVrai/nyxo.js",
+    "directory": "apps/benchmark"
+  },
+  "bugs": {
+    "url": "https://github.com/AtsuLeVrai/nyxo.js/issues"
+  },
+  "author": {
+    "name": "AtsuLeVrai",
+    "url": "https://github.com/AtsuLeVrai"
+  },
+  "scripts": {
+    "build:benchmark": "rimraf dist && tsc -p tsconfig.json",
+    "dev:discordjs": "tsx src/discordjs.ts",
+    "dev:eris": "tsx src/eris.ts",
+    "dev:oceanic": "tsx src/oceanicjs.ts",
+    "dev:nyxo": "tsx src/nyxojs.ts",
+    "dev:mini-nyxo": "tsx src/mini-nyxojs.ts",
+    "start:discordjs": "node dist/discordjs.js",
+    "start:eris": "node dist/eris.js",
+    "start:oceanic": "node dist/oceanicjs.js",
+    "start:nyxo": "node dist/nyxojs.js",
+    "start:mini-nyxo": "node dist/mini-nyxojs.js",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nyxojs/builders": "workspace:^",
+    "@nyxojs/core": "workspace:^",
+    "@nyxojs/gateway": "workspace:^",
+    "@nyxojs/rest": "workspace:^",
+    "@nyxojs/store": "workspace:^",
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.5.0",
+    "eris": "^0.18.0",
+    "nyxo.js": "workspace:^",
+    "oceanic.js": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
