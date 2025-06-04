@@ -44,7 +44,7 @@
   "dependencies": {
     "deepmerge-ts": "^7.1.5",
     "lodash-es": "^4.17.21",
-    "zod": "^3.25.49"
+    "zod": "^3.25.51"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
