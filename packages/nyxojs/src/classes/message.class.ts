@@ -797,7 +797,7 @@ export class Message
    *
    * @returns A promise resolving to the channel object
    */
-  readonly channel = this.client.cache.channels.get(this.channelId);
+  readonly channel = this.client.cache.channels?.get(this.channelId);
 
   /**
    * Gets the referenced message for this message, if it's a reply.

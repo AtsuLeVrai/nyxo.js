@@ -25,6 +25,19 @@ import type {
   VoiceState,
   Webhook,
 } from "../classes/index.js";
+import type { If } from "../types/index.js";
+
+/**
+ * Configuration options for a cacheable store in the Nyxo.js client.
+ * This defines the structure for each entity type's cache settings.
+ */
+const CacheableStoreOptions = StoreOptions.extend({
+  /**
+   * Whether to enable the cache for this entity type.
+   * If set to false, the cache will not store this entity type.
+   */
+  enabled: z.boolean().default(true),
+});
 
 /**
  * Configuration options for the cache system of the Nyxo.js client.
@@ -37,265 +50,133 @@ export const CacheOptions = z.object({
   /**
    * This cache stores Application objects for Discord applications.
    */
-  applications: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Application objects.
-     * If set to false, the cache will not store Application objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  applications: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores AutoModerationRule objects which define automated content filtering.
    * Only relevant for bots that interact with or manage Discord's auto moderation system.
    */
-  autoModerationRules: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for AutoModeration objects.
-     * If set to false, the cache will not store AutoModeration objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  autoModerationRules: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Ban objects which represent user bans in guilds.
    * Only relevant for bots that interact with bans.
    */
-  bans: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Ban objects.
-     * If set to false, the cache will not store Ban objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  bans: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores all types of channel objects (text, voice, category, etc.).
    * Channels are frequently accessed for permission checks and message operations.
    */
-  channels: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Channel objects.
-     * If set to false, the cache will not store Channel objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  channels: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores custom emoji objects from guilds.
    * Consider setting a lower limit if emoji usage is minimal in your bot.
    */
-  emojis: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Emoji objects.
-     * If set to false, the cache will not store Emoji objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  emojis: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores entitlement objects for premium features and subscriptions.
    * Only relevant for bots that interact with Discord's monetization features.
    */
-  entitlements: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Entitlement objects.
-     * If set to false, the cache will not store Entitlement objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  entitlements: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Guild objects which contain core information about Discord servers.
    * Guilds are central entities referenced by many operations.
    */
-  guilds: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Guild objects.
-     * If set to false, the cache will not store Guild objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  guilds: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Integration objects which represent third-party integrations in guilds.
    * Only relevant for bots that interact with integrations.
    */
-  integrations: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Integration objects.
-     * If set to false, the cache will not store Integration objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  integrations: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Invite objects which represent server invites.
    * Only relevant for bots that interact with invites.
    */
-  invites: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Invite objects.
-     * If set to false, the cache will not store Invite objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  invites: CacheableStoreOptions.prefault({}),
 
   /**
-   * This cache stores ThreadMember objects for threads in guilds.
-   * Only relevant for bots that interact with threads.
+   * This cache stores GuildMember objects for members in guilds.
+   * Only relevant for bots that interact with guild members.
    */
-  members: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for GuildMember objects.
-     * If set to false, the cache will not store GuildMember objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  members: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Message objects which are often needed for context
    * in commands, reactions, and other user interactions.
    */
-  messages: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Message objects.
-     * If set to false, the cache will not store Message objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  messages: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Presence objects which represent the online status and activity of users.
    * Only relevant for bots that interact with user presence updates.
    */
-  presences: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Presence objects.
-     * If set to false, the cache will not store Presence objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  presences: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Role objects which define permissions and settings for users in guilds.
    * Only relevant for bots that interact with roles or permissions.
    */
-  roles: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Role objects.
-     * If set to false, the cache will not store Role objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  roles: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores GuildScheduledEvent objects which define events in guilds.
    * Only relevant for bots that interact with scheduled events.
    */
-  scheduledEvents: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for ScheduledEvent objects.
-     * If set to false, the cache will not store ScheduledEvent objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  scheduledEvents: CacheableStoreOptions.prefault({}),
 
   /**
-   * This cache stores Soundboard objects which represent soundboard sounds in guilds.
+   * This cache stores SoundboardSound objects which represent soundboard sounds in guilds.
    * Only relevant for bots that interact with soundboards.
    */
-  soundboards: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for SoundboardSound objects.
-     * If set to false, the cache will not store SoundboardSound objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  soundboards: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores StageInstance objects for Discord's Stage channels.
    * Only relevant for bots that interact with Stage channels.
    */
-  stageInstances: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for StageInstance objects.
-     * If set to false, the cache will not store StageInstance objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  stageInstances: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Sticker objects which are custom stickers used in messages.
    * Only relevant for bots that interact with stickers.
    */
-  stickers: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Sticker objects.
-     * If set to false, the cache will not store Sticker objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  stickers: CacheableStoreOptions.prefault({}),
 
   /**
-   * This cache stores subscription objects for premium features.
+   * This cache stores Subscription objects for premium features.
    * Only relevant for bots that interact with Discord's subscription systems.
    */
-  subscriptions: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Subscription objects.
-     * If set to false, the cache will not store Subscription objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  subscriptions: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores ThreadMember objects which represent members of threads in guilds.
    * Only relevant for bots that interact with threads.
    */
-  threadMembers: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for ThreadMember objects.
-     * If set to false, the cache will not store ThreadMember objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  threadMembers: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores User objects retrieved from the API.
    * Users are referenced by many other entities and are frequently accessed.
    */
-  users: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for User objects.
-     * If set to false, the cache will not store User objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  users: CacheableStoreOptions.prefault({}),
 
   /**
-   * This cache stores voice state objects which represent the voice status of users in guilds.
+   * This cache stores VoiceState objects which represent the voice status of users in guilds.
    * Only relevant for bots that interact with voice channels.
    */
-  voiceStates: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for VoiceState objects.
-     * If set to false, the cache will not store VoiceState objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  voiceStates: CacheableStoreOptions.prefault({}),
 
   /**
    * This cache stores Webhook objects which represent webhooks in guilds.
    * Only relevant for bots that interact with webhooks.
    */
-  webhooks: StoreOptions.extend({
-    /**
-     * Whether to enable the cache for Webhook objects.
-     * If set to false, the cache will not store Webhook objects.
-     */
-    enabled: z.boolean().default(true),
-  }).prefault({}),
+  webhooks: CacheableStoreOptions.prefault({}),
 });
 
 export type CacheOptions = z.infer<typeof CacheOptions>;
@@ -355,7 +236,28 @@ export type CacheableEntity =
   | Webhook;
 
 /**
- * A comprehensive cache management system for Discord entities.
+ * Represents a store that may or may not exist based on configuration.
+ * Returns the store type when enabled, null when disabled.
+ *
+ * @typeParam Enabled - Whether the store is enabled
+ * @typeParam StoreType - The type of store when enabled
+ */
+type ConditionalStore<Enabled extends boolean, StoreType> = If<
+  Enabled,
+  StoreType,
+  null
+>;
+
+/**
+ * Extracts the enabled flag from a cache configuration object.
+ * Returns false if no enabled property is found.
+ *
+ * @typeParam T - Configuration object type
+ */
+type IsEnabled<T> = T extends { enabled: infer E extends boolean } ? E : false;
+
+/**
+ * A comprehensive cache management system for Discord entities with conditional type safety.
  *
  * The CacheManager provides a centralized way to store, retrieve, and manage
  * different types of Discord entities with configurable caching strategies.
@@ -363,230 +265,325 @@ export type CacheableEntity =
  * to optimize memory usage and performance.
  *
  * Each entity type (users, guilds, messages, etc.) has its own dedicated cache
- * store with independently configurable settings.
+ * store with independently configurable settings. When a store is disabled,
+ * it returns null instead of an empty store, providing compile-time type safety
+ * and eliminating unnecessary runtime checks.
  */
-export class CacheManager {
+export class CacheManager<T extends CacheOptions = CacheOptions> {
   /**
    * Access the applications cache store.
-   * Contains Application objects for Discord applications.
+   * Type: Store<Snowflake, Application> if enabled, null if disabled
    */
-  readonly applications: Store<Snowflake, Application>;
+  readonly applications: ConditionalStore<
+    IsEnabled<T["applications"]>,
+    Store<Snowflake, Application>
+  >;
 
   /**
    * Access the auto moderation rules cache store.
-   * Contains AutoModerationRule objects for Discord's content filtering.
+   * Type: Store<Snowflake, AutoModeration> if enabled, null if disabled
    */
-  readonly autoModerationRules: Store<Snowflake, AutoModeration>;
+  readonly autoModerationRules: ConditionalStore<
+    IsEnabled<T["autoModerationRules"]>,
+    Store<Snowflake, AutoModeration>
+  >;
 
   /**
    * Access the bans cache store.
-   * Contains Ban objects for user bans in guilds.
+   * Type: Store<Snowflake, Ban> if enabled, null if disabled
    */
-  readonly bans: Store<Snowflake, Ban>;
+  readonly bans: ConditionalStore<IsEnabled<T["bans"]>, Store<Snowflake, Ban>>;
 
   /**
    * Access the channels cache store.
-   * Contains Channel objects of various types (text, voice, category, etc.).
+   * Type: Store<Snowflake, AnyChannel> if enabled, null if disabled
    */
-  readonly channels: Store<Snowflake, AnyChannel>;
+  readonly channels: ConditionalStore<
+    IsEnabled<T["channels"]>,
+    Store<Snowflake, AnyChannel>
+  >;
 
   /**
    * Access the emojis cache store.
-   * Contains Emoji objects from guilds.
+   * Type: Store<Snowflake, Emoji> if enabled, null if disabled
    */
-  readonly emojis: Store<Snowflake, Emoji>;
+  readonly emojis: ConditionalStore<
+    IsEnabled<T["emojis"]>,
+    Store<Snowflake, Emoji>
+  >;
 
   /**
    * Access the entitlements cache store.
-   * Contains Entitlement objects for premium features.
+   * Type: Store<Snowflake, Entitlement> if enabled, null if disabled
    */
-  readonly entitlements: Store<Snowflake, Entitlement>;
+  readonly entitlements: ConditionalStore<
+    IsEnabled<T["entitlements"]>,
+    Store<Snowflake, Entitlement>
+  >;
 
   /**
    * Access the guilds cache store.
-   * Contains Guild objects which represent Discord servers.
+   * Type: Store<Snowflake, Guild> if enabled, null if disabled
    */
-  readonly guilds: Store<Snowflake, Guild>;
+  readonly guilds: ConditionalStore<
+    IsEnabled<T["guilds"]>,
+    Store<Snowflake, Guild>
+  >;
 
   /**
    * Access the integrations cache store.
-   * Contains Integration objects for third-party services.
+   * Type: Store<Snowflake, Integration> if enabled, null if disabled
    */
-  readonly integrations: Store<Snowflake, Integration>;
+  readonly integrations: ConditionalStore<
+    IsEnabled<T["integrations"]>,
+    Store<Snowflake, Integration>
+  >;
 
   /**
    * Access the invites cache store.
-   * Contains Invite objects for server invites.
+   * Type: Store<Snowflake, Invite> if enabled, null if disabled
    */
-  readonly invites: Store<Snowflake, Invite>;
+  readonly invites: ConditionalStore<
+    IsEnabled<T["invites"]>,
+    Store<Snowflake, Invite>
+  >;
 
   /**
    * Access the members cache store.
-   * Contains GuildMember objects which represent users in specific guilds.
+   * Type: Store<Snowflake, GuildMember> if enabled, null if disabled
    */
-  readonly members: Store<Snowflake, GuildMember>;
+  readonly members: ConditionalStore<
+    IsEnabled<T["members"]>,
+    Store<Snowflake, GuildMember>
+  >;
 
   /**
    * Access the messages cache store.
-   * Contains Message objects sent in channels.
+   * Type: Store<Snowflake, Message> if enabled, null if disabled
    */
-  readonly messages: Store<Snowflake, Message>;
+  readonly messages: ConditionalStore<
+    IsEnabled<T["messages"]>,
+    Store<Snowflake, Message>
+  >;
 
   /**
    * Access the presences cache store.
-   * Contains PresenceEntity objects for users' online status.
+   * Type: Store<Snowflake, PresenceEntity> if enabled, null if disabled
    */
-  readonly presences: Store<Snowflake, PresenceEntity>;
+  readonly presences: ConditionalStore<
+    IsEnabled<T["presences"]>,
+    Store<Snowflake, PresenceEntity>
+  >;
 
   /**
    * Access the roles cache store.
-   * Contains Role objects which define permissions in guilds.
+   * Type: Store<Snowflake, Role> if enabled, null if disabled
    */
-  readonly roles: Store<Snowflake, Role>;
+  readonly roles: ConditionalStore<
+    IsEnabled<T["roles"]>,
+    Store<Snowflake, Role>
+  >;
 
   /**
    * Access the scheduled events cache store.
-   * Contains GuildScheduledEvent objects for Discord server events.
+   * Type: Store<Snowflake, ScheduledEvent> if enabled, null if disabled
    */
-  readonly scheduledEvents: Store<Snowflake, ScheduledEvent>;
+  readonly scheduledEvents: ConditionalStore<
+    IsEnabled<T["scheduledEvents"]>,
+    Store<Snowflake, ScheduledEvent>
+  >;
 
   /**
    * Access the soundboards cache store.
-   * Contains SoundboardSound objects for Discord's soundboard feature.
+   * Type: Store<Snowflake, SoundboardSound> if enabled, null if disabled
    */
-  readonly soundboards: Store<Snowflake, SoundboardSound>;
+  readonly soundboards: ConditionalStore<
+    IsEnabled<T["soundboards"]>,
+    Store<Snowflake, SoundboardSound>
+  >;
 
   /**
    * Access the stage instances cache store.
-   * Contains StageInstance objects for Discord's Stage channels.
+   * Type: Store<Snowflake, StageInstance> if enabled, null if disabled
    */
-  readonly stageInstances: Store<Snowflake, StageInstance>;
+  readonly stageInstances: ConditionalStore<
+    IsEnabled<T["stageInstances"]>,
+    Store<Snowflake, StageInstance>
+  >;
 
   /**
    * Access the stickers cache store.
-   * Contains Sticker objects from guilds.
+   * Type: Store<Snowflake, Sticker> if enabled, null if disabled
    */
-  readonly stickers: Store<Snowflake, Sticker>;
+  readonly stickers: ConditionalStore<
+    IsEnabled<T["stickers"]>,
+    Store<Snowflake, Sticker>
+  >;
 
   /**
    * Access the subscriptions cache store.
-   * Contains Subscription objects for premium features.
+   * Type: Store<Snowflake, Subscription> if enabled, null if disabled
    */
-  readonly subscriptions: Store<Snowflake, Subscription>;
+  readonly subscriptions: ConditionalStore<
+    IsEnabled<T["subscriptions"]>,
+    Store<Snowflake, Subscription>
+  >;
 
   /**
    * Access the thread members cache store.
-   * Contains ThreadMember objects for users in threads.
+   * Type: Store<Snowflake, ThreadMember> if enabled, null if disabled
    */
-  readonly threadMembers: Store<Snowflake, ThreadMember>;
+  readonly threadMembers: ConditionalStore<
+    IsEnabled<T["threadMembers"]>,
+    Store<Snowflake, ThreadMember>
+  >;
 
   /**
    * Access the users cache store.
-   * Contains User objects which represent Discord users.
+   * Type: Store<Snowflake, User> if enabled, null if disabled
    */
-  readonly users: Store<Snowflake, User>;
+  readonly users: ConditionalStore<
+    IsEnabled<T["users"]>,
+    Store<Snowflake, User>
+  >;
 
   /**
    * Access the voice states cache store.
-   * Contains VoiceState objects for users in voice channels.
+   * Type: Store<Snowflake, VoiceState> if enabled, null if disabled
    */
-  readonly voiceStates: Store<Snowflake, VoiceState>;
+  readonly voiceStates: ConditionalStore<
+    IsEnabled<T["voiceStates"]>,
+    Store<Snowflake, VoiceState>
+  >;
 
   /**
    * Access the webhooks cache store.
-   * Contains Webhook objects for server webhooks.
+   * Type: Store<Snowflake, Webhook> if enabled, null if disabled
    */
-  readonly webhooks: Store<Snowflake, Webhook>;
+  readonly webhooks: ConditionalStore<
+    IsEnabled<T["webhooks"]>,
+    Store<Snowflake, Webhook>
+  >;
 
   /**
-   * Map of all cache stores indexed by entity type
+   * Map of all cache stores indexed by entity type.
+   * Stores can be null when disabled.
    * @internal
    */
-  readonly #cache: Map<CacheEntityType, Store<Snowflake, CacheableEntity>> =
-    new Map();
+  readonly #cache: Map<
+    CacheEntityType,
+    Store<Snowflake, CacheableEntity> | null
+  > = new Map();
 
   /**
-   * Creates a new cache manager with the specified options.
+   * Creates a new cache manager with conditional type safety.
    *
    * @param options - Cache configuration options that control caching behavior
    */
-  constructor(options: CacheOptions) {
-    // Initialize all stores, but only enable them based on options
-    this.applications = this.#createStore<Application>("applications", options);
-    this.autoModerationRules = this.#createStore<AutoModeration>(
-      "autoModerationRules",
+  constructor(options: T) {
+    // Initialize all stores conditionally based on enabled flag
+    this.applications = this.#createStore<Application, "applications">(
+      "applications",
       options,
     );
-    this.bans = this.#createStore<Ban>("bans", options);
-    this.channels = this.#createStore<AnyChannel>("channels", options);
-    this.emojis = this.#createStore<Emoji>("emojis", options);
-    this.entitlements = this.#createStore<Entitlement>("entitlements", options);
-    this.guilds = this.#createStore<Guild>("guilds", options);
-    this.integrations = this.#createStore<Integration>("integrations", options);
-    this.invites = this.#createStore<Invite>("invites", options);
-    this.members = this.#createStore<GuildMember>("members", options);
-    this.messages = this.#createStore<Message>("messages", options);
-    this.presences = this.#createStore<PresenceEntity>("presences", options);
-    this.roles = this.#createStore<Role>("roles", options);
-    this.scheduledEvents = this.#createStore<ScheduledEvent>(
+    this.autoModerationRules = this.#createStore<
+      AutoModeration,
+      "autoModerationRules"
+    >("autoModerationRules", options);
+    this.bans = this.#createStore<Ban, "bans">("bans", options);
+    this.channels = this.#createStore<AnyChannel, "channels">(
+      "channels",
+      options,
+    );
+    this.emojis = this.#createStore<Emoji, "emojis">("emojis", options);
+    this.entitlements = this.#createStore<Entitlement, "entitlements">(
+      "entitlements",
+      options,
+    );
+    this.guilds = this.#createStore<Guild, "guilds">("guilds", options);
+    this.integrations = this.#createStore<Integration, "integrations">(
+      "integrations",
+      options,
+    );
+    this.invites = this.#createStore<Invite, "invites">("invites", options);
+    this.members = this.#createStore<GuildMember, "members">(
+      "members",
+      options,
+    );
+    this.messages = this.#createStore<Message, "messages">("messages", options);
+    this.presences = this.#createStore<PresenceEntity, "presences">(
+      "presences",
+      options,
+    );
+    this.roles = this.#createStore<Role, "roles">("roles", options);
+    this.scheduledEvents = this.#createStore<ScheduledEvent, "scheduledEvents">(
       "scheduledEvents",
       options,
     );
-    this.soundboards = this.#createStore<SoundboardSound>(
+    this.soundboards = this.#createStore<SoundboardSound, "soundboards">(
       "soundboards",
       options,
     );
-    this.stageInstances = this.#createStore<StageInstance>(
+    this.stageInstances = this.#createStore<StageInstance, "stageInstances">(
       "stageInstances",
       options,
     );
-    this.stickers = this.#createStore<Sticker>("stickers", options);
-    this.subscriptions = this.#createStore<Subscription>(
+    this.stickers = this.#createStore<Sticker, "stickers">("stickers", options);
+    this.subscriptions = this.#createStore<Subscription, "subscriptions">(
       "subscriptions",
       options,
     );
-    this.threadMembers = this.#createStore<ThreadMember>(
+    this.threadMembers = this.#createStore<ThreadMember, "threadMembers">(
       "threadMembers",
       options,
     );
-    this.users = this.#createStore<User>("users", options);
-    this.voiceStates = this.#createStore<VoiceState>("voiceStates", options);
-    this.webhooks = this.#createStore<Webhook>("webhooks", options);
+    this.users = this.#createStore<User, "users">("users", options);
+    this.voiceStates = this.#createStore<VoiceState, "voiceStates">(
+      "voiceStates",
+      options,
+    );
+    this.webhooks = this.#createStore<Webhook, "webhooks">("webhooks", options);
   }
 
   /**
-   * Clears all caches in the cache manager.
-   * This removes all items from all enabled caches.
+   * Clears all enabled caches in the cache manager.
+   * Disabled caches (null stores) are automatically skipped.
    */
   clearAll(): void {
     for (const store of this.#cache.values()) {
-      store.clear();
-    }
-  }
-
-  /**
-   * Clears specific caches in the cache manager.
-   *
-   * @param types - The types of caches to clear
-   */
-  clear(types: CacheEntityType[]): void {
-    for (const type of types) {
-      const store = this.#cache.get(type);
-      if (store) {
+      if (store !== null) {
         store.clear();
       }
     }
   }
 
   /**
-   * Performs a full cleanup of all caches, removing expired items.
+   * Clears specific caches in the cache manager.
+   * Only clears enabled stores; disabled stores are automatically skipped.
+   *
+   * @param types - The types of caches to clear
+   */
+  clear(types: CacheEntityType[]): void {
+    for (const type of types) {
+      const store = this.#cache.get(type);
+      if (store !== null) {
+        store?.clear();
+      }
+    }
+  }
+
+  /**
+   * Performs a full cleanup of all enabled caches, removing expired items.
+   * Disabled caches are automatically skipped.
    */
   cleanup(): void {
     for (const store of this.#cache.values()) {
-      // Force cleanup by accessing all keys
-      for (const key of store.keys()) {
-        if (store.isExpired(key)) {
-          store.delete(key);
+      if (store !== null) {
+        // Force cleanup by accessing all keys
+        for (const key of store.keys()) {
+          if (store.isExpired(key)) {
+            store.delete(key);
+          }
         }
       }
     }
@@ -598,38 +595,62 @@ export class CacheManager {
    */
   destroy(): void {
     for (const store of this.#cache.values()) {
-      store.destroy();
+      if (store !== null) {
+        store.destroy();
+      }
     }
     this.#cache.clear();
   }
 
   /**
-   * Creates a store for a specific entity type and registers it in the cache manager.
+   * Creates a conditional store for a specific entity type and registers it in the cache manager.
    *
-   * @template T - The type of entities stored in this cache
+   * Returns a Store instance when the entity type is enabled in the configuration,
+   * or null when disabled. This eliminates the need for runtime checks and provides
+   * compile-time type safety through conditional typing.
+   *
+   * @template S - The type of entities stored in this cache
+   * @template EntityType - The specific entity type key
    * @param type - The entity type for this cache
-   * @param options - The cache options
-   * @returns A new store instance
+   * @param options - The cache configuration options
+   * @returns ConditionalStore based on the enabled flag
    * @internal
+   *
+   * @remarks
+   * When a store is disabled (enabled: false), this method:
+   * - Returns null instead of creating a Store instance
+   * - Registers null in the internal cache map
+   * - Saves memory by not instantiating unused stores
+   * - Provides type-safe access through conditional typing
+   *
+   * When a store is enabled (enabled: true), this method:
+   * - Creates a new Store instance with the provided configuration
+   * - Registers the store in the internal cache map
+   * - Returns the typed Store instance
    */
-  #createStore<T>(
-    type: CacheEntityType,
-    options: CacheOptions,
-  ): Store<Snowflake, T> {
-    // Check if the cache is enabled for this entity type
-    const isEnabled = options[type]?.enabled ?? false;
+  #createStore<S, EntityType extends CacheEntityType>(
+    type: EntityType,
+    options: T,
+  ): ConditionalStore<IsEnabled<T[EntityType]>, Store<Snowflake, S>> {
+    const typeConfig = options[type];
+    const isEnabled = typeConfig?.enabled ?? false;
 
-    // Create store options by extracting the configuration for this specific type
-    // and applying default values where appropriate
-    const typeOptions = options[type] || {};
-    const storeOptions: StoreOptions = {
-      ...typeOptions,
-      maxSize: isEnabled ? typeOptions.maxSize : 0, // Set maxSize to 0 to effectively disable the cache
-    };
+    if (!isEnabled) {
+      // Store is disabled - register null and return null
+      this.#cache.set(type, null);
+      return null as ConditionalStore<
+        IsEnabled<T[EntityType]>,
+        Store<Snowflake, S>
+      >;
+    }
 
-    const store = new Store<Snowflake, T>(storeOptions);
+    // Store is enabled - create and register the actual store
+    const store = new Store<Snowflake, S>(typeConfig);
     this.#cache.set(type, store as Store<Snowflake, CacheableEntity>);
 
-    return store;
+    return store as ConditionalStore<
+      IsEnabled<T[EntityType]>,
+      Store<Snowflake, S>
+    >;
   }
 }

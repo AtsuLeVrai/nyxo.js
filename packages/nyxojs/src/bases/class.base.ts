@@ -100,16 +100,16 @@ export abstract class BaseClass<T extends object> {
         const cacheStore = client.cache[storeKey] as unknown as Store<
           Snowflake,
           this
-        >;
+        > | null;
 
         // Check if this entity already exists in the cache
-        const existingEntity = cacheStore.get(id);
+        const existingEntity = cacheStore?.get(id);
         if (existingEntity) {
           // Update the existing cached entity with new data
           existingEntity.patch(data);
         } else {
           // Entity doesn't exist in cache yet, add it
-          cacheStore.set(id, this);
+          cacheStore?.set(id, this);
         }
       }
     }

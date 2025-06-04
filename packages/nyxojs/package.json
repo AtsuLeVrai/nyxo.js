@@ -47,10 +47,12 @@
     "@nyxojs/gateway": "workspace:^",
     "@nyxojs/rest": "workspace:^",
     "@nyxojs/store": "workspace:^",
-    "@nyxojs/voice": "workspace:^",
     "eventemitter3": "^5.0.1",
     "reflect-metadata": "^0.2.2",
     "zod": "^3.25.51"
+  },
+  "optionalDependencies": {
+    "@nyxojs/voice": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

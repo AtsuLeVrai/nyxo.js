@@ -1,4 +1,4 @@
-import { Client } from "discord.js";
+import { Client, Options } from "discord.js";
 import { config } from "dotenv";
 
 const { parsed } = config({ debug: false });
@@ -9,6 +9,7 @@ if (!parsed?.DISCORD_TOKEN) {
 
 const client = new Client({
   intents: 513,
+  makeCache: Options.cacheEverything(),
 });
 
 client.once("ready", (readyClient) => {

@@ -10,6 +10,24 @@ if (!parsed?.DISCORD_TOKEN) {
 const client = new Client({
   token: parsed.DISCORD_TOKEN,
   intents: 513,
+  cache: {
+    applications: { enabled: false },
+    autoModerationRules: { enabled: false },
+    bans: { enabled: false },
+    emojis: { enabled: false },
+    entitlements: { enabled: false },
+    integrations: { enabled: false },
+    invites: { enabled: false },
+    presences: { enabled: false },
+    scheduledEvents: { enabled: false },
+    soundboards: { enabled: false },
+    stageInstances: { enabled: false },
+    stickers: { enabled: false },
+    subscriptions: { enabled: false },
+    threadMembers: { enabled: false },
+    voiceStates: { enabled: false },
+    webhooks: { enabled: false },
+  },
 });
 
 client.once("ready", (ready) => {
