@@ -1,5 +1,20 @@
 # nyxo.js
 
+## 0.2.0
+
+### Minor Changes
+
+- Add session manager export and new WebSocket event types
+
+### Patch Changes
+
+- Updated dependencies
+  - @nyxojs/builders@0.2.0
+  - @nyxojs/core@0.2.0
+  - @nyxojs/gateway@0.2.0
+  - @nyxojs/rest@0.2.0
+  - @nyxojs/store@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes

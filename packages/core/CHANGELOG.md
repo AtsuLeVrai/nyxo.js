@@ -1,5 +1,11 @@
 # @nyxojs/core
 
+## 0.2.0
+
+### Minor Changes
+
+- Add session manager export and new WebSocket event types
+
 ## 0.1.0
 
 ### Minor Changes
