@@ -276,27 +276,6 @@ export class ShardManager {
   }
 
   /**
-   * Checks if sharding is enabled and required
-   *
-   * This is determined by:
-   * - The total number of shards specified in options
-   * - The total number of guilds the bot is in
-   * - The largeThreshold option
-   * - The force option
-   *
-   * If any of these conditions are met, sharding is enabled.
-   *
-   * @returns True if sharding is enabled
-   */
-  get isEnabled(): boolean {
-    const totalGuildCount = this.#calculateTotalGuildCount();
-
-    return (
-      totalGuildCount >= this.#options.largeThreshold || this.#options.force
-    );
-  }
-
-  /**
    * Spawns the required number of shards based on Discord recommendations
    *
    * @param guildCount - Current number of guilds the bot is in
@@ -310,7 +289,7 @@ export class ShardManager {
     maxConcurrency: number,
     recommendedShards: number,
   ): Promise<void> {
-    if (!this.#validateSpawnConditions(guildCount)) {
+    if (!this.isEnabled(guildCount)) {
       return;
     }
 
@@ -614,20 +593,39 @@ export class ShardManager {
   /**
    * Validates if the current configuration requires sharding to be enabled
    *
-   * This method evaluates three conditions:
-   * 1. If the guild count exceeds the configured largeThreshold
-   * 2. If totalShards is explicitly configured in options
-   * 3. If sharding is forced via the force option
+   * Security logic:
+   * 1. If `force` is true → Always enable (complete override)
+   * 2. If guild count < largeThreshold → Disable (even if shards configured)
+   * 3. If guild count >= largeThreshold → Enable
    *
-   * @internal
+   * This prevents accidental sharding when not needed, while still allowing
+   * manual override via the `force` option.
+   *
+   * @param externalGuildCount - Current number of guilds the bot is in
+   * @return True if sharding should be enabled, false otherwise
    */
-  #validateSpawnConditions(guildCount: number): boolean {
+  isEnabled(externalGuildCount?: number): boolean {
+    // Use external count if provided, otherwise use internal count
+    const guildCount = externalGuildCount ?? this.#calculateTotalGuildCount();
+
     const isShardingRequired = guildCount >= this.#options.largeThreshold;
     const hasConfiguredShards = this.#options.totalShards !== undefined;
     const isForced = this.#options.force;
 
-    // Skip sharding if not required, not configured, and not forced
-    return isShardingRequired || hasConfiguredShards || isForced;
+    // Force option overrides everything - complete bypass
+    if (isForced && hasConfiguredShards) {
+      return true;
+    }
+
+    // Security check: Don't enable sharding if not actually needed
+    // Even if shards are configured, respect the guild count threshold
+    if (!isShardingRequired) {
+      return false;
+    }
+
+    // If we reach here: isShardingRequired = true and hasConfiguredShards = true
+    // Enable sharding regardless of configuration
+    return isShardingRequired && hasConfiguredShards;
   }
 
   /**

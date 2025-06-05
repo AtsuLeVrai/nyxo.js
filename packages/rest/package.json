@@ -45,7 +45,7 @@
     "@nyxojs/core": "workspace:^",
     "@nyxojs/store": "workspace:^",
     "eventemitter3": "^5.0.1",
-    "form-data": "^4.0.2",
+    "form-data": "^4.0.3",
     "mime-types": "^3.0.1",
     "undici": "^7.10.0",
     "zod": "^3.25.51"
@@ -54,7 +54,7 @@
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.15.29",
     "rimraf": "^6.0.1",
-    "tsdown": "^0.12.6",
+    "tsdown": "^0.12.7",
     "typescript": "^5.8.3"
   }
 }

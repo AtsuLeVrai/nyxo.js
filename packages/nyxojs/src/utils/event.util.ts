@@ -859,4 +859,7 @@ export const GatewayKeyofEventMappings: (keyof GatewayEvents)[] = [
   "wsClose",
   "wsError",
   "dispatch",
+  "sequenceUpdate",
+  "wsOpen",
+  "wsMessage",
 ];

@@ -343,6 +343,12 @@ export interface GatewayEvents {
   sessionInvalidate: [event: SessionInvalidateEvent];
 
   /**
+   * Emitted when the sequence number is updated
+   * @param sequence The new sequence number
+   */
+  sequenceUpdate: [sequence: number];
+
+  /**
    * Emitted when a shard connects and is ready to receive events
    * @param event Details about the ready shard
    */
@@ -378,6 +384,26 @@ export interface GatewayEvents {
    * @param error The error that occurred
    */
   wsError: [error: Error];
+
+  /**
+   * Emitted when the WebSocket connection is opened
+   */
+  wsOpen: [];
+
+  /**
+   * Emitted when a message is received from the WebSocket
+   * @param data The raw message data received from Discord
+   */
+  wsMessage: [data: Buffer];
+
+  /**
+   * Emitted when the connection state changes
+   * @param oldState The previous connection state
+   */
+  stateChange: [
+    oldState: GatewayConnectionState,
+    newState: GatewayConnectionState,
+  ];
 
   /**
    * Emitted for all Discord Gateway dispatch events
@@ -422,6 +448,47 @@ export interface PayloadEntity {
    * Only present in op:0 (Dispatch) payloads
    */
   t: keyof GatewayReceiveEvents | null;
+}
+
+/**
+ * Enhanced connection states for the Discord Gateway
+ *
+ * Provides more granular states to better track the connection lifecycle
+ * and enable more precise error handling and state management.
+ */
+export enum GatewayConnectionState {
+  /** Initial state - no connection attempt has been made */
+  Idle = "idle",
+
+  /** Attempting to establish WebSocket connection */
+  Connecting = "connecting",
+
+  /** WebSocket connected, waiting for Hello message */
+  Connected = "connected",
+
+  /** Received Hello, sending Identify payload */
+  Identifying = "identifying",
+
+  /** Received Hello, sending Resume payload */
+  Resuming = "resuming",
+
+  /** Authentication successful, waiting for Ready/Resumed event */
+  Authenticating = "authenticating",
+
+  /** Fully connected and operational */
+  Ready = "ready",
+
+  /** Connection lost, attempting to reconnect */
+  Reconnecting = "reconnecting",
+
+  /** Gracefully disconnecting */
+  Disconnecting = "disconnecting",
+
+  /** Connection closed */
+  Disconnected = "disconnected",
+
+  /** Connection failed and won't retry */
+  Failed = "failed",
 }
 
 /**
