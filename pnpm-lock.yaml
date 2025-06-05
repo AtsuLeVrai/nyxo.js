@@ -285,10 +285,6 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
-    optionalDependencies:
-      '@nyxojs/voice':
-        specifier: workspace:^
-        version: link:../voice
 
   packages/rest:
     dependencies:

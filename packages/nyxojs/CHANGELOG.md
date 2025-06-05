@@ -1,5 +1,11 @@
 # nyxo.js
 
+## 0.2.1
+
+### Patch Changes
+
+- remove unused voice dependency and export from index
+
 ## 0.2.0
 
 ### Minor Changes
