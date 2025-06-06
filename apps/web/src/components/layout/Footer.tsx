@@ -131,12 +131,6 @@ export default function Footer() {
           description: "Learn more about TypeScript",
         },
         {
-          title: "Discord.js Guide",
-          href: "https://discordjs.guide/",
-          isExternal: true,
-          description: "Official Discord.js documentation",
-        },
-        {
           title: "Node.js Documentation",
           href: "https://nodejs.org/docs/",
           isExternal: true,
