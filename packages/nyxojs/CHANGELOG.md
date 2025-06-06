@@ -1,5 +1,17 @@
 # nyxo.js
 
+## 0.2.2
+
+### Patch Changes
+
+- refactor: remove unused exports and update REST client usage in routers
+- Updated dependencies
+  - @nyxojs/builders@0.2.1
+  - @nyxojs/gateway@0.2.1
+  - @nyxojs/store@0.2.1
+  - @nyxojs/core@0.2.1
+  - @nyxojs/rest@0.2.1
+
 ## 0.2.1
 
 ### Patch Changes

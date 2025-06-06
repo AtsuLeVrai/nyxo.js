@@ -7,7 +7,7 @@ import type {
   Snowflake,
   UserEntity,
 } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -123,7 +123,7 @@ export interface UserRoleConnectionUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/user}
  */
-export class UserRouter extends BaseRouter {
+export class UserRouter {
   /**
    * API route constants for user-related endpoints.
    * Defines the URL patterns for Discord's user-related API endpoints.
@@ -172,6 +172,17 @@ export class UserRouter extends BaseRouter {
       `/users/@me/applications/${applicationId}/role-connection` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches the user object of the requester's account.
    * Returns detailed information about the currently authenticated user.
@@ -180,7 +191,7 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
   fetchCurrentUser(): Promise<UserEntity> {
-    return this.get(UserRouter.USER_ROUTES.currentUserEndpoint);
+    return this.#rest.get(UserRouter.USER_ROUTES.currentUserEndpoint);
   }
 
   /**
@@ -192,7 +203,7 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
   fetchUser(userId: Snowflake): Promise<UserEntity> {
-    return this.get(UserRouter.USER_ROUTES.userByIdEndpoint(userId));
+    return this.#rest.get(UserRouter.USER_ROUTES.userByIdEndpoint(userId));
   }
 
   /**
@@ -204,16 +215,23 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
   async updateCurrentUser(options: UserUpdateOptions): Promise<UserEntity> {
-    const fileFields: (keyof UserUpdateOptions)[] = ["avatar", "banner"];
-    const processedOptions = await this.prepareBodyWithFiles(
-      options,
-      fileFields,
-    );
+    const processedOptions = { ...options };
 
-    return this.patch(
-      UserRouter.USER_ROUTES.currentUserEndpoint,
-      processedOptions,
-    );
+    if (processedOptions.avatar) {
+      processedOptions.avatar = await this.#rest.file.toDataUri(
+        processedOptions.avatar,
+      );
+    }
+
+    if (processedOptions.banner) {
+      processedOptions.banner = await this.#rest.file.toDataUri(
+        processedOptions.banner,
+      );
+    }
+
+    return this.#rest.patch(UserRouter.USER_ROUTES.currentUserEndpoint, {
+      body: JSON.stringify(processedOptions),
+    });
   }
 
   /**
@@ -225,7 +243,7 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
   fetchCurrentGuilds(query?: UserGuildsFetchParams): Promise<GuildEntity[]> {
-    return this.get(UserRouter.USER_ROUTES.currentUserGuildsEndpoint, {
+    return this.#rest.get(UserRouter.USER_ROUTES.currentUserGuildsEndpoint, {
       query,
     });
   }
@@ -239,7 +257,7 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
   fetchCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
-    return this.get(
+    return this.#rest.get(
       UserRouter.USER_ROUTES.currentUserGuildMemberEndpoint(guildId),
     );
   }
@@ -253,7 +271,9 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
   leaveGuild(guildId: Snowflake): Promise<void> {
-    return this.delete(UserRouter.USER_ROUTES.leaveGuildEndpoint(guildId));
+    return this.#rest.delete(
+      UserRouter.USER_ROUTES.leaveGuildEndpoint(guildId),
+    );
   }
 
   /**
@@ -265,8 +285,10 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
   createDmChannel(recipientId: Snowflake): Promise<DmChannelEntity> {
-    return this.post(UserRouter.USER_ROUTES.currentUserChannelsEndpoint, {
-      recipient_id: recipientId,
+    return this.#rest.post(UserRouter.USER_ROUTES.currentUserChannelsEndpoint, {
+      body: JSON.stringify({
+        recipient_id: recipientId,
+      }),
     });
   }
 
@@ -281,10 +303,9 @@ export class UserRouter extends BaseRouter {
   createGroupDmChannel(
     options: GroupDmCreateOptions,
   ): Promise<DmChannelEntity> {
-    return this.post(
-      UserRouter.USER_ROUTES.currentUserChannelsEndpoint,
-      options,
-    );
+    return this.#rest.post(UserRouter.USER_ROUTES.currentUserChannelsEndpoint, {
+      body: JSON.stringify(options),
+    });
   }
 
   /**
@@ -295,7 +316,9 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
   fetchCurrentConnections(): Promise<ConnectionEntity[]> {
-    return this.get(UserRouter.USER_ROUTES.currentUserConnectionsEndpoint);
+    return this.#rest.get(
+      UserRouter.USER_ROUTES.currentUserConnectionsEndpoint,
+    );
   }
 
   /**
@@ -309,7 +332,7 @@ export class UserRouter extends BaseRouter {
   fetchApplicationRoleConnection(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.get(
+    return this.#rest.get(
       UserRouter.USER_ROUTES.applicationRoleConnectionEndpoint(applicationId),
     );
   }
@@ -327,9 +350,9 @@ export class UserRouter extends BaseRouter {
     applicationId: Snowflake,
     connection: UserRoleConnectionUpdateOptions,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.put(
+    return this.#rest.put(
       UserRouter.USER_ROUTES.applicationRoleConnectionEndpoint(applicationId),
-      connection,
+      { body: JSON.stringify(connection) },
     );
   }
 }

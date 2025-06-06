@@ -2,7 +2,7 @@ import type {
   ApplicationRoleConnectionMetadataEntity,
   Snowflake,
 } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 
 /**
  * Router for Discord Application Connection-related API endpoints.
@@ -10,7 +10,7 @@ import { BaseRouter } from "../bases/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata}
  */
-export class ApplicationConnectionRouter extends BaseRouter {
+export class ApplicationConnectionRouter {
   /**
    * API route constants for application connection-related endpoints.
    */
@@ -23,6 +23,17 @@ export class ApplicationConnectionRouter extends BaseRouter {
       `/applications/${applicationId}/role-connections/metadata` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches the role connection metadata records for an application.
    * Retrieves metadata fields used for role connection verification.
@@ -34,7 +45,7 @@ export class ApplicationConnectionRouter extends BaseRouter {
   fetchRoleConnectionMetadata(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    return this.get(
+    return this.#rest.get(
       ApplicationConnectionRouter.CONNECTION_ROUTES.roleConnectionsMetadataEndpoint(
         applicationId,
       ),
@@ -54,11 +65,11 @@ export class ApplicationConnectionRouter extends BaseRouter {
     applicationId: Snowflake,
     metadata: ApplicationRoleConnectionMetadataEntity[],
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    return this.put(
+    return this.#rest.put(
       ApplicationConnectionRouter.CONNECTION_ROUTES.roleConnectionsMetadataEndpoint(
         applicationId,
       ),
-      metadata,
+      { body: JSON.stringify(metadata) },
     );
   }
 }

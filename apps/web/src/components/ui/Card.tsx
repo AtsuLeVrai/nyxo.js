@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import type { ReactElement, ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import type { HTMLAttributes, ReactNode } from "react";
+import { forwardRef } from "react";
 
 export type CardVariant =
   | "default"
@@ -10,7 +11,7 @@ export type CardVariant =
   | "testimonial"
   | "pricing";
 
-interface CardProps {
+interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
   /** Content to display inside the card */
   children: ReactNode;
   /** Style variant */
@@ -23,182 +24,254 @@ interface CardProps {
   className?: string;
   /** Click handler */
   onClick?: () => void;
+  /** Whether the card is interactive (clickable) */
+  interactive?: boolean;
+  /** Test ID for testing */
+  "data-testid"?: string;
 }
 
-export function Card({
-  children,
-  variant = "default",
-  isHighlighted = false,
-  animate = true,
-  className = "",
-  onClick,
-}: CardProps) {
-  // Base styles for all cards
-  const baseStyles = "rounded-lg overflow-hidden";
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  (
+    {
+      children,
+      variant = "default",
+      isHighlighted = false,
+      animate = true,
+      className = "",
+      onClick,
+      interactive = false,
+      "data-testid": testId,
+      ...rest
+    },
+    ref,
+  ) => {
+    const shouldReduceMotion = useReducedMotion();
+    const isClickable = onClick || interactive;
 
-  // Specific styles for each variant
-  const variantStyles: Record<CardVariant, string> = {
-    default: "border border-dark-500 bg-dark-600",
-    elevated: "border border-dark-500 bg-dark-600 shadow-lg",
-    feature: "border border-dark-500 bg-dark-600",
-    testimonial: "border border-dark-500 bg-dark-600 p-6",
-    pricing: "border border-dark-500 bg-dark-600",
-  };
+    // Base styles for all cards
+    const baseStyles = "rounded-lg overflow-hidden transition-all duration-200";
 
-  // Highlighted styles
-  const highlightedStyles = isHighlighted
-    ? "border-primary-500/30 shadow-lg shadow-primary-500/20"
-    : "";
+    // Specific styles for each variant with improved contrast
+    const variantStyles: Record<CardVariant, string> = {
+      default: "border border-dark-500 bg-dark-600/80 backdrop-blur-sm",
+      elevated:
+        "border border-dark-500 bg-dark-600/80 shadow-lg shadow-black/20 backdrop-blur-sm",
+      feature:
+        "border border-dark-500 bg-dark-600/80 backdrop-blur-sm hover:border-dark-400 transition-colors",
+      testimonial: "border border-dark-500 bg-dark-600/80 p-6 backdrop-blur-sm",
+      pricing: "border border-dark-500 bg-dark-600/80 backdrop-blur-sm",
+    };
 
-  // Animation properties
-  const animationProps = animate
-    ? {
-        whileHover: {
-          y: -5,
-          transition: { duration: 0.3 },
-        },
-        animate: { opacity: 1, y: 0 },
-        initial: { opacity: 0, y: 15 },
-        transition: { duration: 0.5 },
-      }
-    : {};
+    // Highlighted styles with better visual feedback
+    const highlightedStyles = isHighlighted
+      ? "border-primary-500/50 shadow-lg shadow-primary-500/20 bg-dark-600/90"
+      : "";
 
-  // Combine all styles
-  const combinedStyles = `
+    // Interactive styles
+    const interactiveStyles = isClickable
+      ? "cursor-pointer hover:border-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 focus:ring-offset-dark-800"
+      : "";
+
+    // Combine all styles
+    const combinedStyles = `
     ${baseStyles}
     ${variantStyles[variant]}
     ${highlightedStyles}
+    ${interactiveStyles}
     ${className}
   `;
 
-  /**
-   * Render a card with gradient border if highlighted
-   */
-  function renderCardWithGradient() {
-    if (isHighlighted) {
+    // Animation properties with reduced motion support
+    const animationProps =
+      animate && !shouldReduceMotion
+        ? {
+            whileHover: isClickable
+              ? {
+                  y: -4,
+                  scale: 1.02,
+                  transition: { duration: 0.2, ease: "easeOut" },
+                }
+              : {
+                  y: -2,
+                  transition: { duration: 0.2, ease: "easeOut" },
+                },
+            animate: { opacity: 1, y: 0 },
+            initial: { opacity: 0, y: 15 },
+            transition: { duration: 0.4, ease: "easeOut" },
+            whileTap: isClickable ? { scale: 0.98 } : undefined,
+          }
+        : {};
+
+    // Handle keyboard events for accessibility
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+      if (onClick && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        onClick();
+      }
+    };
+
+    /**
+     * Render a card with gradient border if highlighted
+     */
+    function CardContent() {
+      if (isHighlighted) {
+        return (
+          <div className="group relative">
+            <div className="-inset-0.5 absolute rounded-lg bg-gradient-to-r from-primary-500 to-cyan-500 opacity-60 blur-sm transition-opacity group-hover:opacity-80" />
+            <div className={`relative ${combinedStyles}`}>{children}</div>
+          </div>
+        );
+      }
+
+      return <div className={combinedStyles}>{children}</div>;
+    }
+
+    // Return with or without animation
+    if (animate && !shouldReduceMotion) {
       return (
-        <div className="group relative">
-          <div className="-inset-0.5 absolute rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 opacity-75 blur-sm" />
-          <div className={combinedStyles}>{children}</div>
-        </div>
+        // @ts-ignore
+        <motion.div
+          ref={ref}
+          className="relative"
+          {...animationProps}
+          onClick={onClick}
+          onKeyDown={isClickable ? handleKeyDown : undefined}
+          role={isClickable ? "button" : undefined}
+          tabIndex={isClickable ? 0 : undefined}
+          aria-pressed={isClickable ? false : undefined}
+          data-testid={testId}
+          {...rest}
+        >
+          <CardContent />
+        </motion.div>
       );
     }
 
-    return <div className={combinedStyles}>{children}</div>;
-  }
-
-  // Return with or without animation
-  if (animate) {
     return (
-      <motion.div
+      <div
+        ref={ref}
         className="relative"
-        {...animationProps}
         onClick={onClick}
-        role={onClick ? "button" : undefined}
-        tabIndex={onClick ? 0 : undefined}
-        onKeyDown={
-          onClick
-            ? (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onClick();
-                }
-              }
-            : undefined
-        }
+        onKeyDown={isClickable ? handleKeyDown : undefined}
+        role={isClickable ? "button" : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        aria-pressed={isClickable ? false : undefined}
+        data-testid={testId}
+        {...rest}
       >
-        {renderCardWithGradient()}
-      </motion.div>
+        <CardContent />
+      </div>
     );
-  }
+  },
+);
 
-  return (
-    <div
-      className="relative"
-      onClick={onClick}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={
-        onClick
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onClick();
-              }
-            }
-          : undefined
-      }
-    >
-      {renderCardWithGradient()}
-    </div>
-  );
-}
+Card.displayName = "Card";
 
 /**
  * Card header subcomponent
  */
-Card.Header = function CardHeader({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}): ReactElement {
-  return <div className={`p-6 ${className}`}>{children}</div>;
-};
+const CardHeader = forwardRef<
+  HTMLDivElement,
+  {
+    children: ReactNode;
+    className?: string;
+  }
+>(({ children, className = "" }, ref) => {
+  return (
+    <div ref={ref} className={`p-6 ${className}`}>
+      {children}
+    </div>
+  );
+});
+CardHeader.displayName = "CardHeader";
 
 /**
  * Card body subcomponent
  */
-Card.Body = function CardBody({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}): ReactElement {
-  return <div className={`px-6 py-4 ${className}`}>{children}</div>;
-};
+const CardBody = forwardRef<
+  HTMLDivElement,
+  {
+    children: ReactNode;
+    className?: string;
+  }
+>(({ children, className = "" }, ref) => {
+  return (
+    <div ref={ref} className={`px-6 py-4 ${className}`}>
+      {children}
+    </div>
+  );
+});
+CardBody.displayName = "CardBody";
 
 /**
  * Card footer subcomponent
  */
-Card.Footer = function CardFooter({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}): ReactElement {
-  return <div className={`bg-dark-700/50 p-6 ${className}`}>{children}</div>;
-};
+const CardFooter = forwardRef<
+  HTMLDivElement,
+  {
+    children: ReactNode;
+    className?: string;
+  }
+>(({ children, className = "" }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={`border-dark-500/50 border-t bg-dark-700/30 p-6 ${className}`}
+    >
+      {children}
+    </div>
+  );
+});
+CardFooter.displayName = "CardFooter";
 
 /**
  * Card title subcomponent
  */
-Card.Title = function CardTitle({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}): ReactElement {
+const CardTitle = forwardRef<
+  HTMLHeadingElement,
+  {
+    children: ReactNode;
+    className?: string;
+    as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  }
+>(({ children, className = "", as: Component = "h3" }, ref) => {
   return (
-    <h3 className={`font-medium text-lg text-white ${className}`}>
+    <Component
+      ref={ref}
+      className={`font-semibold text-lg text-white leading-tight ${className}`}
+    >
       {children}
-    </h3>
+    </Component>
   );
-};
+});
+CardTitle.displayName = "CardTitle";
 
 /**
  * Card description subcomponent
  */
-Card.Description = function CardDescription({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}): ReactElement {
-  return <p className={`text-slate-400 ${className}`}>{children}</p>;
-};
+const CardDescription = forwardRef<
+  HTMLParagraphElement,
+  {
+    children: ReactNode;
+    className?: string;
+  }
+>(({ children, className = "" }, ref) => {
+  return (
+    <p ref={ref} className={`text-slate-400 leading-relaxed ${className}`}>
+      {children}
+    </p>
+  );
+});
+CardDescription.displayName = "CardDescription";
+
+// Attach subcomponents to main Card component
+// @ts-ignore
+Card.Header = CardHeader;
+// @ts-ignore
+Card.Body = CardBody;
+// @ts-ignore
+Card.Footer = CardFooter;
+// @ts-ignore
+Card.Title = CardTitle;
+// @ts-ignore
+Card.Description = CardDescription;

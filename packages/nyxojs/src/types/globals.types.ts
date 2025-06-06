@@ -123,36 +123,6 @@ export type Enforce<
 export type Promisable<T> = T | Promise<T>;
 
 /**
- * Conditional type utility that returns different types based on a boolean condition.
- *
- * @typeParam Condition - Boolean condition that determines which type to return
- * @typeParam Then - Type to return when condition is true
- * @typeParam Else - Type to return when condition is false (default: never)
- *
- * @remarks
- * This utility type provides a more readable alternative to TypeScript's native
- * conditional type syntax `Condition extends true ? Then : Else`.
- * It's particularly useful for creating type-safe APIs where certain properties
- * or return types depend on configuration flags or boolean parameters.
- *
- * The type handles strict boolean literals (`true`/`false`) and will resolve
- * to the appropriate branch. When used with the general `boolean` type,
- * TypeScript will create a union of both possible types.
- *
- * Useful for:
- * - Creating conditional property types based on configuration
- * - Implementing feature flags at the type level
- * - Building type-safe APIs with optional functionality
- * - Avoiding runtime type checks when compile-time information is available
- * - Simplifying complex conditional type expressions
- */
-export type If<
-  Condition extends boolean,
-  Then,
-  Else = never,
-> = Condition extends true ? Then : Else;
-
-/**
  * Represents a guild-based entity, which includes a guild ID.
  * This is useful for entities that are specific to a guild context.
  */

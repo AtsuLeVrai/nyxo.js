@@ -15,7 +15,7 @@ const RATE_LIMIT_CONSTANTS = {
    * Routes not subject to the global rate limit per Discord documentation.
    * Only interaction endpoints are exempted from global rate limits.
    */
-  GLOBAL_EXEMPT_ROUTES: ["/interactions"],
+  GLOBAL_EXEMPT_ROUTES: ["/interactions", "/webhooks"],
 
   /**
    * Status codes that indicate invalid requests.
@@ -281,7 +281,7 @@ export class RateLimitManager {
 
     // Skip global exempt routes (only interaction endpoints per Discord docs)
     const isGlobalExempt = RATE_LIMIT_CONSTANTS.GLOBAL_EXEMPT_ROUTES.some(
-      (route) => path.startsWith(route),
+      (route) => path.startsWith(route) || path.includes(route),
     );
 
     // Check global limits unless this route is exempt
@@ -765,6 +765,10 @@ export class RateLimitManager {
     const retryAfterSec = Number(headers[HEADERS.RETRY_AFTER]);
     const retryAfter = retryAfterSec * 1000; // Convert to milliseconds
     const scope = (headers[HEADERS.SCOPE] as RateLimitScope) ?? "user";
+    if (scope !== "shared") {
+      this.#trackInvalidRequest(now);
+    }
+
     const isGlobal = headers[HEADERS.GLOBAL] === "true";
     const bucketId = headers[HEADERS.BUCKET] || "unknown";
 

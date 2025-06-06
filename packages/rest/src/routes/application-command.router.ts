@@ -9,7 +9,7 @@ import type {
   ApplicationCommandType,
   ApplicationIntegrationType,
 } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 
 /**
  * Interface for editing application command permissions.
@@ -143,7 +143,7 @@ export type GuildCommandUpdateOptions = Partial<
  *
  * @see {@link https://discord.com/developers/docs/interactions/application-commands}
  */
-export class ApplicationCommandRouter extends BaseRouter {
+export class ApplicationCommandRouter {
   /**
    * API route constants for application command-related endpoints.
    */
@@ -211,6 +211,17 @@ export class ApplicationCommandRouter extends BaseRouter {
       `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches all global commands for the application.
    * Returns commands available in all guilds.
@@ -224,7 +235,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     withLocalizations = false,
   ): Promise<AnyApplicationCommandEntity[]> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandsEndpoint(
         applicationId,
       ),
@@ -247,11 +258,11 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     options: GlobalCommandCreateOptions,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.post(
+    return this.#rest.post(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandsEndpoint(
         applicationId,
       ),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -267,7 +278,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandByIdEndpoint(
         applicationId,
         commandId,
@@ -290,12 +301,12 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
     options: GlobalCommandUpdateOptions,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.patch(
+    return this.#rest.patch(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandByIdEndpoint(
         applicationId,
         commandId,
       ),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -312,7 +323,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandByIdEndpoint(
         applicationId,
         commandId,
@@ -333,11 +344,11 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     commands: GlobalCommandCreateOptions[],
   ): Promise<AnyApplicationCommandEntity[]> {
-    return this.put(
+    return this.#rest.put(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandsEndpoint(
         applicationId,
       ),
-      commands,
+      { body: JSON.stringify(commands) },
     );
   }
 
@@ -356,14 +367,12 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     withLocalizations = false,
   ): Promise<AnyApplicationCommandEntity[]> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandsEndpoint(
         applicationId,
         guildId,
       ),
-      {
-        query: { with_localizations: withLocalizations },
-      },
+      { query: { with_localizations: withLocalizations } },
     );
   }
 
@@ -382,12 +391,12 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     options: GuildCommandCreateOptions,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.post(
+    return this.#rest.post(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandsEndpoint(
         applicationId,
         guildId,
       ),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -405,7 +414,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandByIdEndpoint(
         applicationId,
         guildId,
@@ -431,13 +440,13 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
     options: GuildCommandUpdateOptions,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.patch(
+    return this.#rest.patch(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandByIdEndpoint(
         applicationId,
         guildId,
         commandId,
       ),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -456,7 +465,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandByIdEndpoint(
         applicationId,
         guildId,
@@ -480,12 +489,12 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     commands: GuildCommandCreateOptions[],
   ): Promise<AnyApplicationCommandEntity[]> {
-    return this.put(
+    return this.#rest.put(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandsEndpoint(
         applicationId,
         guildId,
       ),
-      commands,
+      { body: JSON.stringify(commands) },
     );
   }
 
@@ -502,7 +511,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity[]> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.COMMAND_ROUTES.allGuildCommandPermissionsEndpoint(
         applicationId,
         guildId,
@@ -525,7 +534,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandPermissionsByIdEndpoint(
         applicationId,
         guildId,
@@ -551,13 +560,13 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
     options: CommandPermissionsUpdateOptions,
   ): Promise<GuildApplicationCommandPermissionEntity> {
-    return this.put(
+    return this.#rest.put(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandPermissionsByIdEndpoint(
         applicationId,
         guildId,
         commandId,
       ),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 }

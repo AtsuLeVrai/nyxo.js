@@ -25,7 +25,6 @@ import type {
   VoiceState,
   Webhook,
 } from "../classes/index.js";
-import type { If } from "../types/index.js";
 
 /**
  * Configuration options for a cacheable store in the Nyxo.js client.
@@ -236,25 +235,32 @@ export type CacheableEntity =
   | Webhook;
 
 /**
- * Represents a store that may or may not exist based on configuration.
- * Returns the store type when enabled, null when disabled.
- *
- * @typeParam Enabled - Whether the store is enabled
- * @typeParam StoreType - The type of store when enabled
+ * Mapping of cache entity types to their corresponding cacheable entities.
  */
-type ConditionalStore<Enabled extends boolean, StoreType> = If<
-  Enabled,
-  StoreType,
-  null
->;
-
-/**
- * Extracts the enabled flag from a cache configuration object.
- * Returns false if no enabled property is found.
- *
- * @typeParam T - Configuration object type
- */
-type IsEnabled<T> = T extends { enabled: infer E extends boolean } ? E : false;
+export type CacheEntityMapping = {
+  applications: Application;
+  autoModerationRules: AutoModeration;
+  bans: Ban;
+  channels: AnyChannel;
+  emojis: Emoji;
+  entitlements: Entitlement;
+  guilds: Guild;
+  integrations: Integration;
+  invites: Invite;
+  members: GuildMember;
+  messages: Message;
+  presences: PresenceEntity;
+  roles: Role;
+  scheduledEvents: ScheduledEvent;
+  soundboards: SoundboardSound;
+  stageInstances: StageInstance;
+  stickers: Sticker;
+  subscriptions: Subscription;
+  threadMembers: ThreadMember;
+  users: User;
+  voiceStates: VoiceState;
+  webhooks: Webhook;
+};
 
 /**
  * A comprehensive cache management system for Discord entities with conditional type safety.
@@ -269,201 +275,138 @@ type IsEnabled<T> = T extends { enabled: infer E extends boolean } ? E : false;
  * it returns null instead of an empty store, providing compile-time type safety
  * and eliminating unnecessary runtime checks.
  */
-export class CacheManager<T extends CacheOptions = CacheOptions> {
+export class CacheManager {
   /**
    * Access the applications cache store.
    * Type: Store<Snowflake, Application> if enabled, null if disabled
    */
-  readonly applications: ConditionalStore<
-    IsEnabled<T["applications"]>,
-    Store<Snowflake, Application>
-  >;
+  readonly applications: Store<Snowflake, Application> | null;
 
   /**
    * Access the auto moderation rules cache store.
    * Type: Store<Snowflake, AutoModeration> if enabled, null if disabled
    */
-  readonly autoModerationRules: ConditionalStore<
-    IsEnabled<T["autoModerationRules"]>,
-    Store<Snowflake, AutoModeration>
-  >;
+  readonly autoModerationRules: Store<Snowflake, AutoModeration> | null;
 
   /**
    * Access the bans cache store.
    * Type: Store<Snowflake, Ban> if enabled, null if disabled
    */
-  readonly bans: ConditionalStore<IsEnabled<T["bans"]>, Store<Snowflake, Ban>>;
+  readonly bans: Store<Snowflake, Ban> | null;
 
   /**
    * Access the channels cache store.
    * Type: Store<Snowflake, AnyChannel> if enabled, null if disabled
    */
-  readonly channels: ConditionalStore<
-    IsEnabled<T["channels"]>,
-    Store<Snowflake, AnyChannel>
-  >;
+  readonly channels: Store<Snowflake, AnyChannel> | null;
 
   /**
    * Access the emojis cache store.
    * Type: Store<Snowflake, Emoji> if enabled, null if disabled
    */
-  readonly emojis: ConditionalStore<
-    IsEnabled<T["emojis"]>,
-    Store<Snowflake, Emoji>
-  >;
+  readonly emojis: Store<Snowflake, Emoji> | null;
 
   /**
    * Access the entitlements cache store.
    * Type: Store<Snowflake, Entitlement> if enabled, null if disabled
    */
-  readonly entitlements: ConditionalStore<
-    IsEnabled<T["entitlements"]>,
-    Store<Snowflake, Entitlement>
-  >;
+  readonly entitlements: Store<Snowflake, Entitlement> | null;
 
   /**
    * Access the guilds cache store.
    * Type: Store<Snowflake, Guild> if enabled, null if disabled
    */
-  readonly guilds: ConditionalStore<
-    IsEnabled<T["guilds"]>,
-    Store<Snowflake, Guild>
-  >;
+  readonly guilds: Store<Snowflake, Guild> | null;
 
   /**
    * Access the integrations cache store.
    * Type: Store<Snowflake, Integration> if enabled, null if disabled
    */
-  readonly integrations: ConditionalStore<
-    IsEnabled<T["integrations"]>,
-    Store<Snowflake, Integration>
-  >;
+  readonly integrations: Store<Snowflake, Integration> | null;
 
   /**
    * Access the invites cache store.
    * Type: Store<Snowflake, Invite> if enabled, null if disabled
    */
-  readonly invites: ConditionalStore<
-    IsEnabled<T["invites"]>,
-    Store<Snowflake, Invite>
-  >;
+  readonly invites: Store<Snowflake, Invite> | null;
 
   /**
    * Access the members cache store.
    * Type: Store<Snowflake, GuildMember> if enabled, null if disabled
    */
-  readonly members: ConditionalStore<
-    IsEnabled<T["members"]>,
-    Store<Snowflake, GuildMember>
-  >;
+  readonly members: Store<Snowflake, GuildMember> | null;
 
   /**
    * Access the messages cache store.
    * Type: Store<Snowflake, Message> if enabled, null if disabled
    */
-  readonly messages: ConditionalStore<
-    IsEnabled<T["messages"]>,
-    Store<Snowflake, Message>
-  >;
+  readonly messages: Store<Snowflake, Message> | null;
 
   /**
    * Access the presences cache store.
    * Type: Store<Snowflake, PresenceEntity> if enabled, null if disabled
    */
-  readonly presences: ConditionalStore<
-    IsEnabled<T["presences"]>,
-    Store<Snowflake, PresenceEntity>
-  >;
+  readonly presences: Store<Snowflake, PresenceEntity> | null;
 
   /**
    * Access the roles cache store.
    * Type: Store<Snowflake, Role> if enabled, null if disabled
    */
-  readonly roles: ConditionalStore<
-    IsEnabled<T["roles"]>,
-    Store<Snowflake, Role>
-  >;
+  readonly roles: Store<Snowflake, Role> | null;
 
   /**
    * Access the scheduled events cache store.
    * Type: Store<Snowflake, ScheduledEvent> if enabled, null if disabled
    */
-  readonly scheduledEvents: ConditionalStore<
-    IsEnabled<T["scheduledEvents"]>,
-    Store<Snowflake, ScheduledEvent>
-  >;
+  readonly scheduledEvents: Store<Snowflake, ScheduledEvent> | null;
 
   /**
    * Access the soundboards cache store.
    * Type: Store<Snowflake, SoundboardSound> if enabled, null if disabled
    */
-  readonly soundboards: ConditionalStore<
-    IsEnabled<T["soundboards"]>,
-    Store<Snowflake, SoundboardSound>
-  >;
+  readonly soundboards: Store<Snowflake, SoundboardSound> | null;
 
   /**
    * Access the stage instances cache store.
    * Type: Store<Snowflake, StageInstance> if enabled, null if disabled
    */
-  readonly stageInstances: ConditionalStore<
-    IsEnabled<T["stageInstances"]>,
-    Store<Snowflake, StageInstance>
-  >;
+  readonly stageInstances: Store<Snowflake, StageInstance> | null;
 
   /**
    * Access the stickers cache store.
    * Type: Store<Snowflake, Sticker> if enabled, null if disabled
    */
-  readonly stickers: ConditionalStore<
-    IsEnabled<T["stickers"]>,
-    Store<Snowflake, Sticker>
-  >;
+  readonly stickers: Store<Snowflake, Sticker> | null;
 
   /**
    * Access the subscriptions cache store.
    * Type: Store<Snowflake, Subscription> if enabled, null if disabled
    */
-  readonly subscriptions: ConditionalStore<
-    IsEnabled<T["subscriptions"]>,
-    Store<Snowflake, Subscription>
-  >;
+  readonly subscriptions: Store<Snowflake, Subscription> | null;
 
   /**
    * Access the thread members cache store.
    * Type: Store<Snowflake, ThreadMember> if enabled, null if disabled
    */
-  readonly threadMembers: ConditionalStore<
-    IsEnabled<T["threadMembers"]>,
-    Store<Snowflake, ThreadMember>
-  >;
+  readonly threadMembers: Store<Snowflake, ThreadMember> | null;
 
   /**
    * Access the users cache store.
    * Type: Store<Snowflake, User> if enabled, null if disabled
    */
-  readonly users: ConditionalStore<
-    IsEnabled<T["users"]>,
-    Store<Snowflake, User>
-  >;
+  readonly users: Store<Snowflake, User> | null;
 
   /**
    * Access the voice states cache store.
    * Type: Store<Snowflake, VoiceState> if enabled, null if disabled
    */
-  readonly voiceStates: ConditionalStore<
-    IsEnabled<T["voiceStates"]>,
-    Store<Snowflake, VoiceState>
-  >;
+  readonly voiceStates: Store<Snowflake, VoiceState> | null;
 
   /**
    * Access the webhooks cache store.
    * Type: Store<Snowflake, Webhook> if enabled, null if disabled
    */
-  readonly webhooks: ConditionalStore<
-    IsEnabled<T["webhooks"]>,
-    Store<Snowflake, Webhook>
-  >;
+  readonly webhooks: Store<Snowflake, Webhook> | null;
 
   /**
    * Map of all cache stores indexed by entity type.
@@ -480,69 +423,33 @@ export class CacheManager<T extends CacheOptions = CacheOptions> {
    *
    * @param options - Cache configuration options that control caching behavior
    */
-  constructor(options: T) {
+  constructor(options: CacheOptions) {
     // Initialize all stores conditionally based on enabled flag
-    this.applications = this.#createStore<Application, "applications">(
-      "applications",
+    this.applications = this.#createStore("applications", options);
+    this.autoModerationRules = this.#createStore(
+      "autoModerationRules",
       options,
     );
-    this.autoModerationRules = this.#createStore<
-      AutoModeration,
-      "autoModerationRules"
-    >("autoModerationRules", options);
-    this.bans = this.#createStore<Ban, "bans">("bans", options);
-    this.channels = this.#createStore<AnyChannel, "channels">(
-      "channels",
-      options,
-    );
-    this.emojis = this.#createStore<Emoji, "emojis">("emojis", options);
-    this.entitlements = this.#createStore<Entitlement, "entitlements">(
-      "entitlements",
-      options,
-    );
-    this.guilds = this.#createStore<Guild, "guilds">("guilds", options);
-    this.integrations = this.#createStore<Integration, "integrations">(
-      "integrations",
-      options,
-    );
-    this.invites = this.#createStore<Invite, "invites">("invites", options);
-    this.members = this.#createStore<GuildMember, "members">(
-      "members",
-      options,
-    );
-    this.messages = this.#createStore<Message, "messages">("messages", options);
-    this.presences = this.#createStore<PresenceEntity, "presences">(
-      "presences",
-      options,
-    );
-    this.roles = this.#createStore<Role, "roles">("roles", options);
-    this.scheduledEvents = this.#createStore<ScheduledEvent, "scheduledEvents">(
-      "scheduledEvents",
-      options,
-    );
-    this.soundboards = this.#createStore<SoundboardSound, "soundboards">(
-      "soundboards",
-      options,
-    );
-    this.stageInstances = this.#createStore<StageInstance, "stageInstances">(
-      "stageInstances",
-      options,
-    );
-    this.stickers = this.#createStore<Sticker, "stickers">("stickers", options);
-    this.subscriptions = this.#createStore<Subscription, "subscriptions">(
-      "subscriptions",
-      options,
-    );
-    this.threadMembers = this.#createStore<ThreadMember, "threadMembers">(
-      "threadMembers",
-      options,
-    );
-    this.users = this.#createStore<User, "users">("users", options);
-    this.voiceStates = this.#createStore<VoiceState, "voiceStates">(
-      "voiceStates",
-      options,
-    );
-    this.webhooks = this.#createStore<Webhook, "webhooks">("webhooks", options);
+    this.bans = this.#createStore("bans", options);
+    this.channels = this.#createStore("channels", options);
+    this.emojis = this.#createStore("emojis", options);
+    this.entitlements = this.#createStore("entitlements", options);
+    this.guilds = this.#createStore("guilds", options);
+    this.integrations = this.#createStore("integrations", options);
+    this.invites = this.#createStore("invites", options);
+    this.members = this.#createStore("members", options);
+    this.messages = this.#createStore("messages", options);
+    this.presences = this.#createStore("presences", options);
+    this.roles = this.#createStore("roles", options);
+    this.scheduledEvents = this.#createStore("scheduledEvents", options);
+    this.soundboards = this.#createStore("soundboards", options);
+    this.stageInstances = this.#createStore("stageInstances", options);
+    this.stickers = this.#createStore("stickers", options);
+    this.subscriptions = this.#createStore("subscriptions", options);
+    this.threadMembers = this.#createStore("threadMembers", options);
+    this.users = this.#createStore("users", options);
+    this.voiceStates = this.#createStore("voiceStates", options);
+    this.webhooks = this.#createStore("webhooks", options);
   }
 
   /**
@@ -609,8 +516,7 @@ export class CacheManager<T extends CacheOptions = CacheOptions> {
    * or null when disabled. This eliminates the need for runtime checks and provides
    * compile-time type safety through conditional typing.
    *
-   * @template S - The type of entities stored in this cache
-   * @template EntityType - The specific entity type key
+   * @typeParam T - The type of entities stored in this cache
    * @param type - The entity type for this cache
    * @param options - The cache configuration options
    * @returns ConditionalStore based on the enabled flag
@@ -628,29 +534,24 @@ export class CacheManager<T extends CacheOptions = CacheOptions> {
    * - Registers the store in the internal cache map
    * - Returns the typed Store instance
    */
-  #createStore<S, EntityType extends CacheEntityType>(
-    type: EntityType,
-    options: T,
-  ): ConditionalStore<IsEnabled<T[EntityType]>, Store<Snowflake, S>> {
+  #createStore<K extends CacheEntityType>(
+    type: K,
+    options: CacheOptions,
+  ): Store<Snowflake, CacheEntityMapping[K]> | null {
     const typeConfig = options[type];
     const isEnabled = typeConfig?.enabled ?? false;
 
     if (!isEnabled) {
       // Store is disabled - register null and return null
       this.#cache.set(type, null);
-      return null as ConditionalStore<
-        IsEnabled<T[EntityType]>,
-        Store<Snowflake, S>
-      >;
+      return null;
     }
 
     // Store is enabled - create and register the actual store
-    const store = new Store<Snowflake, S>(typeConfig);
+    const store = new Store<Snowflake, CacheEntityMapping[K]>(
+      typeConfig as StoreOptions,
+    );
     this.#cache.set(type, store as Store<Snowflake, CacheableEntity>);
-
-    return store as ConditionalStore<
-      IsEnabled<T[EntityType]>,
-      Store<Snowflake, S>
-    >;
+    return store;
   }
 }

@@ -1,6 +1,6 @@
 import type { LobbyEntity, LobbyMemberEntity } from "@nyxojs/core";
 import type { Snowflake } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 
 /**
  * Interface for creating a new lobby.
@@ -106,7 +106,7 @@ export interface LobbyMemberUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/lobby}
  */
-export class LobbyRouter extends BaseRouter {
+export class LobbyRouter {
   /**
    * API route constants for lobby-related endpoints.
    */
@@ -143,6 +143,17 @@ export class LobbyRouter extends BaseRouter {
       `/lobbies/${lobbyId}/channel-linking` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Creates a new lobby.
    * Creates a lobby and adds specified members to it.
@@ -152,7 +163,9 @@ export class LobbyRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/lobby#create-lobby}
    */
   createLobby(options: LobbyCreateOptions): Promise<LobbyEntity> {
-    return this.post(LobbyRouter.LOBBY_ROUTES.lobbiesEndpoint, options);
+    return this.#rest.post(LobbyRouter.LOBBY_ROUTES.lobbiesEndpoint, {
+      body: JSON.stringify(options),
+    });
   }
 
   /**
@@ -164,7 +177,7 @@ export class LobbyRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/lobby#get-lobby}
    */
   fetchLobby(lobbyId: Snowflake): Promise<LobbyEntity> {
-    return this.get(LobbyRouter.LOBBY_ROUTES.lobbyByIdEndpoint(lobbyId));
+    return this.#rest.get(LobbyRouter.LOBBY_ROUTES.lobbyByIdEndpoint(lobbyId));
   }
 
   /**
@@ -180,9 +193,9 @@ export class LobbyRouter extends BaseRouter {
     lobbyId: Snowflake,
     options: LobbyUpdateOptions,
   ): Promise<LobbyEntity> {
-    return this.patch(
+    return this.#rest.patch(
       LobbyRouter.LOBBY_ROUTES.lobbyByIdEndpoint(lobbyId),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -195,7 +208,9 @@ export class LobbyRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/lobby#delete-lobby}
    */
   deleteLobby(lobbyId: Snowflake): Promise<void> {
-    return this.delete(LobbyRouter.LOBBY_ROUTES.lobbyByIdEndpoint(lobbyId));
+    return this.#rest.delete(
+      LobbyRouter.LOBBY_ROUTES.lobbyByIdEndpoint(lobbyId),
+    );
   }
 
   /**
@@ -213,9 +228,9 @@ export class LobbyRouter extends BaseRouter {
     userId: Snowflake,
     options: LobbyMemberUpdateOptions,
   ): Promise<LobbyMemberEntity> {
-    return this.put(
+    return this.#rest.put(
       LobbyRouter.LOBBY_ROUTES.lobbyMemberEndpoint(lobbyId, userId),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -229,7 +244,7 @@ export class LobbyRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/lobby#remove-a-member-from-a-lobby}
    */
   removeLobbyMember(lobbyId: Snowflake, userId: Snowflake): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       LobbyRouter.LOBBY_ROUTES.lobbyMemberEndpoint(lobbyId, userId),
     );
   }
@@ -243,7 +258,9 @@ export class LobbyRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/lobby#leave-lobby}
    */
   leaveLobby(lobbyId: Snowflake): Promise<void> {
-    return this.delete(LobbyRouter.LOBBY_ROUTES.leaveLobbyEndpoint(lobbyId));
+    return this.#rest.delete(
+      LobbyRouter.LOBBY_ROUTES.leaveLobbyEndpoint(lobbyId),
+    );
   }
 
   /**
@@ -259,9 +276,9 @@ export class LobbyRouter extends BaseRouter {
     lobbyId: Snowflake,
     channelId: Snowflake,
   ): Promise<LobbyEntity> {
-    return this.patch(
+    return this.#rest.patch(
       LobbyRouter.LOBBY_ROUTES.lobbyChannelLinkingEndpoint(lobbyId),
-      { channel_id: channelId },
+      { body: JSON.stringify({ channel_id: channelId }) },
     );
   }
 
@@ -274,7 +291,7 @@ export class LobbyRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/lobby#unlink-channel-from-lobby}
    */
   unlinkChannelFromLobby(lobbyId: Snowflake): Promise<LobbyEntity> {
-    return this.patch(
+    return this.#rest.patch(
       LobbyRouter.LOBBY_ROUTES.lobbyChannelLinkingEndpoint(lobbyId),
     );
   }

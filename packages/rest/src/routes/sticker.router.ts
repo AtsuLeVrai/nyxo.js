@@ -1,5 +1,5 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -80,7 +80,7 @@ export interface GuildStickerUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker}
  */
-export class StickerRouter extends BaseRouter {
+export class StickerRouter {
   /**
    * API route constants for sticker-related endpoints.
    */
@@ -118,6 +118,17 @@ export class StickerRouter extends BaseRouter {
       `/guilds/${guildId}/stickers/${stickerId}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches a sticker by its ID.
    * Works for both standard stickers and guild stickers.
@@ -127,7 +138,7 @@ export class StickerRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
    */
   fetchSticker(stickerId: Snowflake): Promise<StickerEntity> {
-    return this.get(
+    return this.#rest.get(
       StickerRouter.STICKER_ROUTES.stickerByIdEndpoint(stickerId),
     );
   }
@@ -140,7 +151,7 @@ export class StickerRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
    */
   fetchStickerPacks(): Promise<StickerPacksResponse> {
-    return this.get(StickerRouter.STICKER_ROUTES.stickerPacksEndpoint);
+    return this.#rest.get(StickerRouter.STICKER_ROUTES.stickerPacksEndpoint);
   }
 
   /**
@@ -152,7 +163,7 @@ export class StickerRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack}
    */
   fetchStickerPack(packId: Snowflake): Promise<StickerPackEntity> {
-    return this.get(
+    return this.#rest.get(
       StickerRouter.STICKER_ROUTES.stickerPackByIdEndpoint(packId),
     );
   }
@@ -166,7 +177,7 @@ export class StickerRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
    */
   fetchGuildStickers(guildId: Snowflake): Promise<StickerEntity[]> {
-    return this.get(
+    return this.#rest.get(
       StickerRouter.STICKER_ROUTES.guildStickersEndpoint(guildId),
     );
   }
@@ -184,7 +195,7 @@ export class StickerRouter extends BaseRouter {
     guildId: Snowflake,
     stickerId: Snowflake,
   ): Promise<StickerEntity> {
-    return this.get(
+    return this.#rest.get(
       StickerRouter.STICKER_ROUTES.guildStickerByIdEndpoint(guildId, stickerId),
     );
   }
@@ -205,10 +216,9 @@ export class StickerRouter extends BaseRouter {
     reason?: string,
   ): Promise<StickerEntity> {
     const { file, ...rest } = options;
-    return this.post(
+    return this.#rest.post(
       StickerRouter.STICKER_ROUTES.guildStickersEndpoint(guildId),
-      rest,
-      { files: file, reason },
+      { body: JSON.stringify(rest), files: file, reason },
     );
   }
 
@@ -229,10 +239,9 @@ export class StickerRouter extends BaseRouter {
     options: GuildStickerUpdateOptions,
     reason?: string,
   ): Promise<StickerEntity> {
-    return this.patch(
+    return this.#rest.patch(
       StickerRouter.STICKER_ROUTES.guildStickerByIdEndpoint(guildId, stickerId),
-      options,
-      { reason },
+      { body: JSON.stringify(options), reason },
     );
   }
 
@@ -251,7 +260,7 @@ export class StickerRouter extends BaseRouter {
     stickerId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       StickerRouter.STICKER_ROUTES.guildStickerByIdEndpoint(guildId, stickerId),
       { reason },
     );

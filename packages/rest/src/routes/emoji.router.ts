@@ -1,5 +1,5 @@
 import type { EmojiEntity, Snowflake } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -90,7 +90,7 @@ export type ApplicationEmojiUpdateOptions = Pick<
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji}
  */
-export class EmojiRouter extends BaseRouter {
+export class EmojiRouter {
   /**
    * API route constants for emoji-related endpoints.
    */
@@ -128,6 +128,17 @@ export class EmojiRouter extends BaseRouter {
     ) => `/applications/${applicationId}/emojis/${emojiId}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches all emojis in a guild.
    * Retrieves all custom emojis available in the specified guild.
@@ -137,7 +148,9 @@ export class EmojiRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis}
    */
   fetchGuildEmojis(guildId: Snowflake): Promise<EmojiEntity[]> {
-    return this.get(EmojiRouter.EMOJI_ROUTES.guildEmojisEndpoint(guildId));
+    return this.#rest.get(
+      EmojiRouter.EMOJI_ROUTES.guildEmojisEndpoint(guildId),
+    );
   }
 
   /**
@@ -153,7 +166,7 @@ export class EmojiRouter extends BaseRouter {
     guildId: Snowflake,
     emojiId: Snowflake,
   ): Promise<EmojiEntity> {
-    return this.get(
+    return this.#rest.get(
       EmojiRouter.EMOJI_ROUTES.guildEmojiByIdEndpoint(guildId, emojiId),
     );
   }
@@ -173,16 +186,17 @@ export class EmojiRouter extends BaseRouter {
     options: GuildEmojiCreateOptions,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const fileFields: (keyof GuildEmojiCreateOptions)[] = ["image"];
-    const processedOptions = await this.prepareBodyWithFiles(
-      options,
-      fileFields,
-    );
+    const processedOptions = { ...options };
 
-    return this.post(
+    if (processedOptions.image) {
+      processedOptions.image = await this.#rest.file.toDataUri(
+        processedOptions.image,
+      );
+    }
+
+    return this.#rest.post(
       EmojiRouter.EMOJI_ROUTES.guildEmojisEndpoint(guildId),
-      processedOptions,
-      { reason },
+      { body: JSON.stringify(processedOptions), reason },
     );
   }
 
@@ -203,10 +217,9 @@ export class EmojiRouter extends BaseRouter {
     options: GuildEmojiUpdateOptions,
     reason?: string,
   ): Promise<EmojiEntity> {
-    return this.patch(
+    return this.#rest.patch(
       EmojiRouter.EMOJI_ROUTES.guildEmojiByIdEndpoint(guildId, emojiId),
-      options,
-      { reason },
+      { body: JSON.stringify(options), reason },
     );
   }
 
@@ -225,7 +238,7 @@ export class EmojiRouter extends BaseRouter {
     emojiId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       EmojiRouter.EMOJI_ROUTES.guildEmojiByIdEndpoint(guildId, emojiId),
       { reason },
     );
@@ -242,7 +255,7 @@ export class EmojiRouter extends BaseRouter {
   fetchApplicationEmojis(
     applicationId: Snowflake,
   ): Promise<ApplicationEmojisResponse> {
-    return this.get(
+    return this.#rest.get(
       EmojiRouter.EMOJI_ROUTES.applicationEmojisEndpoint(applicationId),
     );
   }
@@ -260,7 +273,7 @@ export class EmojiRouter extends BaseRouter {
     applicationId: Snowflake,
     emojiId: Snowflake,
   ): Promise<EmojiEntity> {
-    return this.get(
+    return this.#rest.get(
       EmojiRouter.EMOJI_ROUTES.applicationEmojiByIdEndpoint(
         applicationId,
         emojiId,
@@ -283,16 +296,17 @@ export class EmojiRouter extends BaseRouter {
     options: ApplicationEmojiCreateOptions,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const fileFields: (keyof ApplicationEmojiCreateOptions)[] = ["image"];
-    const processedOptions = await this.prepareBodyWithFiles(
-      options,
-      fileFields,
-    );
+    const processedOptions = { ...options };
 
-    return this.post(
+    if (processedOptions.image) {
+      processedOptions.image = await this.#rest.file.toDataUri(
+        processedOptions.image,
+      );
+    }
+
+    return this.#rest.post(
       EmojiRouter.EMOJI_ROUTES.applicationEmojisEndpoint(applicationId),
-      processedOptions,
-      { reason },
+      { body: JSON.stringify(processedOptions), reason },
     );
   }
 
@@ -313,13 +327,12 @@ export class EmojiRouter extends BaseRouter {
     options: ApplicationEmojiUpdateOptions,
     reason?: string,
   ): Promise<EmojiEntity> {
-    return this.patch(
+    return this.#rest.patch(
       EmojiRouter.EMOJI_ROUTES.applicationEmojiByIdEndpoint(
         applicationId,
         emojiId,
       ),
-      options,
-      { reason },
+      { body: JSON.stringify(options), reason },
     );
   }
 
@@ -338,7 +351,7 @@ export class EmojiRouter extends BaseRouter {
     emojiId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       EmojiRouter.EMOJI_ROUTES.applicationEmojiByIdEndpoint(
         applicationId,
         emojiId,

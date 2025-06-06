@@ -8,7 +8,7 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -131,7 +131,7 @@ export interface EventUsersFetchParams {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event}
  */
-export class ScheduledEventRouter extends BaseRouter {
+export class ScheduledEventRouter {
   /**
    * API route constants for scheduled event endpoints.
    */
@@ -160,6 +160,17 @@ export class ScheduledEventRouter extends BaseRouter {
       `/guilds/${guildId}/scheduled-events/${eventId}/users` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches all scheduled events for a guild.
    * Retrieves events with option to include subscriber counts.
@@ -173,11 +184,9 @@ export class ScheduledEventRouter extends BaseRouter {
     guildId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity[]> {
-    return this.get(
+    return this.#rest.get(
       ScheduledEventRouter.EVENT_ROUTES.guildEventsEndpoint(guildId),
-      {
-        query: { with_user_count: withUserCount },
-      },
+      { query: { with_user_count: withUserCount } },
     );
   }
 
@@ -196,16 +205,17 @@ export class ScheduledEventRouter extends BaseRouter {
     options: EventCreateOptions,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    const fileFields: (keyof EventCreateOptions)[] = ["image"];
-    const processedOptions = await this.prepareBodyWithFiles(
-      options,
-      fileFields,
-    );
+    const processedOptions = { ...options };
 
-    return this.post(
+    if (processedOptions.image) {
+      processedOptions.image = await this.#rest.file.toDataUri(
+        processedOptions.image,
+      );
+    }
+
+    return this.#rest.post(
       ScheduledEventRouter.EVENT_ROUTES.guildEventsEndpoint(guildId),
-      processedOptions,
-      { reason },
+      { body: JSON.stringify(processedOptions), reason },
     );
   }
 
@@ -224,14 +234,12 @@ export class ScheduledEventRouter extends BaseRouter {
     eventId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity> {
-    return this.get(
+    return this.#rest.get(
       ScheduledEventRouter.EVENT_ROUTES.guildEventByIdEndpoint(
         guildId,
         eventId,
       ),
-      {
-        query: { with_user_count: withUserCount },
-      },
+      { query: { with_user_count: withUserCount } },
     );
   }
 
@@ -252,19 +260,20 @@ export class ScheduledEventRouter extends BaseRouter {
     options: EventUpdateOptions,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    const fileFields: (keyof EventUpdateOptions)[] = ["image"];
-    const processedOptions = await this.prepareBodyWithFiles(
-      options,
-      fileFields,
-    );
+    const processedOptions = { ...options };
 
-    return this.patch(
+    if (processedOptions.image) {
+      processedOptions.image = await this.#rest.file.toDataUri(
+        processedOptions.image,
+      );
+    }
+
+    return this.#rest.patch(
       ScheduledEventRouter.EVENT_ROUTES.guildEventByIdEndpoint(
         guildId,
         eventId,
       ),
-      processedOptions,
-      { reason },
+      { body: JSON.stringify(processedOptions), reason },
     );
   }
 
@@ -278,7 +287,7 @@ export class ScheduledEventRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#delete-guild-scheduled-event}
    */
   deleteEvent(guildId: Snowflake, eventId: Snowflake): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       ScheduledEventRouter.EVENT_ROUTES.guildEventByIdEndpoint(
         guildId,
         eventId,
@@ -301,7 +310,7 @@ export class ScheduledEventRouter extends BaseRouter {
     eventId: Snowflake,
     query?: EventUsersFetchParams,
   ): Promise<GuildScheduledEventUserEntity[]> {
-    return this.get(
+    return this.#rest.get(
       ScheduledEventRouter.EVENT_ROUTES.eventUsersEndpoint(guildId, eventId),
       { query },
     );

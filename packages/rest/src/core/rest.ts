@@ -218,28 +218,32 @@ export const RestOptions = z.object({
   /**
    * HTTP connection pool configuration.
    * Controls how HTTP connections are managed for performance.
-   * @default {}
+   *
+   * @see {@link PoolOptions} for detailed cache configuration.
    */
   pool: PoolOptions.prefault({}),
 
   /**
    * Request retry configuration.
    * Controls how failed requests are retried.
-   * @default {}
+   *
+   * @see {@link RetryOptions} for detailed cache configuration.
    */
   retry: RetryOptions.prefault({}),
 
   /**
    * Rate limit configuration.
    * Controls how rate limits are tracked and respected.
-   * @default {}
+   *
+   * @see {@link RateLimitOptions} for detailed cache configuration.
    */
   rateLimit: RateLimitOptions.prefault({}),
 
   /**
    * File handler options for file uploads.
    * Controls how files are processed and uploaded.
-   * @default {}
+   *
+   * @see {@link FileHandlerOptions} for detailed cache configuration.
    */
   file: FileHandlerOptions.prefault({}),
 });
@@ -783,12 +787,17 @@ export class Rest extends EventEmitter<RestEvents> {
       // Build the request headers
       const headers = this.#buildRequestHeaders(preparedRequest);
 
+      // Format query parameters for boolean values
+      const query = preparedRequest.query
+        ? this.#formatBooleanQueryParams(preparedRequest.query)
+        : undefined;
+
       // Send the HTTP request using the pool
       const response = await this.pool.request<T>({
         path,
         method: preparedRequest.method,
         body: preparedRequest.body,
-        query: preparedRequest.query,
+        query: query,
         signal: controller.signal,
         headers: headers,
       });
@@ -898,10 +907,24 @@ export class Rest extends EventEmitter<RestEvents> {
   #buildRequestHeaders(options: HttpRequestOptions): Record<string, string> {
     const headers: Record<string, string> = {
       authorization: `${this.#options.authType} ${this.#options.token}`,
-      "content-type": "application/json",
-      "x-ratelimit-precision": "millisecond",
       "user-agent": this.#options.userAgent,
+      "x-ratelimit-precision": "millisecond",
     };
+
+    // Handle content type and length based on request body
+    if (options.body && !options.files) {
+      if (typeof options.body === "string") {
+        headers["content-length"] = Buffer.byteLength(
+          options.body,
+          "utf8",
+        ).toString();
+        headers["content-type"] = "application/json";
+      } else if (Buffer.isBuffer(options.body)) {
+        headers["content-length"] = options.body.length.toString();
+        headers["content-type"] = "application/json";
+      }
+      // Note: Undici handles Content-Length for streams automatically
+    }
 
     // Merge in custom headers from options
     if (options.headers) {
@@ -945,6 +968,34 @@ export class Rest extends EventEmitter<RestEvents> {
       body: formData.getBuffer(),
       headers: formData.getHeaders(options.headers),
     };
+  }
+
+  /**
+   * Formats boolean query parameters for Discord API requests.
+   *
+   * Discord API expects boolean values in specific formats:
+   * - `true` or `1` for true
+   * - `false` or `0` for false
+   *
+   * This method converts boolean values in the query parameters
+   * to the appropriate string representation.
+   *
+   * @param params
+   * @private
+   */
+  #formatBooleanQueryParams(params: object): object {
+    const result: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(params)) {
+      if (typeof value === "boolean") {
+        // Discord accepts: True/true/1 for true, False/false/0 for false
+        result[key] = value ? "true" : "false";
+      } else if (value !== undefined && value !== null) {
+        result[key] = String(value);
+      }
+    }
+
+    return result;
   }
 
   /**

@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import type { CSSProperties, ReactElement, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import type { KeyboardEvent, ReactElement, ReactNode } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 
 export interface TabItem {
   /** Unique identifier for the tab */
@@ -15,6 +15,8 @@ export interface TabItem {
   content: ReactNode;
   /** Whether the tab is disabled */
   disabled?: boolean;
+  /** Aria label for accessibility */
+  "aria-label"?: string;
 }
 
 export interface TabsProps {
@@ -38,205 +40,295 @@ export interface TabsProps {
   onChange?: (tabId: string) => void;
   /** Whether to animate tab transitions */
   animated?: boolean;
+  /** Test ID for testing */
+  "data-testid"?: string;
 }
 
 /**
- * Tabs component for organizing content into selectable tabs
+ * Enhanced Tabs component with improved accessibility and performance
  */
-export function Tabs({
-  items,
-  defaultTab,
-  orientation = "horizontal",
-  size = "md",
-  variant = "default",
-  className = "",
-  tabClassName = "",
-  contentClassName = "",
-  onChange,
-  animated = true,
-}: TabsProps) {
-  // Find default tab ID or use first tab
-  const initialTab =
-    defaultTab || ((items.length > 0 ? items[0]?.id : "") as string);
-  const [activeTab, setActiveTab] = useState<string>(initialTab);
+export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
+  (
+    {
+      items,
+      defaultTab,
+      orientation = "horizontal",
+      size = "md",
+      variant = "default",
+      className = "",
+      tabClassName = "",
+      contentClassName = "",
+      onChange,
+      animated = true,
+      "data-testid": testId,
+    },
+    ref,
+  ) => {
+    const shouldReduceMotion = useReducedMotion();
 
-  // Reference to indicator element for animations
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const [indicatorStyle, setIndicatorStyle] = useState<CSSProperties>({});
+    // Find default tab ID or use first tab
+    const initialTab = (defaultTab ||
+      (items.length > 0 ? items[0]?.id : "")) as string;
+    const [activeTab, setActiveTab] = useState<string>(initialTab);
+    const [focusedTab, setFocusedTab] = useState<string>(activeTab);
 
-  // Get active tab content
-  const activeContent = items.find((item) => item.id === activeTab)?.content;
+    // Reference to tabs container for indicator positioning
+    const tabsRef = useRef<HTMLDivElement>(null);
+    const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>(
+      {},
+    );
 
-  /**
-   * Handle tab change
-   */
-  function handleTabChange(tabId: string): void {
-    if (tabId !== activeTab) {
-      setActiveTab(tabId);
-      if (onChange) {
-        onChange(tabId);
-      }
-    }
-  }
+    // Get active tab content
+    const activeContent = items.find((item) => item.id === activeTab)?.content;
 
-  // Update indicator position when tab changes
-  useEffect(() => {
-    if (tabsRef.current && variant !== "pill") {
+    /**
+     * Handle tab change with validation
+     */
+    const handleTabChange = useCallback(
+      (tabId: string) => {
+        const tab = items.find((item) => item.id === tabId);
+        if (!tab || tab.disabled || tabId === activeTab) return;
+
+        setActiveTab(tabId);
+        setFocusedTab(tabId);
+        onChange?.(tabId);
+      },
+      [items, activeTab, onChange],
+    );
+
+    /**
+     * Handle keyboard navigation
+     */
+    const handleKeyDown = useCallback(
+      (event: KeyboardEvent<HTMLDivElement>) => {
+        const currentIndex = items.findIndex((item) => item.id === focusedTab);
+        let nextIndex = currentIndex;
+
+        switch (event.key) {
+          case "ArrowLeft":
+          case "ArrowUp":
+            event.preventDefault();
+            nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+            break;
+          case "ArrowRight":
+          case "ArrowDown":
+            event.preventDefault();
+            nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+            break;
+          case "Home":
+            event.preventDefault();
+            nextIndex = 0;
+            break;
+          case "End":
+            event.preventDefault();
+            nextIndex = items.length - 1;
+            break;
+          case "Enter":
+          case " ":
+            event.preventDefault();
+            handleTabChange(focusedTab);
+            return;
+          default:
+            return;
+        }
+
+        // Skip disabled tabs
+        let attempts = 0;
+        while (items[nextIndex]?.disabled && attempts < items.length) {
+          nextIndex = nextIndex < items.length - 1 ? nextIndex + 1 : 0;
+          attempts++;
+        }
+
+        if (!items[nextIndex]?.disabled) {
+          setFocusedTab(items[nextIndex]?.id as string);
+        }
+      },
+      [items, focusedTab, handleTabChange],
+    );
+
+    // Update indicator position when tab changes
+    useEffect(() => {
+      if (!tabsRef.current || variant === "pill" || shouldReduceMotion) return;
+
       const tabElement = tabsRef.current.querySelector(
         `[data-tab-id="${activeTab}"]`,
-      );
+      ) as HTMLElement;
 
-      if (tabElement instanceof HTMLElement) {
-        if (orientation === "horizontal") {
-          const { offsetLeft, offsetWidth } = tabElement;
-          setIndicatorStyle({
-            left: `${offsetLeft}px`,
-            width: `${offsetWidth}px`,
-            height: "2px",
-            bottom: "0",
-          });
-        } else {
-          const { offsetTop, offsetHeight } = tabElement;
-          setIndicatorStyle({
-            top: `${offsetTop}px`,
-            height: `${offsetHeight}px`,
-            width: "2px",
-            left: "0",
-          });
-        }
+      if (!tabElement) return;
+
+      if (orientation === "horizontal") {
+        const { offsetLeft, offsetWidth } = tabElement;
+        setIndicatorStyle({
+          left: `${offsetLeft}px`,
+          width: `${offsetWidth}px`,
+          height: "2px",
+          bottom: "0",
+          top: "auto",
+        });
+      } else {
+        const { offsetTop, offsetHeight } = tabElement;
+        setIndicatorStyle({
+          top: `${offsetTop}px`,
+          height: `${offsetHeight}px`,
+          width: "2px",
+          left: "0",
+          bottom: "auto",
+        });
       }
-    }
-  }, [activeTab, orientation, variant]);
+    }, [activeTab, orientation, variant, shouldReduceMotion]);
 
-  // Size styles
-  const sizeStyles = {
-    sm: "text-xs",
-    md: "text-sm",
-    lg: "text-base",
-  };
+    // Size styles
+    const sizeStyles = {
+      sm: "text-sm",
+      md: "text-sm",
+      lg: "text-base",
+    };
 
-  // Padding styles based on size and orientation
-  const paddingStyles = {
-    horizontal: {
-      sm: "px-3 py-1.5",
-      md: "px-4 py-2",
-      lg: "px-6 py-3",
-    },
-    vertical: {
-      sm: "px-3 py-1.5",
-      md: "px-4 py-2",
-      lg: "px-5 py-3",
-    },
-  };
+    // Padding styles based on size and orientation
+    const paddingStyles = {
+      horizontal: {
+        sm: "px-3 py-2",
+        md: "px-4 py-2.5",
+        lg: "px-6 py-3",
+      },
+      vertical: {
+        sm: "px-3 py-2",
+        md: "px-4 py-2.5",
+        lg: "px-5 py-3",
+      },
+    };
 
-  // Tab variant styles
-  const variantStyles = {
-    default: "border-dark-500 hover:bg-dark-600/50",
-    pill: "rounded-full hover:bg-dark-600/50",
-    underline: "border-b border-dark-500 hover:text-primary-400",
-  };
+    // Tab variant styles
+    const variantStyles = {
+      default: "border-dark-500/50 hover:bg-dark-600/50 transition-colors",
+      pill: "rounded-full hover:bg-dark-600/50 transition-colors",
+      underline:
+        "border-b-2 border-transparent hover:text-primary-400 hover:border-primary-500/50 transition-colors",
+    };
 
-  // Active tab styles by variant
-  const activeTabStyles = {
-    default: "text-primary-400 border-primary-500",
-    pill: "bg-primary-500/10 text-primary-400",
-    underline: "text-primary-400 border-primary-500",
-  };
+    // Active tab styles by variant
+    const activeTabStyles = {
+      default: "text-primary-400 border-primary-500/50 bg-dark-600/30",
+      pill: "bg-primary-500/20 text-primary-400 border border-primary-500/30",
+      underline: "text-primary-400 border-primary-500",
+    };
 
-  // Animation variants for tab content
-  const contentVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.3 },
-    },
-    exit: {
-      opacity: 0,
-      y: -10,
-      transition: { duration: 0.2 },
-    },
-  };
+    // Animation variants for tab content
+    const contentVariants = {
+      hidden: {
+        opacity: 0,
+        y: 10,
+        transition: { duration: 0.15 },
+      },
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.25, ease: "easeOut" },
+      },
+    };
 
-  return (
-    <div
-      className={`flex flex-col ${orientation === "vertical" ? "sm:flex-row" : ""} ${className}`}
-    >
-      {/* Tab list */}
+    return (
       <div
-        ref={tabsRef}
-        className={`relative flex ${
-          orientation === "horizontal"
-            ? "flex-row overflow-x-auto"
-            : "flex-shrink-0 flex-col sm:w-48"
-        } ${variant === "default" ? "rounded-lg border border-dark-500" : ""}`}
+        ref={ref}
+        className={`flex ${orientation === "vertical" ? "sm:flex-row" : "flex-col"} ${className}`}
+        data-testid={testId}
       >
-        {items.map((item) => (
-          <button
-            type="button"
-            key={item.id}
-            data-tab-id={item.id}
-            className={`
-              ${sizeStyles[size]}
-              ${paddingStyles[orientation][size]}
-              ${variantStyles[variant]}
-              ${activeTab === item.id ? activeTabStyles[variant] : "text-slate-300"}
-              ${tabClassName}font-medium whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ${item.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
-              ${
-                variant === "default" && orientation === "horizontal"
-                  ? "border-dark-500 border-r last:border-r-0"
-                  : variant === "default" && orientation === "vertical"
-                    ? "border-dark-500 border-b last:border-b-0"
-                    : ""
-              }
-            `}
-            onClick={() => !item.disabled && handleTabChange(item.id)}
-            disabled={item.disabled}
-            aria-selected={activeTab === item.id}
-            role="tab"
-          >
-            <div className="flex items-center">
-              {item.icon && <span className="mr-2">{item.icon}</span>}
-              {item.label}
-            </div>
-          </button>
-        ))}
+        {/* Tab list */}
+        <div
+          ref={tabsRef}
+          className={`relative flex ${
+            orientation === "horizontal"
+              ? "scrollbar-hide flex-row overflow-x-auto"
+              : "flex-shrink-0 flex-col sm:w-64"
+          } ${variant === "default" ? "rounded-lg border border-dark-500/50 bg-dark-700/30" : ""}`}
+          role="tablist"
+          aria-orientation={orientation}
+          onKeyDown={handleKeyDown}
+        >
+          {items.map((item, index) => {
+            const isActive = activeTab === item.id;
+            const isFocused = focusedTab === item.id;
 
-        {/* Animated indicator for default/underline variants */}
-        {variant !== "pill" && (
-          <motion.div
-            className="absolute bg-primary-500"
-            style={indicatorStyle}
-            layoutId="tabIndicator"
-            transition={{
-              duration: 0.3,
-              type: "spring",
-              stiffness: 300,
-              damping: 30,
-            }}
-          />
-        )}
-      </div>
+            return (
+              <button
+                type="button"
+                key={item.id}
+                data-tab-id={item.id}
+                className={`relative flex items-center justify-center ${sizeStyles[size]}
+                ${paddingStyles[orientation][size]}
+                ${variantStyles[variant]}
+                ${isActive ? activeTabStyles[variant] : "text-slate-300"}
+                ${tabClassName}font-medium whitespace-nowrap transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 focus:ring-offset-dark-800 ${item.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+                ${
+                  variant === "default" && orientation === "horizontal"
+                    ? "border-dark-500/50 border-r last:border-r-0"
+                    : variant === "default" && orientation === "vertical"
+                      ? "border-dark-500/50 border-b last:border-b-0"
+                      : ""
+                }
+                ${isFocused && !item.disabled ? "ring-2 ring-primary-500/50" : ""}
+              `}
+                onClick={() => handleTabChange(item.id)}
+                onFocus={() => setFocusedTab(item.id)}
+                disabled={item.disabled}
+                aria-selected={isActive}
+                aria-controls={`tabpanel-${item.id}`}
+                aria-label={item["aria-label"] || item.label}
+                id={`tab-${item.id}`}
+                role="tab"
+                tabIndex={isFocused ? 0 : -1}
+              >
+                <div className="flex items-center">
+                  {item.icon && (
+                    <span className="mr-2 flex-shrink-0" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                  )}
+                  <span className="truncate">{item.label}</span>
+                </div>
+              </button>
+            );
+          })}
 
-      {/* Tab content */}
-      <div
-        className={`mt-4 ${orientation === "vertical" ? "flex-1 sm:mt-0 sm:ml-6" : ""} ${contentClassName}`}
-        role="tabpanel"
-      >
-        {animated ? (
-          <motion.div
-            key={activeTab}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={contentVariants}
-          >
-            {activeContent}
-          </motion.div>
-        ) : (
-          <div>{activeContent}</div>
-        )}
+          {/* Animated indicator for default/underline variants */}
+          {variant !== "pill" && !shouldReduceMotion && (
+            <motion.div
+              className="absolute z-10 bg-primary-500"
+              style={indicatorStyle}
+              layoutId="tabIndicator"
+              transition={{
+                duration: 0.25,
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+              }}
+            />
+          )}
+        </div>
+
+        {/* Tab content */}
+        <div
+          className={`${orientation === "vertical" ? "flex-1 sm:ml-6" : "mt-6"} ${contentClassName}`}
+          role="tabpanel"
+          aria-labelledby={`tab-${activeTab}`}
+          id={`tabpanel-${activeTab}`}
+        >
+          {animated && !shouldReduceMotion ? (
+            <motion.div
+              key={activeTab}
+              initial="hidden"
+              animate="visible"
+              variants={contentVariants}
+            >
+              {activeContent}
+            </motion.div>
+          ) : (
+            <div>{activeContent}</div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+);
+
+Tabs.displayName = "Tabs";

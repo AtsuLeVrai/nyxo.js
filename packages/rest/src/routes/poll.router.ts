@@ -1,5 +1,5 @@
 import type { MessageEntity, Snowflake, UserEntity } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 
 /**
  * Interface representing the response body when retrieving poll answer voters.
@@ -41,7 +41,7 @@ export interface PollVotersFetchParams {
  *
  * @see {@link https://discord.com/developers/docs/resources/poll}
  */
-export class PollRouter extends BaseRouter {
+export class PollRouter {
   /**
    * API route constants for poll-related endpoints.
    */
@@ -68,6 +68,17 @@ export class PollRouter extends BaseRouter {
       `/channels/${channelId}/polls/${messageId}/expire` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches a list of users that voted for a specific poll answer.
    * Requires the READ_MESSAGE_HISTORY permission.
@@ -85,7 +96,7 @@ export class PollRouter extends BaseRouter {
     answerId: number,
     query?: PollVotersFetchParams,
   ): Promise<PollVotersResponse> {
-    return this.get(
+    return this.#rest.get(
       PollRouter.POLL_ROUTES.pollAnswerVotersEndpoint(
         channelId,
         messageId,
@@ -105,7 +116,7 @@ export class PollRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
    */
   endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
-    return this.post(
+    return this.#rest.post(
       PollRouter.POLL_ROUTES.endPollEndpoint(channelId, messageId),
     );
   }

@@ -218,7 +218,7 @@ export const GatewayOptions = z.object({
    * Controls the behavior of the heartbeat system that keeps the WebSocket
    * connection alive and monitors connection health.
    *
-   * @default The default heartbeat options
+   * @see {@link HeartbeatOptions} for detailed cache configuration.
    */
   heartbeat: HeartbeatOptions.prefault({}),
 
@@ -228,7 +228,7 @@ export const GatewayOptions = z.object({
    * Controls how the bot's guild connections are distributed across multiple
    * shards for better performance and scalability. Required for bots in 2500+ guilds.
    *
-   * @default The default shard options
+   * @see {@link ShardOptions} for detailed cache configuration.
    * @see {@link https://discord.com/developers/docs/topics/gateway#sharding}
    */
   shard: ShardOptions.prefault({}),

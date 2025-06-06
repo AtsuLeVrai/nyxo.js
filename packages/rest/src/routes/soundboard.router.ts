@@ -1,5 +1,5 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -112,7 +112,7 @@ export interface GuildSoundUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard}
  */
-export class SoundboardRouter extends BaseRouter {
+export class SoundboardRouter {
   /**
    * API route constants for soundboard-related endpoints.
    */
@@ -143,6 +143,17 @@ export class SoundboardRouter extends BaseRouter {
       `/channels/${channelId}/send-soundboard-sound` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Plays a soundboard sound in a voice channel the user is connected to.
    * Requires SPEAK and USE_SOUNDBOARD permissions.
@@ -156,9 +167,9 @@ export class SoundboardRouter extends BaseRouter {
     channelId: Snowflake,
     options: SoundboardSendOptions,
   ): Promise<void> {
-    return this.post(
+    return this.#rest.post(
       SoundboardRouter.SOUNDBOARD_ROUTES.playSoundInChannelEndpoint(channelId),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -170,7 +181,9 @@ export class SoundboardRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
   fetchDefaultSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.get(SoundboardRouter.SOUNDBOARD_ROUTES.defaultSoundsEndpoint);
+    return this.#rest.get(
+      SoundboardRouter.SOUNDBOARD_ROUTES.defaultSoundsEndpoint,
+    );
   }
 
   /**
@@ -182,7 +195,7 @@ export class SoundboardRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds}
    */
   fetchSounds(guildId: Snowflake): Promise<GuildSoundsResponse> {
-    return this.get(
+    return this.#rest.get(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundsEndpoint(guildId),
     );
   }
@@ -200,7 +213,7 @@ export class SoundboardRouter extends BaseRouter {
     guildId: Snowflake,
     soundId: Snowflake,
   ): Promise<SoundboardSoundEntity> {
-    return this.get(
+    return this.#rest.get(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundByIdEndpoint(
         guildId,
         soundId,
@@ -223,16 +236,17 @@ export class SoundboardRouter extends BaseRouter {
     options: GuildSoundCreateOptions,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    const fileFields: (keyof GuildSoundCreateOptions)[] = ["sound"];
-    const processedOptions = await this.prepareBodyWithFiles(
-      options,
-      fileFields,
-    );
+    const processedOptions = { ...options };
 
-    return this.post(
+    if (processedOptions.sound) {
+      processedOptions.sound = await this.#rest.file.toDataUri(
+        processedOptions.sound,
+      );
+    }
+
+    return this.#rest.post(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundsEndpoint(guildId),
-      processedOptions,
-      { reason },
+      { body: JSON.stringify(processedOptions), reason },
     );
   }
 
@@ -253,13 +267,12 @@ export class SoundboardRouter extends BaseRouter {
     options: GuildSoundUpdateOptions,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    return this.patch(
+    return this.#rest.patch(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundByIdEndpoint(
         guildId,
         soundId,
       ),
-      options,
-      { reason },
+      { body: JSON.stringify(options), reason },
     );
   }
 
@@ -278,7 +291,7 @@ export class SoundboardRouter extends BaseRouter {
     soundId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundByIdEndpoint(
         guildId,
         soundId,

@@ -4,7 +4,7 @@ import type {
   MessageEntity,
   Snowflake,
 } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 import type {
   WebhookExecuteOptions,
   WebhookMessageEditOptions,
@@ -16,7 +16,7 @@ import type {
  *
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding}
  */
-export class InteractionRouter extends BaseRouter {
+export class InteractionRouter {
   /**
    * API route constants for interaction-related endpoints.
    */
@@ -114,6 +114,17 @@ export class InteractionRouter extends BaseRouter {
       `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Creates an initial response to an interaction.
    * Must be sent within 3 seconds of receiving the interaction.
@@ -131,13 +142,12 @@ export class InteractionRouter extends BaseRouter {
     options: InteractionResponseEntity,
     withResponse = true,
   ): Promise<InteractionCallbackResponseEntity | undefined> {
-    return this.post(
+    return this.#rest.post(
       InteractionRouter.INTERACTION_ROUTES.createResponseEndpoint(
         interactionId,
         interactionToken,
       ),
-      options,
-      { query: { with_response: withResponse } },
+      { body: JSON.stringify(options), query: { with_response: withResponse } },
     );
   }
 
@@ -154,7 +164,7 @@ export class InteractionRouter extends BaseRouter {
     applicationId: Snowflake,
     interactionToken: string,
   ): Promise<MessageEntity> {
-    return this.get(
+    return this.#rest.get(
       InteractionRouter.INTERACTION_ROUTES.getOriginalResponseEndpoint(
         applicationId,
         interactionToken,
@@ -178,13 +188,12 @@ export class InteractionRouter extends BaseRouter {
     options: WebhookMessageEditOptions,
   ): Promise<MessageEntity> {
     const { files, ...rest } = options;
-    return this.patch(
+    return this.#rest.patch(
       InteractionRouter.INTERACTION_ROUTES.editOriginalResponseEndpoint(
         applicationId,
         interactionToken,
       ),
-      rest,
-      { files },
+      { body: JSON.stringify(rest), files },
     );
   }
 
@@ -201,7 +210,7 @@ export class InteractionRouter extends BaseRouter {
     applicationId: Snowflake,
     interactionToken: string,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       InteractionRouter.INTERACTION_ROUTES.deleteOriginalResponseEndpoint(
         applicationId,
         interactionToken,
@@ -225,13 +234,12 @@ export class InteractionRouter extends BaseRouter {
     options: WebhookExecuteOptions,
   ): Promise<MessageEntity> {
     const { files, ...rest } = options;
-    return this.post(
+    return this.#rest.post(
       InteractionRouter.INTERACTION_ROUTES.createFollowupMessageEndpoint(
         applicationId,
         interactionToken,
       ),
-      rest,
-      { files },
+      { body: JSON.stringify(rest), files },
     );
   }
 
@@ -250,7 +258,7 @@ export class InteractionRouter extends BaseRouter {
     interactionToken: string,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.get(
+    return this.#rest.get(
       InteractionRouter.INTERACTION_ROUTES.getFollowupMessageEndpoint(
         applicationId,
         interactionToken,
@@ -277,14 +285,13 @@ export class InteractionRouter extends BaseRouter {
     options: WebhookMessageEditOptions,
   ): Promise<MessageEntity> {
     const { files, ...rest } = options;
-    return this.patch(
+    return this.#rest.patch(
       InteractionRouter.INTERACTION_ROUTES.editFollowupMessageEndpoint(
         applicationId,
         interactionToken,
         messageId,
       ),
-      rest,
-      { files },
+      { body: JSON.stringify(rest), files },
     );
   }
 
@@ -303,7 +310,7 @@ export class InteractionRouter extends BaseRouter {
     interactionToken: string,
     messageId: Snowflake,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       InteractionRouter.INTERACTION_ROUTES.deleteFollowupMessageEndpoint(
         applicationId,
         interactionToken,

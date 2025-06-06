@@ -21,7 +21,7 @@ export interface CacheEntityInfo {
 /**
  * Metadata keys used by the caching system
  */
-const METADATA_KEYS = {
+export const METADATA_KEYS = {
   CACHE_STORE_KEY: "nyxojs:cache:storeKey",
   CACHE_KEY_EXTRACTOR: "nyxojs:cache:keyExtractor",
 } as const;
@@ -92,27 +92,8 @@ export abstract class BaseClass<T extends object> {
     this.client = client;
     this.rawData = data;
 
-    // Automatically cache this entity
-    const cacheInfo = this.getCacheInfo();
-    if (cacheInfo) {
-      const { storeKey, id } = cacheInfo;
-      if (id && storeKey) {
-        const cacheStore = client.cache[storeKey] as unknown as Store<
-          Snowflake,
-          this
-        > | null;
-
-        // Check if this entity already exists in the cache
-        const existingEntity = cacheStore?.get(id);
-        if (existingEntity) {
-          // Update the existing cached entity with new data
-          existingEntity.patch(data);
-        } else {
-          // Entity doesn't exist in cache yet, add it
-          cacheStore?.set(id, this);
-        }
-      }
-    }
+    // Initialize cache for this entity
+    this.#initializeCache();
   }
 
   /**
@@ -135,7 +116,7 @@ export abstract class BaseClass<T extends object> {
    * @throws Error if data is not provided
    */
   patch(data: Partial<T>): this {
-    Object.assign(this.rawData, data);
+    this.rawData = { ...this.rawData, ...data };
 
     // Update entity in cache
     const cacheInfo = this.getCacheInfo();
@@ -203,8 +184,21 @@ export abstract class BaseClass<T extends object> {
       return this.rawData.id === other.rawData.id;
     }
 
-    // Otherwise, compare the full data objects
-    return JSON.stringify(this.rawData) === JSON.stringify(other.rawData);
+    // If no ID is available, compare all properties
+    const thisKeys = Object.keys(this.rawData).sort();
+    const otherKeys = Object.keys(other.rawData).sort();
+
+    // If the number of properties is different, they are not equal
+    if (thisKeys.length !== otherKeys.length) {
+      return false;
+    }
+
+    // Compare each property in the sorted order
+    return thisKeys.every((key) => {
+      const thisValue = (this.rawData as Record<string, unknown>)[key];
+      const otherValue = (other.rawData as Record<string, unknown>)[key];
+      return thisValue === otherValue;
+    });
   }
 
   /**
@@ -257,5 +251,45 @@ export abstract class BaseClass<T extends object> {
     }
 
     return id ? { storeKey, id } : null;
+  }
+
+  /**
+   * Initializes the cache for this entity.
+   *
+   * This method is automatically called when the entity is created.
+   * It checks if the entity can be cached based on metadata and adds it to the appropriate cache store if it doesn't already exist.
+   *
+   * This is a private method and should not be called directly.
+   * It is intended to be used internally by the framework to ensure that entities are cached correctly when they are instantiated.
+   *
+   * @private
+   */
+  #initializeCache(): void {
+    // Automatically cache this entity
+    const cacheInfo = this.getCacheInfo();
+    if (cacheInfo) {
+      const { storeKey, id } = cacheInfo;
+      if (id && storeKey) {
+        const cacheStore = this.client.cache[storeKey] as unknown as Store<
+          Snowflake,
+          this
+        > | null;
+
+        // If the cache store is not available, do nothing
+        if (!cacheStore) {
+          return;
+        }
+
+        // Check if this entity already exists in the cache
+        const existingEntity = cacheStore.get(id);
+        if (existingEntity) {
+          // Update the existing cached entity with new data
+          existingEntity.patch(this.rawData);
+        } else {
+          // Entity doesn't exist in cache yet, add it
+          cacheStore.set(id, this);
+        }
+      }
+    }
   }
 }

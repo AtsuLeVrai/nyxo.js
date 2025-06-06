@@ -1,5 +1,5 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -56,7 +56,7 @@ export type GuildTemplateUpdateOptions = Partial<GuildTemplateCreateOptions>;
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-template}
  */
-export class GuildTemplateRouter extends BaseRouter {
+export class GuildTemplateRouter {
   /**
    * API route constants for Guild Template-related endpoints.
    */
@@ -87,6 +87,17 @@ export class GuildTemplateRouter extends BaseRouter {
       `/guilds/${guildId}/templates/${code}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches a guild template by its code.
    * Retrieves template information using its unique code.
@@ -96,7 +107,7 @@ export class GuildTemplateRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
    */
   fetchGuildTemplate(code: string): Promise<GuildTemplateEntity> {
-    return this.get(
+    return this.#rest.get(
       GuildTemplateRouter.TEMPLATE_ROUTES.templateByCodeEndpoint(code),
     );
   }
@@ -114,15 +125,17 @@ export class GuildTemplateRouter extends BaseRouter {
     code: string,
     options: GuildFromTemplateCreateOptions,
   ): Promise<GuildEntity> {
-    const fileFields: (keyof GuildFromTemplateCreateOptions)[] = ["icon"];
-    const processedOptions = await this.prepareBodyWithFiles(
-      options,
-      fileFields,
-    );
+    const processedOptions = { ...options };
 
-    return this.post(
+    if (processedOptions.icon) {
+      processedOptions.icon = await this.#rest.file.toDataUri(
+        processedOptions.icon,
+      );
+    }
+
+    return this.#rest.post(
       GuildTemplateRouter.TEMPLATE_ROUTES.templateByCodeEndpoint(code),
-      processedOptions,
+      { body: JSON.stringify(processedOptions) },
     );
   }
 
@@ -135,7 +148,7 @@ export class GuildTemplateRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
    */
   fetchGuildTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
-    return this.get(
+    return this.#rest.get(
       GuildTemplateRouter.TEMPLATE_ROUTES.guildTemplatesEndpoint(guildId),
     );
   }
@@ -153,9 +166,9 @@ export class GuildTemplateRouter extends BaseRouter {
     guildId: Snowflake,
     options: GuildTemplateCreateOptions,
   ): Promise<GuildTemplateEntity> {
-    return this.post(
+    return this.#rest.post(
       GuildTemplateRouter.TEMPLATE_ROUTES.guildTemplatesEndpoint(guildId),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -172,7 +185,7 @@ export class GuildTemplateRouter extends BaseRouter {
     guildId: Snowflake,
     code: string,
   ): Promise<GuildTemplateEntity> {
-    return this.put(
+    return this.#rest.put(
       GuildTemplateRouter.TEMPLATE_ROUTES.guildTemplateByCodeEndpoint(
         guildId,
         code,
@@ -195,12 +208,12 @@ export class GuildTemplateRouter extends BaseRouter {
     code: string,
     options: GuildTemplateUpdateOptions,
   ): Promise<GuildTemplateEntity> {
-    return this.patch(
+    return this.#rest.patch(
       GuildTemplateRouter.TEMPLATE_ROUTES.guildTemplateByCodeEndpoint(
         guildId,
         code,
       ),
-      options,
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -217,7 +230,7 @@ export class GuildTemplateRouter extends BaseRouter {
     guildId: Snowflake,
     code: string,
   ): Promise<GuildTemplateEntity> {
-    return this.delete(
+    return this.#rest.delete(
       GuildTemplateRouter.TEMPLATE_ROUTES.guildTemplateByCodeEndpoint(
         guildId,
         code,

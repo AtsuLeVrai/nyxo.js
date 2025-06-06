@@ -3,7 +3,7 @@ import type {
   InviteMetadataEntity,
   Snowflake,
 } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 
 /**
  * Interface for the query parameters when retrieving an invite.
@@ -37,7 +37,7 @@ export interface InviteFetchParams {
  *
  * @see {@link https://discord.com/developers/docs/resources/invite}
  */
-export class InviteRouter extends BaseRouter {
+export class InviteRouter {
   /**
    * API route constants for invite-related endpoints.
    */
@@ -48,6 +48,17 @@ export class InviteRouter extends BaseRouter {
      */
     inviteByCodeEndpoint: (code: string) => `/invites/${code}` as const,
   } as const;
+
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * Fetches detailed information about an invite by its code.
@@ -62,9 +73,12 @@ export class InviteRouter extends BaseRouter {
     code: string,
     query?: InviteFetchParams,
   ): Promise<InviteEntity & InviteMetadataEntity> {
-    return this.get(InviteRouter.INVITE_ROUTES.inviteByCodeEndpoint(code), {
-      query,
-    });
+    return this.#rest.get(
+      InviteRouter.INVITE_ROUTES.inviteByCodeEndpoint(code),
+      {
+        query,
+      },
+    );
   }
 
   /**
@@ -77,8 +91,11 @@ export class InviteRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.delete(InviteRouter.INVITE_ROUTES.inviteByCodeEndpoint(code), {
-      reason,
-    });
+    return this.#rest.delete(
+      InviteRouter.INVITE_ROUTES.inviteByCodeEndpoint(code),
+      {
+        reason,
+      },
+    );
   }
 }

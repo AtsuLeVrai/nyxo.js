@@ -6,7 +6,7 @@ import type {
   InstallParamsEntity,
 } from "@nyxojs/core";
 import type { ApplicationEntity, Snowflake } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -183,7 +183,7 @@ export interface ApplicationUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/application}
  */
-export class ApplicationRouter extends BaseRouter {
+export class ApplicationRouter {
   /**
    * API route constants for application-related endpoints.
    */
@@ -203,6 +203,17 @@ export class ApplicationRouter extends BaseRouter {
       `/applications/${applicationId}/activity-instances/${instanceId}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches the current application's information from Discord.
    * Provides details about the application associated with the token.
@@ -211,7 +222,7 @@ export class ApplicationRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   fetchCurrentApplication(): Promise<ApplicationEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationRouter.APPLICATION_ROUTES.currentApplicationEndpoint,
     );
   }
@@ -227,18 +238,23 @@ export class ApplicationRouter extends BaseRouter {
   async updateCurrentApplication(
     options: ApplicationUpdateOptions,
   ): Promise<ApplicationEntity> {
-    const fileFields: (keyof ApplicationUpdateOptions)[] = [
-      "icon",
-      "cover_image",
-    ];
-    const processedOptions = await this.prepareBodyWithFiles(
-      options,
-      fileFields,
-    );
+    const processedOptions = { ...options };
 
-    return this.patch(
+    if (processedOptions.icon) {
+      processedOptions.icon = await this.#rest.file.toDataUri(
+        processedOptions.icon,
+      );
+    }
+
+    if (processedOptions.cover_image) {
+      processedOptions.cover_image = await this.#rest.file.toDataUri(
+        processedOptions.cover_image,
+      );
+    }
+
+    return this.#rest.patch(
       ApplicationRouter.APPLICATION_ROUTES.currentApplicationEndpoint,
-      processedOptions,
+      { body: JSON.stringify(processedOptions) },
     );
   }
 
@@ -255,7 +271,7 @@ export class ApplicationRouter extends BaseRouter {
     applicationId: Snowflake,
     instanceId: string,
   ): Promise<ActivityInstanceEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationRouter.APPLICATION_ROUTES.getActivityInstanceEndpoint(
         applicationId,
         instanceId,

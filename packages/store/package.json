@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/store",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "High-performance in-memory data store for Discord bots using enhanced Map functionality.",
   "readme": "README.md",
   "license": "Apache-2.0",
@@ -44,11 +44,11 @@
   "dependencies": {
     "deepmerge-ts": "^7.1.5",
     "lodash-es": "^4.17.21",
-    "zod": "^3.25.51"
+    "zod": "^3.25.55"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
-    "@types/node": "^22.15.29",
+    "@types/node": "^22.15.30",
     "rimraf": "^6.0.1",
     "tsdown": "^0.12.7",
     "typescript": "^5.8.3"

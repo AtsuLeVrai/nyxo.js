@@ -1,5 +1,11 @@
 # @nyxojs/core
 
+## 0.2.1
+
+### Patch Changes
+
+- refactor: remove unused exports and update REST client usage in routers
+
 ## 0.2.0
 
 ### Minor Changes

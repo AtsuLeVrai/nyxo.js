@@ -1,5 +1,5 @@
 import type { Snowflake, SubscriptionEntity } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 
 /**
  * Interface for query parameters when listing SKU subscriptions.
@@ -39,7 +39,7 @@ export interface SubscriptionFetchParams {
  *
  * @see {@link https://discord.com/developers/docs/resources/subscription}
  */
-export class SubscriptionRouter extends BaseRouter {
+export class SubscriptionRouter {
   /**
    * API route constants for subscription-related endpoints.
    */
@@ -62,6 +62,17 @@ export class SubscriptionRouter extends BaseRouter {
     ) => `/skus/${skuId}/subscriptions/${subscriptionId}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * Fetches all subscriptions containing the specified SKU.
    * Retrieves both active and inactive subscriptions with optional filtering.
@@ -75,7 +86,7 @@ export class SubscriptionRouter extends BaseRouter {
     skuId: Snowflake,
     query?: SubscriptionFetchParams,
   ): Promise<SubscriptionEntity[]> {
-    return this.get(
+    return this.#rest.get(
       SubscriptionRouter.SUBSCRIPTION_ROUTES.skuSubscriptionsEndpoint(skuId),
       { query },
     );
@@ -94,7 +105,7 @@ export class SubscriptionRouter extends BaseRouter {
     skuId: Snowflake,
     subscriptionId: Snowflake,
   ): Promise<SubscriptionEntity> {
-    return this.get(
+    return this.#rest.get(
       SubscriptionRouter.SUBSCRIPTION_ROUTES.skuSubscriptionByIdEndpoint(
         skuId,
         subscriptionId,

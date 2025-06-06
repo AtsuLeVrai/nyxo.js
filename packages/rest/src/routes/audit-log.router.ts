@@ -1,5 +1,5 @@
 import type { AuditLogEntity, AuditLogEvent, Snowflake } from "@nyxojs/core";
-import { BaseRouter } from "../bases/index.js";
+import type { Rest } from "../core/index.js";
 
 /**
  * Interface for query parameters used when fetching guild audit logs.
@@ -45,7 +45,7 @@ export interface AuditLogFetchParams {
  *
  * @see {@link https://discord.com/developers/docs/resources/audit-log}
  */
-export class AuditLogRouter extends BaseRouter {
+export class AuditLogRouter {
   /**
    * API route constants for audit log-related endpoints.
    */
@@ -57,6 +57,17 @@ export class AuditLogRouter extends BaseRouter {
     guildAuditLogsEndpoint: (guildId: Snowflake) =>
       `/guilds/${guildId}/audit-logs` as const,
   } as const;
+
+  /** The REST client used to make API requests */
+  readonly #rest: Rest;
+
+  /**
+   * Creates a new instance of a router.
+   * @param rest - The REST client to use for making Discord API requests
+   */
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * Fetches the audit log for a guild with optional filtering.
@@ -71,7 +82,7 @@ export class AuditLogRouter extends BaseRouter {
     guildId: Snowflake,
     query?: AuditLogFetchParams,
   ): Promise<AuditLogEntity> {
-    return this.get(
+    return this.#rest.get(
       AuditLogRouter.AUDIT_ROUTES.guildAuditLogsEndpoint(guildId),
       { query },
     );
