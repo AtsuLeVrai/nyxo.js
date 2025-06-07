@@ -1,8 +1,28 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "nyxo.js",
-  "version": "0.2.2",
-  "description": "A Next-Generation Discord Bot Framework",
+  "version": "0.2.3",
+  "description": "Complete Next-Generation Discord Bot Framework with Type-Safe API, Auto-Caching, and Real-Time Gateway",
+  "keywords": [
+    "discord",
+    "bot",
+    "framework",
+    "discord-bot",
+    "typescript",
+    "type-safe",
+    "discord-api",
+    "gateway",
+    "websocket",
+    "rest",
+    "realtime",
+    "auto-cache",
+    "high-performance",
+    "builders",
+    "interactions",
+    "sharding",
+    "bot-framework"
+  ],
+  "homepage": "https://github.com/AtsuLeVrai/nyxo.js",
   "readme": "README.md",
   "license": "Apache-2.0",
   "type": "module",
@@ -49,7 +69,7 @@
     "@nyxojs/store": "workspace:^",
     "eventemitter3": "^5.0.1",
     "reflect-metadata": "^0.2.2",
-    "zod": "^3.25.55"
+    "zod": "^3.25.56"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",

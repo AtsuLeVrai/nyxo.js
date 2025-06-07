@@ -1,5 +1,14 @@
 # @nyxojs/voice
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @nyxojs/gateway@0.2.2
+  - @nyxojs/store@0.2.2
+  - @nyxojs/core@0.2.2
+
 ## 0.1.2
 
 ### Patch Changes

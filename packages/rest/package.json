@@ -1,8 +1,30 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/rest",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Type-Safe Discord REST API Client with Advanced Rate Limiting",
+  "keywords": [
+    "discord",
+    "rest",
+    "api",
+    "client",
+    "rate-limiting",
+    "typescript",
+    "type-safe",
+    "discord-api",
+    "bot",
+    "discord-bot",
+    "http-client",
+    "rate-limit",
+    "undici",
+    "form-data",
+    "file-upload",
+    "eventemitter",
+    "zod",
+    "validation",
+    "discord-rest"
+  ],
+  "homepage": "https://github.com/AtsuLeVrai/nyxo.js/tree/main/packages/rest",
   "readme": "README.md",
   "license": "Apache-2.0",
   "type": "module",
@@ -48,7 +70,7 @@
     "form-data": "^4.0.3",
     "mime-types": "^3.0.1",
     "undici": "^7.10.0",
-    "zod": "^3.25.55"
+    "zod": "^3.25.56"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.4",

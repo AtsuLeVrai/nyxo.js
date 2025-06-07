@@ -237,7 +237,7 @@ export type CacheableEntity =
 /**
  * Mapping of cache entity types to their corresponding cacheable entities.
  */
-export type CacheEntityMapping = {
+export interface CacheEntityMapping {
   applications: Application;
   autoModerationRules: AutoModeration;
   bans: Ban;
@@ -260,7 +260,7 @@ export type CacheEntityMapping = {
   users: User;
   voiceStates: VoiceState;
   webhooks: Webhook;
-};
+}
 
 /**
  * A comprehensive cache management system for Discord entities with conditional type safety.
@@ -519,7 +519,7 @@ export class CacheManager {
    * @typeParam T - The type of entities stored in this cache
    * @param type - The entity type for this cache
    * @param options - The cache configuration options
-   * @returns ConditionalStore based on the enabled flag
+   * @return A Store instance for the specified entity type, or null if disabled
    * @internal
    *
    * @remarks

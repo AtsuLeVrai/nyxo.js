@@ -1,5 +1,17 @@
 # nyxo.js
 
+## 0.2.3
+
+### Patch Changes
+
+- update package.json with new dependencies, zod version bump, and enhanced keywords for better discoverability
+- Updated dependencies
+  - @nyxojs/builders@0.2.2
+  - @nyxojs/gateway@0.2.2
+  - @nyxojs/store@0.2.2
+  - @nyxojs/core@0.2.2
+  - @nyxojs/rest@0.2.2
+
 ## 0.2.2
 
 ### Patch Changes

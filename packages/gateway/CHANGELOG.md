@@ -1,5 +1,14 @@
 # @nyxojs/gateway
 
+## 0.2.2
+
+### Patch Changes
+
+- update package.json with new dependencies, zod version bump, and enhanced keywords for better discoverability
+- Updated dependencies
+  - @nyxojs/core@0.2.2
+  - @nyxojs/rest@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes

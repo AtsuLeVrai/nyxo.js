@@ -1,8 +1,31 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/gateway",
-  "version": "0.2.1",
-  "description": "High-Performance Discord Gateway Client for Scalable Bots",
+  "version": "0.2.2",
+  "description": "High-Performance Discord Gateway Client for Real-Time Communication and Scalable Bots",
+  "keywords": [
+    "discord",
+    "gateway",
+    "websocket",
+    "bot",
+    "discord-bot",
+    "typescript",
+    "sharding",
+    "heartbeat",
+    "session-management",
+    "compression",
+    "rate-limiting",
+    "event-emitter",
+    "ws",
+    "discord-gateway",
+    "scalable",
+    "high-performance",
+    "etf",
+    "zstd",
+    "voice-state",
+    "discord-events"
+  ],
+  "homepage": "https://github.com/AtsuLeVrai/nyxo.js/tree/main/packages/gateway",
   "readme": "README.md",
   "license": "Apache-2.0",
   "type": "module",
@@ -46,7 +69,7 @@
     "@nyxojs/rest": "workspace:^",
     "eventemitter3": "^5.0.1",
     "ws": "^8.18.2",
-    "zod": "^3.25.55"
+    "zod": "^3.25.56"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.9",

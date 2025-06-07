@@ -1,7 +1,9 @@
 import { cpus } from "node:os";
+import codspeedPlugin from "@codspeed/vitest-plugin";
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
+  plugins: [codspeedPlugin()],
   test: {
     projects: ["packages/*"],
     environment: "node",
@@ -20,7 +22,17 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       enabled: false, // Enable via CLI with --coverage
-      reporter: ["text", "json", "html", "lcov"],
+      reporter: [
+        "text",
+        "html",
+        "clover",
+        "json",
+        "json-summary",
+        "lcov",
+        "teamcity",
+        "text-summary",
+        "cobertura",
+      ],
       reportsDirectory: "./coverage",
       exclude: [
         "**/*.d.ts",

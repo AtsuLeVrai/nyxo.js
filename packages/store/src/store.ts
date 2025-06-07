@@ -84,6 +84,23 @@ export const StoreOptions = z.object({
    * @default 15000 (15 seconds)
    */
   sweepInterval: z.number().int().positive().default(15000),
+
+  /**
+   * Size of each chunk processed during the sweep operation.
+   *
+   * This controls how many expired items are removed in each sweep cycle.
+   *
+   * Lower values:
+   * - More frequent sweeps with smaller batches
+   * - Reduces memory spikes during sweeps
+   *
+   * Higher values:
+   * - Fewer sweeps with larger batches
+   * - Can lead to higher memory usage during sweeps
+   *
+   * @default 100
+   */
+  sweepChunkSize: z.number().int().positive().default(100),
 });
 
 export type StoreOptions = z.infer<typeof StoreOptions>;
@@ -244,24 +261,36 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @returns The Store instance for method chaining
    */
   add(key: K, value: V | Partial<V>): this {
-    if (this.has(key)) {
-      const existingValue = this.get(key) as V;
-      // Perform deep merge if both values are objects
-      if (
-        typeof existingValue === "object" &&
-        existingValue !== null &&
-        typeof value === "object" &&
-        value !== null
-      ) {
-        const mergedValue = deepmerge(existingValue, value) as V;
-        this.set(key, mergedValue);
-      } else {
-        this.set(key, value as V);
-      }
-    } else {
-      this.set(key, value as V);
+    if (!this.has(key)) {
+      return this.set(key, value as V);
     }
-    return this;
+
+    const existingValue = this.get(key) as V;
+
+    // If either existing or new value is not an object, replace directly
+    if (
+      typeof existingValue !== "object" ||
+      existingValue === null ||
+      typeof value !== "object" ||
+      value === null
+    ) {
+      return this.set(key, value as V);
+    }
+
+    // Check if both existing and new values are objects
+    const hasNestedObjects = Object.values(value).some(
+      (v) => typeof v === "object" && v !== null,
+    );
+
+    // If neither value has nested objects, perform a shallow merge
+    if (!hasNestedObjects) {
+      const merged = { ...existingValue, ...value } as V;
+      return this.set(key, merged);
+    }
+
+    // If either value has nested objects, perform a deep merge
+    const mergedValue = deepmerge(existingValue, value) as V;
+    return this.set(key, mergedValue);
   }
 
   /**
@@ -648,10 +677,26 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @override Overrides Map.delete
    */
   override delete(key: K): boolean {
+    // Check if the key exists in the store
+    const existed = super.has(key);
+    if (!existed) {
+      return false;
+    }
+
+    // Delete the item from the store
+    const result = super.delete(key);
+
     // Clean up associated metadata
-    this.#ttlMap.delete(key);
-    this.#lruTracker?.delete(key);
-    return super.delete(key);
+    if (this.#ttlMap.size > 0) {
+      this.#ttlMap.delete(key);
+    }
+
+    // Clean up LRU tracker if it exists
+    if (this.#lruTracker) {
+      this.#lruTracker.delete(key);
+    }
+
+    return result;
   }
 
   /**
@@ -739,16 +784,40 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
     const now = Date.now();
     const expiredKeys: K[] = [];
+    let processed = 0;
 
-    // First, identify all expired keys to avoid modifying maps during iteration
+    // Iterate through the TTL map to find expired items
     for (const [key, expiry] of this.#ttlMap.entries()) {
       if (now >= expiry) {
         expiredKeys.push(key);
       }
+
+      processed++;
+      if (processed >= this.#options.sweepChunkSize) {
+        // Batch processing to avoid blocking the event loop
+        if (expiredKeys.length > 0) {
+          setTimeout(() => this.#sweepBatch(expiredKeys), 0);
+        }
+
+        // Reset expired keys for the next batch
+        setTimeout(() => this.#sweep(), 0);
+        return;
+      }
     }
 
-    // Then, remove all expired keys in a batch operation
-    for (const key of expiredKeys) {
+    // Cleanup final
+    this.#sweepBatch(expiredKeys);
+  }
+
+  /**
+   * Continues the sweep operation after processing a batch of expired items.
+   * This method is called recursively until all expired items are processed.
+   *
+   * @param keys
+   * @private
+   */
+  #sweepBatch(keys: K[]): void {
+    for (const key of keys) {
       this.delete(key);
     }
   }
@@ -838,24 +907,28 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       return false;
     }
 
-    return pattern.every(([path, expectedValue]) => {
+    // Optimisation: if the pattern is empty, always return true
+    for (const [path, expectedValue] of pattern) {
       const actualValue = get(value, path);
 
-      // Handle array contains checks for more flexible matching
+      // If the actual value is undefined, it doesn't match
       if (Array.isArray(actualValue)) {
         if (Array.isArray(expectedValue)) {
-          // Check if arrays are equal (all elements match)
-          return (
-            expectedValue.length === actualValue.length &&
-            expectedValue.every((v) => actualValue.includes(v))
-          );
+          // If both are arrays, check if they match in length and content
+          if (
+            expectedValue.length !== actualValue.length ||
+            !expectedValue.every((v) => actualValue.includes(v))
+          ) {
+            return false;
+          }
+        } else if (!actualValue.includes(expectedValue)) {
+          return false;
         }
-        // Check if array contains value
-        return actualValue.includes(expectedValue);
+      } else if (actualValue !== expectedValue) {
+        return false;
       }
+    }
 
-      // Default equality check
-      return actualValue === expectedValue;
-    });
+    return true;
   }
 }
