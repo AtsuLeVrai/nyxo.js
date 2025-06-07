@@ -114,8 +114,8 @@ describe("LruTracker", () => {
       expect(evicted).toBeNull();
       expect(tracker.size).toBe(1);
       expect(tracker.has("key1")).toBe(true);
-      expect(tracker.getMru()).toBe("key1");
-      expect(tracker.getLru()).toBe("key1");
+      expect(tracker.mru).toBe("key1");
+      expect(tracker.lru).toBe("key1");
     });
 
     it("adds multiple keys maintaining order", () => {
@@ -123,8 +123,8 @@ describe("LruTracker", () => {
       tracker.touch("key2");
       tracker.touch("key3");
 
-      expect(tracker.getMru()).toBe("key3");
-      expect(tracker.getLru()).toBe("key1");
+      expect(tracker.mru).toBe("key3");
+      expect(tracker.lru).toBe("key1");
       expect(tracker.size).toBe(3);
     });
 
@@ -137,8 +137,8 @@ describe("LruTracker", () => {
       const evicted = tracker.touch("key1");
 
       expect(evicted).toBeNull();
-      expect(tracker.getMru()).toBe("key1");
-      expect(tracker.getLru()).toBe("key2");
+      expect(tracker.mru).toBe("key1");
+      expect(tracker.lru).toBe("key2");
       expect(tracker.size).toBe(3);
     });
 
@@ -154,8 +154,8 @@ describe("LruTracker", () => {
       expect(tracker.size).toBe(3);
       expect(tracker.has("key1")).toBe(false);
       expect(tracker.has("key4")).toBe(true);
-      expect(tracker.getMru()).toBe("key4");
-      expect(tracker.getLru()).toBe("key2");
+      expect(tracker.mru).toBe("key4");
+      expect(tracker.lru).toBe("key2");
     });
 
     it("handles touch on recently evicted key", () => {
@@ -168,7 +168,7 @@ describe("LruTracker", () => {
       const evicted = tracker.touch("key1");
 
       expect(evicted).toBe("key2"); // key2 should be evicted now
-      expect(tracker.getMru()).toBe("key1");
+      expect(tracker.mru).toBe("key1");
       expect(tracker.has("key2")).toBe(false);
     });
 
@@ -182,8 +182,8 @@ describe("LruTracker", () => {
       tracker.touch("key2");
       tracker.touch("key1");
 
-      expect(tracker.getMru()).toBe("key1");
-      expect(tracker.getLru()).toBe("key3");
+      expect(tracker.mru).toBe("key1");
+      expect(tracker.lru).toBe("key3");
     });
 
     it("works with numeric keys", () => {
@@ -194,7 +194,7 @@ describe("LruTracker", () => {
       const evicted = numTracker.touch(3);
 
       expect(evicted).toBe(1);
-      expect(numTracker.getMru()).toBe(3);
+      expect(numTracker.mru).toBe(3);
     });
 
     it("works with symbol keys", () => {
@@ -205,22 +205,22 @@ describe("LruTracker", () => {
       symTracker.touch(sym1);
       symTracker.touch(sym2);
 
-      expect(symTracker.getMru()).toBe(sym2);
-      expect(symTracker.getLru()).toBe(sym1);
+      expect(symTracker.mru).toBe(sym2);
+      expect(symTracker.lru).toBe(sym1);
     });
   });
 
   describe("getLru and getMru", () => {
     it("returns null for empty tracker", () => {
-      expect(tracker.getLru()).toBeNull();
-      expect(tracker.getMru()).toBeNull();
+      expect(tracker.lru).toBeNull();
+      expect(tracker.mru).toBeNull();
     });
 
     it("returns same key for single item", () => {
       tracker.touch("only-key");
 
-      expect(tracker.getLru()).toBe("only-key");
-      expect(tracker.getMru()).toBe("only-key");
+      expect(tracker.lru).toBe("only-key");
+      expect(tracker.mru).toBe("only-key");
     });
 
     it("returns correct LRU and MRU for multiple items", () => {
@@ -228,8 +228,8 @@ describe("LruTracker", () => {
       tracker.touch("second");
       tracker.touch("third");
 
-      expect(tracker.getLru()).toBe("first");
-      expect(tracker.getMru()).toBe("third");
+      expect(tracker.lru).toBe("first");
+      expect(tracker.mru).toBe("third");
     });
 
     it("updates correctly after touching middle item", () => {
@@ -239,8 +239,8 @@ describe("LruTracker", () => {
 
       tracker.touch("second"); // Move second to front
 
-      expect(tracker.getLru()).toBe("first");
-      expect(tracker.getMru()).toBe("second");
+      expect(tracker.lru).toBe("first");
+      expect(tracker.mru).toBe("second");
     });
 
     it("updates correctly after eviction", () => {
@@ -249,8 +249,8 @@ describe("LruTracker", () => {
       tracker.touch("key3");
       tracker.touch("key4"); // Evicts key1
 
-      expect(tracker.getLru()).toBe("key2");
-      expect(tracker.getMru()).toBe("key4");
+      expect(tracker.lru).toBe("key2");
+      expect(tracker.mru).toBe("key4");
     });
   });
 
@@ -289,13 +289,13 @@ describe("LruTracker", () => {
       tracker.touch("key2");
       tracker.touch("key3");
 
-      const lruBefore = tracker.getLru();
-      const mruBefore = tracker.getMru();
+      const lruBefore = tracker.lru;
+      const mruBefore = tracker.mru;
 
       tracker.has("key2");
 
-      expect(tracker.getLru()).toBe(lruBefore);
-      expect(tracker.getMru()).toBe(mruBefore);
+      expect(tracker.lru).toBe(lruBefore);
+      expect(tracker.mru).toBe(mruBefore);
     });
   });
 
@@ -312,8 +312,8 @@ describe("LruTracker", () => {
       expect(deleted).toBe(true);
       expect(tracker.size).toBe(0);
       expect(tracker.has("only-key")).toBe(false);
-      expect(tracker.getLru()).toBeNull();
-      expect(tracker.getMru()).toBeNull();
+      expect(tracker.lru).toBeNull();
+      expect(tracker.mru).toBeNull();
     });
 
     it("deletes head item from multi-item tracker", () => {
@@ -325,8 +325,8 @@ describe("LruTracker", () => {
 
       expect(deleted).toBe(true);
       expect(tracker.size).toBe(2);
-      expect(tracker.getMru()).toBe("key2");
-      expect(tracker.getLru()).toBe("key1");
+      expect(tracker.mru).toBe("key2");
+      expect(tracker.lru).toBe("key1");
     });
 
     it("deletes tail item from multi-item tracker", () => {
@@ -338,8 +338,8 @@ describe("LruTracker", () => {
 
       expect(deleted).toBe(true);
       expect(tracker.size).toBe(2);
-      expect(tracker.getMru()).toBe("key3");
-      expect(tracker.getLru()).toBe("key2");
+      expect(tracker.mru).toBe("key3");
+      expect(tracker.lru).toBe("key2");
     });
 
     it("deletes middle item from multi-item tracker", () => {
@@ -351,8 +351,8 @@ describe("LruTracker", () => {
 
       expect(deleted).toBe(true);
       expect(tracker.size).toBe(2);
-      expect(tracker.getMru()).toBe("key3");
-      expect(tracker.getLru()).toBe("key1");
+      expect(tracker.mru).toBe("key3");
+      expect(tracker.lru).toBe("key1");
     });
 
     it("returns false for non-existing key", () => {
@@ -398,8 +398,8 @@ describe("LruTracker", () => {
       tracker.clear();
 
       expect(tracker.size).toBe(0);
-      expect(tracker.getLru()).toBeNull();
-      expect(tracker.getMru()).toBeNull();
+      expect(tracker.lru).toBeNull();
+      expect(tracker.mru).toBeNull();
     });
 
     it("clears tracker with single item", () => {
@@ -408,8 +408,8 @@ describe("LruTracker", () => {
 
       expect(tracker.size).toBe(0);
       expect(tracker.has("only-key")).toBe(false);
-      expect(tracker.getLru()).toBeNull();
-      expect(tracker.getMru()).toBeNull();
+      expect(tracker.lru).toBeNull();
+      expect(tracker.mru).toBeNull();
     });
 
     it("clears tracker with multiple items", () => {
@@ -423,8 +423,8 @@ describe("LruTracker", () => {
       expect(tracker.has("key1")).toBe(false);
       expect(tracker.has("key2")).toBe(false);
       expect(tracker.has("key3")).toBe(false);
-      expect(tracker.getLru()).toBeNull();
-      expect(tracker.getMru()).toBeNull();
+      expect(tracker.lru).toBeNull();
+      expect(tracker.mru).toBeNull();
     });
 
     it("allows normal operations after clear", () => {
@@ -435,8 +435,8 @@ describe("LruTracker", () => {
       tracker.touch("new-key");
 
       expect(tracker.size).toBe(1);
-      expect(tracker.getMru()).toBe("new-key");
-      expect(tracker.getLru()).toBe("new-key");
+      expect(tracker.mru).toBe("new-key");
+      expect(tracker.lru).toBe("new-key");
     });
 
     it("handles multiple consecutive clears", () => {
@@ -646,14 +646,14 @@ describe("LruTracker", () => {
 
       singleTracker.touch("key1");
       expect(singleTracker.size).toBe(1);
-      expect(singleTracker.getMru()).toBe("key1");
-      expect(singleTracker.getLru()).toBe("key1");
+      expect(singleTracker.mru).toBe("key1");
+      expect(singleTracker.lru).toBe("key1");
 
       const evicted = singleTracker.touch("key2");
       expect(evicted).toBe("key1");
       expect(singleTracker.size).toBe(1);
-      expect(singleTracker.getMru()).toBe("key2");
-      expect(singleTracker.getLru()).toBe("key2");
+      expect(singleTracker.mru).toBe("key2");
+      expect(singleTracker.lru).toBe("key2");
     });
 
     it("handles rapid sequential operations", () => {
@@ -684,7 +684,7 @@ describe("LruTracker", () => {
       tracker.touch("c"); // Move existing to front
 
       expect(tracker.size).toBe(3);
-      expect(tracker.getMru()).toBe("c");
+      expect(tracker.mru).toBe("c");
       expect(tracker.has("a")).toBe(true);
       expect(tracker.has("b")).toBe(false);
       expect(tracker.has("d")).toBe(true);
@@ -748,8 +748,8 @@ describe("LruTracker", () => {
       }
 
       expect(largeTracker.size).toBe(5000);
-      expect(largeTracker.getMru()).toBe(4999);
-      expect(largeTracker.getLru()).toBe(0);
+      expect(largeTracker.mru).toBe(4999);
+      expect(largeTracker.lru).toBe(0);
 
       // Verify some middle elements
       expect(largeTracker.has(2500)).toBe(true);
@@ -765,9 +765,9 @@ describe("LruTracker", () => {
       numberTracker.touch(42);
       symbolTracker.touch(Symbol("test"));
 
-      expect(stringTracker.getMru()).toBe("string-key");
-      expect(numberTracker.getMru()).toBe(42);
-      expect(typeof symbolTracker.getMru()).toBe("symbol");
+      expect(stringTracker.mru).toBe("string-key");
+      expect(numberTracker.mru).toBe(42);
+      expect(typeof symbolTracker.mru).toBe("symbol");
     });
 
     it("handles boundary conditions correctly", () => {

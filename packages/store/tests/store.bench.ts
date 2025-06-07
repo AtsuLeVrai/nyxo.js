@@ -89,6 +89,13 @@ describe("Store Bulk Operations", () => {
     const store = new Store(data);
     store.destroy();
   });
+
+  bench("constructor with Record object 1000 items", () => {
+    const data = generateTestData(1000);
+    const record = Object.fromEntries(data);
+    const store = new Store(record);
+    store.destroy();
+  });
 });
 
 describe("Store Search Operations", () => {
@@ -165,6 +172,195 @@ describe("Store Data Manipulation", () => {
   });
 });
 
+describe("Store Convenience Methods", () => {
+  const store = new Store<string, any>();
+  const testData = generateTestData(1000);
+
+  for (const [key, value] of testData) {
+    store.set(key, value);
+  }
+
+  bench("first() single value", () => {
+    store.first();
+  });
+
+  bench("first(10) multiple values", () => {
+    store.first(10);
+  });
+
+  bench("last() single value", () => {
+    store.last();
+  });
+
+  bench("last(10) multiple values", () => {
+    store.last(10);
+  });
+
+  bench("random() single value", () => {
+    store.random();
+  });
+
+  bench("random(10) multiple values", () => {
+    store.random(10);
+  });
+
+  bench("at() positive index", () => {
+    store.at(500);
+  });
+
+  bench("at() negative index", () => {
+    store.at(-500);
+  });
+
+  bench("reverse operation", () => {
+    const reversed = store.reverse();
+    reversed.destroy();
+  });
+});
+
+describe("Store Aggregation Methods", () => {
+  const store = new Store<string, any>();
+  const testData = generateTestData(1000);
+
+  for (const [key, value] of testData) {
+    store.set(key, value);
+  }
+
+  bench("reduce operation", () => {
+    store.reduce((acc, value) => acc + value.id, 0);
+  });
+
+  bench("some with function predicate", () => {
+    store.some((value) => value.id > 500);
+  });
+
+  bench("some with object pattern", () => {
+    store.some({ id: 500 });
+  });
+
+  bench("every with function predicate", () => {
+    store.every((value) => value.id >= 0);
+  });
+
+  bench("every with object pattern", () => {
+    store.every({ name: "item500" });
+  });
+});
+
+describe("Store Set Operations", () => {
+  const store1 = new Store<string, any>();
+  const store2 = new Store<string, any>();
+  const testData1 = generateTestData(500);
+  const testData2 = generateTestData(500);
+
+  for (const [key, value] of testData1) {
+    store1.set(key, value);
+  }
+
+  for (let i = 250; i < 750; i++) {
+    store2.set(`key${i}`, testData2[i - 250]?.[1]);
+  }
+
+  bench("partition with function predicate", () => {
+    const [matching, nonMatching] = store1.partition(
+      (value) => value.id % 2 === 0,
+    );
+    matching.destroy();
+    nonMatching.destroy();
+  });
+
+  bench("partition with object pattern", () => {
+    const [matching, nonMatching] = store1.partition({ id: 100 });
+    matching.destroy();
+    nonMatching.destroy();
+  });
+
+  bench("concat operation", () => {
+    const result = store1.concat(store2);
+    result.destroy();
+  });
+
+  bench("difference operation", () => {
+    const result = store1.difference(store2);
+    result.destroy();
+  });
+
+  bench("intersect operation", () => {
+    const result = store1.intersect(store2);
+    result.destroy();
+  });
+
+  bench("union operation", () => {
+    const result = store1.union(store2);
+    result.destroy();
+  });
+
+  bench("symmetricDifference operation", () => {
+    const result = store1.symmetricDifference(store2);
+    result.destroy();
+  });
+
+  store1.destroy();
+  store2.destroy();
+});
+
+describe("Store Cloning and Comparison", () => {
+  const store = new Store<string, any>();
+  const testData = generateTestData(1000);
+
+  for (const [key, value] of testData) {
+    store.set(key, value);
+  }
+
+  const clonedStore = store.clone();
+
+  bench("clone deep", () => {
+    const cloned = store.clone(true);
+    cloned.destroy();
+  });
+
+  bench("clone shallow", () => {
+    const cloned = store.clone(false);
+    cloned.destroy();
+  });
+
+  bench("equals shallow comparison", () => {
+    store.equals(clonedStore, false);
+  });
+
+  bench("equals deep comparison", () => {
+    store.equals(clonedStore, true);
+  });
+
+  bench("tap operation", () => {
+    store.tap((s) => s.size);
+  });
+
+  clonedStore.destroy();
+});
+
+describe("Store Serialization", () => {
+  const store = new Store<string, any>();
+  const testData = generateTestData(1000);
+
+  for (const [key, value] of testData) {
+    store.set(key, value);
+  }
+
+  bench("toJSON conversion", () => {
+    store.toJson();
+  });
+
+  bench("toJSON with complex objects", () => {
+    const complexStore = new Store<string, any>();
+    for (let i = 0; i < 100; i++) {
+      complexStore.set(`key${i}`, generateLargeObject());
+    }
+    complexStore.toJson();
+    complexStore.destroy();
+  });
+});
+
 describe("Store Memory Management", () => {
   bench("large object storage and retrieval", () => {
     const store = new Store<string, any>();
@@ -193,6 +389,15 @@ describe("Store Memory Management", () => {
     const obj = generateLargeObject();
     store.set("remove", obj);
     store.remove("remove", ["nested.deep.values"]);
+    store.destroy();
+  });
+
+  bench("destroy operation", () => {
+    const store = new Store<string, any>();
+    const data = generateTestData(100);
+    for (const [key, value] of data) {
+      store.set(key, value);
+    }
     store.destroy();
   });
 });
@@ -405,6 +610,29 @@ describe("Store vs Native Map Comparison", () => {
 
     store.destroy();
   });
+
+  bench("Native Array - first/last operations", () => {
+    const values = testData.map(([, value]) => value);
+    values[0];
+    values[values.length - 1];
+    values.slice(0, 10);
+    values.slice(-10);
+  });
+
+  bench("Store - first/last operations", () => {
+    const store = new Store<string, any>({ maxSize: 0, ttl: 0 });
+
+    for (const [key, value] of testData) {
+      store.set(key, value);
+    }
+
+    store.first();
+    store.last();
+    store.first(10);
+    store.last(10);
+
+    store.destroy();
+  });
 });
 
 describe("Store Concurrency Simulation", () => {
@@ -466,6 +694,23 @@ describe("Store Concurrency Simulation", () => {
     }
     store.destroy();
   });
+
+  bench("convenience methods workload", () => {
+    const store = new Store<string, any>();
+    const data = generateTestData(100);
+
+    for (const [key, value] of data) {
+      store.set(key, value);
+    }
+
+    for (let i = 0; i < 100; i++) {
+      store.first();
+      store.last();
+      store.random();
+      store.at(Math.floor(Math.random() * 100));
+    }
+    store.destroy();
+  });
 });
 
 describe("Store Memory Footprint", () => {
@@ -494,6 +739,17 @@ describe("Store Memory Footprint", () => {
     for (let i = 0; i < 100; i++) {
       store.set(`key${i}`, generateLargeObject());
     }
+    store.destroy();
+  });
+
+  bench("clone operations memory impact", () => {
+    const store = new Store<string, any>();
+    for (let i = 0; i < 100; i++) {
+      store.set(`key${i}`, generateLargeObject());
+    }
+
+    const cloned = store.clone();
+    cloned.destroy();
     store.destroy();
   });
 });
@@ -539,5 +795,40 @@ describe("Store Edge Cases Performance", () => {
       store.get(Math.floor(Math.random() * 1000));
     }
     store.destroy();
+  });
+
+  bench("negative index operations", () => {
+    const store = new Store<string, any>();
+    const data = generateTestData(1000);
+
+    for (const [key, value] of data) {
+      store.set(key, value);
+    }
+
+    for (let i = 0; i < 100; i++) {
+      store.at(-Math.floor(Math.random() * 1000) - 1);
+    }
+    store.destroy();
+  });
+
+  bench("chained operations performance", () => {
+    const store1 = new Store<string, any>();
+    const store2 = new Store<string, any>();
+    const data = generateTestData(100);
+
+    for (const [key, value] of data) {
+      store1.set(key, value);
+      store2.set(key, { ...value, modified: true });
+    }
+
+    const result = store1
+      .filter((value) => value.id % 2 === 0)
+      .sort((a, b) => a.id - b.id)
+      .concat(store2)
+      .reverse();
+
+    result.destroy();
+    store1.destroy();
+    store2.destroy();
   });
 });

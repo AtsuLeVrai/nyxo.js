@@ -3,6 +3,7 @@ export * from "./button.builder.js";
 export * from "./container.builder.js";
 export * from "./file.builder.js";
 export * from "./media-gallery.builder.js";
+export * from "./modal.builder.js";
 export * from "./section.builder.js";
 export * from "./select-menu.builder.js";
 export * from "./separator.builder.js";

@@ -51,7 +51,7 @@ describe("Store", () => {
 
     it("throws error for invalid first argument", () => {
       expect(() => new Store("invalid" as any)).toThrow(
-        "First argument must be either an array of entries or an options object",
+        "First argument must be either an array of entries, an object, or an options object",
       );
     });
 
@@ -878,6 +878,684 @@ describe("Store", () => {
 
       expect(stressStore.size).toBeLessThanOrEqual(100);
       stressStore.destroy();
+    });
+  });
+
+  describe("New Advanced Operations", () => {
+    beforeEach(() => {
+      store.set("a", 1);
+      store.set("b", 2);
+      store.set("c", 3);
+      store.set("d", 4);
+      store.set("e", 5);
+    });
+
+    describe("Convenience Methods", () => {
+      describe("first method", () => {
+        it("returns first value when called without arguments", () => {
+          expect(store.first()).toBe(1);
+        });
+
+        it("returns undefined for empty store", () => {
+          store.clear();
+          expect(store.first()).toBeUndefined();
+        });
+
+        it("returns array of first n values when count provided", () => {
+          expect(store.first(3)).toEqual([1, 2, 3]);
+        });
+
+        it("returns all values when count exceeds store size", () => {
+          expect(store.first(10)).toEqual([1, 2, 3, 4, 5]);
+        });
+
+        it("returns empty array when count is 0", () => {
+          expect(store.first(0)).toEqual([]);
+        });
+
+        it("returns empty array for negative count", () => {
+          expect(store.first(-5)).toEqual([]);
+        });
+      });
+
+      describe("last method", () => {
+        it("returns last value when called without arguments", () => {
+          expect(store.last()).toBe(5);
+        });
+
+        it("returns undefined for empty store", () => {
+          store.clear();
+          expect(store.last()).toBeUndefined();
+        });
+
+        it("returns array of last n values when count provided", () => {
+          expect(store.last(3)).toEqual([3, 4, 5]);
+        });
+
+        it("returns all values when count exceeds store size", () => {
+          expect(store.last(10)).toEqual([1, 2, 3, 4, 5]);
+        });
+
+        it("returns empty array when count is 0", () => {
+          expect(store.last(0)).toEqual([]);
+        });
+
+        it("returns empty array for negative count", () => {
+          expect(store.last(-5)).toEqual([]);
+        });
+      });
+
+      describe("random method", () => {
+        it("returns random value when called without arguments", () => {
+          const result = store.random();
+          expect([1, 2, 3, 4, 5]).toContain(result);
+        });
+
+        it("returns undefined for empty store", () => {
+          store.clear();
+          expect(store.random()).toBeUndefined();
+        });
+
+        it("returns array of random values when count provided", () => {
+          const result = store.random(3);
+          expect(result).toHaveLength(3);
+          expect(result.every((val) => [1, 2, 3, 4, 5].includes(val))).toBe(
+            true,
+          );
+        });
+
+        it("returns all values when count equals store size", () => {
+          const result = store.random(5);
+          expect(result).toHaveLength(5);
+          expect(result.sort()).toEqual([1, 2, 3, 4, 5]);
+        });
+
+        it("returns all values when count exceeds store size", () => {
+          const result = store.random(10);
+          expect(result).toHaveLength(5);
+        });
+
+        it("returns empty array for empty store with count", () => {
+          store.clear();
+          expect(store.random(3)).toEqual([]);
+        });
+
+        it("returns empty array when count is 0", () => {
+          expect(store.random(0)).toEqual([]);
+        });
+
+        it("returns no duplicates in random selection", () => {
+          const result = store.random(5);
+          const unique = [...new Set(result)];
+          expect(result).toHaveLength(unique.length);
+        });
+      });
+
+      describe("at method", () => {
+        it("returns value at positive index", () => {
+          expect(store.at(0)).toBe(1);
+          expect(store.at(2)).toBe(3);
+          expect(store.at(4)).toBe(5);
+        });
+
+        it("returns value at negative index", () => {
+          expect(store.at(-1)).toBe(5);
+          expect(store.at(-3)).toBe(3);
+          expect(store.at(-5)).toBe(1);
+        });
+
+        it("returns undefined for out of bounds index", () => {
+          expect(store.at(10)).toBeUndefined();
+          expect(store.at(-10)).toBeUndefined();
+        });
+
+        it("returns undefined for empty store", () => {
+          store.clear();
+          expect(store.at(0)).toBeUndefined();
+          expect(store.at(-1)).toBeUndefined();
+        });
+      });
+    });
+
+    describe("Transformation Methods", () => {
+      describe("reverse method", () => {
+        it("creates new store with reversed order", () => {
+          const reversed = store.reverse();
+          expect(reversed.toArray()).toEqual([5, 4, 3, 2, 1]);
+          expect(reversed.keysArray()).toEqual(["e", "d", "c", "b", "a"]);
+          reversed.destroy();
+        });
+
+        it("does not modify original store", () => {
+          const original = store.toArray();
+          const reversed = store.reverse();
+          expect(store.toArray()).toEqual(original);
+          reversed.destroy();
+        });
+
+        it("preserves store options", () => {
+          store.destroy();
+          const originalStore = new Store<string, number>(null, {
+            maxSize: 10,
+          });
+          originalStore.set("a", 1);
+          originalStore.set("b", 2);
+
+          const reversed = originalStore.reverse();
+          expect(reversed.toArray()).toEqual([2, 1]);
+
+          originalStore.destroy();
+          reversed.destroy();
+        });
+      });
+    });
+
+    describe("Aggregation Methods", () => {
+      describe("reduce method", () => {
+        it("reduces values to single result", () => {
+          const sum = store.reduce((acc, value) => acc + value, 0);
+          expect(sum).toBe(15);
+        });
+
+        it("provides key and store in callback", () => {
+          const result = store.reduce((acc, value, key, storeRef) => {
+            expect(typeof key).toBe("string");
+            expect(storeRef).toBe(store);
+            return acc + value;
+          }, 0);
+          expect(result).toBe(15);
+        });
+
+        it("works with complex accumulator types", () => {
+          const grouped = store.reduce(
+            (acc, value, key) => {
+              acc[key] = value * 2;
+              return acc;
+            },
+            {} as Record<string, number>,
+          );
+          expect(grouped).toEqual({ a: 2, b: 4, c: 6, d: 8, e: 10 });
+        });
+
+        it("handles empty store", () => {
+          store.clear();
+          const result = store.reduce((acc, value) => acc + value, 0);
+          expect(result).toBe(0);
+        });
+      });
+
+      describe("some method", () => {
+        it("returns true when at least one value matches function predicate", () => {
+          expect(store.some((value) => value > 4)).toBe(true);
+          expect(store.some((value) => value > 10)).toBe(false);
+        });
+
+        it("returns true when at least one value matches object pattern", () => {
+          store.clear();
+          store.set("user1", { active: true, age: 25 });
+          store.set("user2", { active: false, age: 30 });
+
+          expect(store.some({ active: true })).toBe(true);
+          expect(store.some({ active: false })).toBe(true);
+          expect(store.some({ age: 40 })).toBe(false);
+        });
+
+        it("returns false for empty store", () => {
+          store.clear();
+          expect(store.some((_) => true)).toBe(false);
+        });
+      });
+
+      describe("every method", () => {
+        it("returns true when all values match function predicate", () => {
+          expect(store.every((value) => value > 0)).toBe(true);
+          expect(store.every((value) => value > 3)).toBe(false);
+        });
+
+        it("returns true when all values match object pattern", () => {
+          store.clear();
+          store.set("user1", { active: true, type: "admin" });
+          store.set("user2", { active: true, type: "user" });
+
+          expect(store.every({ active: true })).toBe(true);
+          expect(store.every({ type: "admin" })).toBe(false);
+        });
+
+        it("returns true for empty store", () => {
+          store.clear();
+          expect(store.every((_) => false)).toBe(true);
+        });
+      });
+    });
+
+    describe("Set Operations", () => {
+      let otherStore: Store<string, number>;
+
+      beforeEach(() => {
+        otherStore = new Store<string, number>();
+        otherStore.set("c", 30);
+        otherStore.set("d", 40);
+        otherStore.set("f", 60);
+      });
+
+      afterEach(() => {
+        otherStore.destroy();
+      });
+
+      describe("partition method", () => {
+        it("splits store based on function predicate", () => {
+          const [evens, odds] = store.partition((value) => value % 2 === 0);
+
+          expect(evens.toArray()).toEqual([2, 4]);
+          expect(odds.toArray()).toEqual([1, 3, 5]);
+
+          evens.destroy();
+          odds.destroy();
+        });
+
+        it("splits store based on object pattern", () => {
+          store.clear();
+          store.set("user1", { active: true, age: 25 });
+          store.set("user2", { active: false, age: 30 });
+          store.set("user3", { active: true, age: 35 });
+
+          const [active, inactive] = store.partition({ active: true });
+
+          expect(active.size).toBe(2);
+          expect(inactive.size).toBe(1);
+
+          active.destroy();
+          inactive.destroy();
+        });
+
+        it("preserves store options in partitioned stores", () => {
+          store.destroy();
+          const originalStore = new Store<string, number>(null, { maxSize: 5 });
+          originalStore.set("a", 1);
+          originalStore.set("b", 2);
+
+          const [evens, odds] = originalStore.partition(
+            (value) => value % 2 === 0,
+          );
+
+          expect(evens.size).toBe(1);
+          expect(odds.size).toBe(1);
+
+          originalStore.destroy();
+          evens.destroy();
+          odds.destroy();
+        });
+      });
+
+      describe("concat method", () => {
+        it("concatenates multiple stores", () => {
+          const store2 = new Store<string, number>();
+          store2.set("x", 100);
+          store2.set("y", 200);
+
+          const result = store.concat(otherStore, store2);
+
+          expect(result.size).toBe(8);
+          expect(result.get("a")).toBe(1);
+          expect(result.get("c")).toBe(30);
+          expect(result.get("x")).toBe(100);
+
+          result.destroy();
+          store2.destroy();
+        });
+
+        it("later stores override earlier ones for duplicate keys", () => {
+          const result = store.concat(otherStore);
+
+          expect(result.get("c")).toBe(30);
+          expect(result.get("d")).toBe(40);
+
+          result.destroy();
+        });
+      });
+
+      describe("difference method", () => {
+        it("returns entries that exist in this store but not in other", () => {
+          const result = store.difference(otherStore);
+
+          expect(result.keysArray().sort()).toEqual(["a", "b", "e"]);
+          expect(result.get("a")).toBe(1);
+          expect(result.get("b")).toBe(2);
+          expect(result.get("e")).toBe(5);
+
+          result.destroy();
+        });
+
+        it("returns empty store when all keys exist in other", () => {
+          const allKeys = new Store<string, number>();
+          allKeys.set("a", 10);
+          allKeys.set("b", 20);
+          allKeys.set("c", 30);
+          allKeys.set("d", 40);
+          allKeys.set("e", 50);
+
+          const result = store.difference(allKeys);
+          expect(result.size).toBe(0);
+
+          result.destroy();
+          allKeys.destroy();
+        });
+      });
+
+      describe("intersect method", () => {
+        it("returns entries that exist in both stores", () => {
+          const result = store.intersect(otherStore);
+
+          expect(result.keysArray().sort()).toEqual(["c", "d"]);
+          expect(result.get("c")).toBe(3);
+          expect(result.get("d")).toBe(4);
+
+          result.destroy();
+        });
+
+        it("values from this store take precedence", () => {
+          const result = store.intersect(otherStore);
+
+          expect(result.get("c")).toBe(3);
+          expect(result.get("d")).toBe(4);
+
+          result.destroy();
+        });
+      });
+
+      describe("union method", () => {
+        it("returns entries from both stores", () => {
+          const result = store.union(otherStore);
+
+          expect(result.size).toBe(6);
+          expect(result.keysArray().sort()).toEqual([
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+          ]);
+
+          result.destroy();
+        });
+
+        it("other store values take precedence for duplicates", () => {
+          const result = store.union(otherStore);
+
+          expect(result.get("c")).toBe(30);
+          expect(result.get("d")).toBe(40);
+
+          result.destroy();
+        });
+      });
+
+      describe("symmetricDifference method", () => {
+        it("returns entries that exist in either store but not both", () => {
+          const result = store.symmetricDifference(otherStore);
+
+          expect(result.keysArray().sort()).toEqual(["a", "b", "e", "f"]);
+          expect(result.get("a")).toBe(1);
+          expect(result.get("f")).toBe(60);
+
+          result.destroy();
+        });
+
+        it("excludes keys that exist in both stores", () => {
+          const result = store.symmetricDifference(otherStore);
+
+          expect(result.has("c")).toBe(false);
+          expect(result.has("d")).toBe(false);
+
+          result.destroy();
+        });
+      });
+    });
+
+    describe("Cloning and Comparison", () => {
+      describe("clone method", () => {
+        it("creates deep clone by default", () => {
+          store.clear();
+          store.set("nested", { obj: { value: 42 } });
+
+          const cloned = store.clone();
+          const original = store.get("nested");
+          const clonedValue = cloned.get("nested");
+
+          expect(clonedValue).toEqual(original);
+          expect(clonedValue).not.toBe(original);
+
+          cloned.destroy();
+        });
+
+        it("creates shallow clone when deep=false", () => {
+          store.clear();
+          const sharedObj = { value: 42 };
+          store.set("shared", sharedObj);
+
+          const cloned = store.clone(false);
+
+          expect(cloned.get("shared")).toBe(sharedObj);
+
+          cloned.destroy();
+        });
+
+        it("preserves store options", () => {
+          store.destroy();
+          const originalStore = new Store<string, number>(null, { maxSize: 5 });
+          originalStore.set("a", 1);
+
+          const cloned = originalStore.clone();
+          expect(cloned.size).toBe(1);
+
+          originalStore.destroy();
+          cloned.destroy();
+        });
+
+        it("creates independent stores", () => {
+          const cloned = store.clone();
+
+          store.set("new", 999);
+          cloned.set("other", 888);
+
+          expect(store.has("other")).toBe(false);
+          expect(cloned.has("new")).toBe(false);
+
+          cloned.destroy();
+        });
+      });
+
+      describe("equals method", () => {
+        it("returns true for identical stores with shallow comparison", () => {
+          const other = new Store<string, number>();
+          other.set("a", 1);
+          other.set("b", 2);
+          other.set("c", 3);
+          other.set("d", 4);
+          other.set("e", 5);
+
+          expect(store.equals(other)).toBe(true);
+
+          other.destroy();
+        });
+
+        it("returns false for stores with different sizes", () => {
+          const other = new Store<string, number>();
+          other.set("a", 1);
+
+          expect(store.equals(other)).toBe(false);
+
+          other.destroy();
+        });
+
+        it("returns false for stores with different keys", () => {
+          const other = new Store<string, number>();
+          other.set("x", 1);
+          other.set("y", 2);
+          other.set("z", 3);
+          other.set("w", 4);
+          other.set("v", 5);
+
+          expect(store.equals(other)).toBe(false);
+
+          other.destroy();
+        });
+
+        it("returns false for stores with different values", () => {
+          const other = new Store<string, number>();
+          other.set("a", 10);
+          other.set("b", 20);
+          other.set("c", 30);
+          other.set("d", 40);
+          other.set("e", 50);
+
+          expect(store.equals(other)).toBe(false);
+
+          other.destroy();
+        });
+
+        it("performs deep comparison when deep=true", () => {
+          store.clear();
+          store.set("nested", { obj: { value: 42 } });
+
+          const other = new Store<string, any>();
+          other.set("nested", { obj: { value: 42 } });
+
+          expect(store.equals(other, true)).toBe(true);
+          expect(store.equals(other, false)).toBe(false);
+
+          other.destroy();
+        });
+
+        it("handles null and undefined values correctly", () => {
+          store.clear();
+          store.set("null", null);
+          store.set("undefined", undefined);
+
+          const other = new Store<string, any>();
+          other.set("null", null);
+          other.set("undefined", undefined);
+
+          expect(store.equals(other)).toBe(true);
+
+          other.destroy();
+        });
+      });
+
+      describe("tap method", () => {
+        it("executes callback and returns store for chaining", () => {
+          let callbackExecuted = false;
+          let receivedStore: Store<string, number> | null = null;
+
+          const result = store.tap((s) => {
+            callbackExecuted = true;
+            receivedStore = s;
+          });
+
+          expect(callbackExecuted).toBe(true);
+          expect(receivedStore).toBe(store);
+          expect(result).toBe(store);
+        });
+
+        it("allows method chaining", () => {
+          const values: number[] = [];
+
+          const result = store
+            .tap((s) => values.push(s.size))
+            .set("f", 6)
+            .tap((s) => values.push(s.size));
+
+          expect(values).toEqual([5, 6]);
+          expect(result).toBe(store);
+        });
+      });
+    });
+
+    describe("Serialization", () => {
+      describe("toJSON method", () => {
+        it("converts store to plain object", () => {
+          const json = store.toJson();
+
+          expect(json).toEqual({
+            a: 1,
+            b: 2,
+            c: 3,
+            d: 4,
+            e: 5,
+          });
+        });
+
+        it("handles complex values", () => {
+          store.clear();
+          store.set("user", { name: "Alice", age: 30 });
+          store.set("config", { enabled: true, count: 42 });
+
+          const json = store.toJson();
+
+          expect(json).toEqual({
+            user: { name: "Alice", age: 30 },
+            config: { enabled: true, count: 42 },
+          });
+        });
+
+        it("handles null and undefined values", () => {
+          store.clear();
+          store.set("null", null);
+          store.set("undefined", undefined);
+
+          const json = store.toJson();
+
+          expect(json).toEqual({
+            null: null,
+            undefined: undefined,
+          });
+        });
+      });
+    });
+
+    describe("Constructor with Record", () => {
+      it("creates store from Record object", () => {
+        const data = { x: 10, y: 20, z: 30 };
+        const recordStore = new Store(data);
+
+        expect(recordStore.size).toBe(3);
+        expect(recordStore.get("x")).toBe(10);
+        expect(recordStore.get("y")).toBe(20);
+        expect(recordStore.get("z")).toBe(30);
+
+        recordStore.destroy();
+      });
+
+      it("creates store from Record with options", () => {
+        const data = { a: 1, b: 2 };
+        const options = { maxSize: 5, ttl: 1000 };
+        const recordStore = new Store(data, options);
+
+        expect(recordStore.size).toBe(2);
+        expect(recordStore.get("a")).toBe(1);
+
+        recordStore.destroy();
+      });
+
+      it("handles empty Record object", () => {
+        const data = {};
+        const recordStore = new Store(data);
+
+        expect(recordStore.size).toBe(0);
+
+        recordStore.destroy();
+      });
+
+      it("differentiates between Record and options object", () => {
+        const optionsOnly = new Store({ maxSize: 10 });
+        expect(optionsOnly.size).toBe(0);
+        optionsOnly.destroy();
+
+        const recordWithData = new Store({ key: "value" });
+        expect(recordWithData.size).toBe(1);
+        expect(recordWithData.get("key")).toBe("value");
+        recordWithData.destroy();
+      });
     });
   });
 });

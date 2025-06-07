@@ -98,6 +98,22 @@ export class LruTracker<K extends StoreKey> {
   }
 
   /**
+   * The least recently used key from the cache without modifying access order.
+   * @returns The least recently used key, or null if the cache is empty
+   */
+  get lru(): K | null {
+    return this.#tail?.key ?? null;
+  }
+
+  /**
+   * The most recently used key from the cache without modifying access order.
+   * @returns The most recently used key, or null if the cache is empty
+   */
+  get mru(): K | null {
+    return this.#head?.key ?? null;
+  }
+
+  /**
    * Updates the access time for a key, moving it to the front of the LRU list (most recently used).
    * If the key doesn't exist, it will be added to the cache.
    * If adding the key exceeds capacity, the least recently used item will be automatically evicted.
@@ -125,22 +141,6 @@ export class LruTracker<K extends StoreKey> {
       return this.#evictLru();
     }
     return null;
-  }
-
-  /**
-   * Retrieves the least recently used key from the cache without modifying access order.
-   * @returns The least recently used key, or null if the cache is empty
-   */
-  getLru(): K | null {
-    return this.#tail ? this.#tail.key : null;
-  }
-
-  /**
-   * Retrieves the most recently used key from the cache without modifying access order.
-   * @returns The most recently used key, or null if the cache is empty
-   */
-  getMru(): K | null {
-    return this.#head ? this.#head.key : null;
   }
 
   /**

@@ -1,5 +1,14 @@
 # @nyxojs/rest
 
+## 0.2.3
+
+### Patch Changes
+
+- feat: add modal builder export and enhance LRU tracker with convenience methods for first, last, random, and at operations
+- Updated dependencies
+  - @nyxojs/store@0.2.3
+  - @nyxojs/core@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes

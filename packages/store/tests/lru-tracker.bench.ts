@@ -46,11 +46,11 @@ describe("LruTracker Basic Operations", () => {
   });
 
   bench("getLru operation", () => {
-    tracker.getLru();
+    tracker.lru;
   });
 
   bench("getMru operation", () => {
-    tracker.getMru();
+    tracker.mru;
   });
 
   bench("delete operation", () => {
@@ -426,7 +426,7 @@ describe("LruTracker Edge Cases", () => {
     }
 
     for (let i = 0; i < 1000; i++) {
-      tracker.getLru();
+      tracker.lru;
       if (i % 10 === 0) {
         tracker.touch(`extra${i}`);
       }
@@ -442,7 +442,7 @@ describe("LruTracker Edge Cases", () => {
     }
 
     for (let i = 0; i < 1000; i++) {
-      tracker.getMru();
+      tracker.mru;
       if (i % 10 === 0) {
         tracker.touch(`extra${i}`);
       }
@@ -483,13 +483,13 @@ describe("LruTracker Concurrency Simulation", () => {
           break;
         }
         case 3:
-          tracker.getLru();
+          tracker.lru;
           break;
         case 4:
           tracker.touch(`new${i}`);
           break;
         default:
-          tracker.getMru();
+          tracker.mru;
       }
     }
   });
@@ -513,7 +513,7 @@ describe("LruTracker Concurrency Simulation", () => {
           tracker.has(`key${Math.floor(i / 2)}`);
           break;
         default:
-          tracker.getLru();
+          tracker.lru;
       }
     }
   });
@@ -544,7 +544,7 @@ describe("LruTracker Concurrency Simulation", () => {
           tracker.has(`key${Math.floor(Math.random() * 100)}`);
           break;
         case 4:
-          tracker.getLru();
+          tracker.lru;
           break;
         case 5: {
           if (Math.random() < 0.1) {
@@ -553,7 +553,7 @@ describe("LruTracker Concurrency Simulation", () => {
           break;
         }
         default:
-          tracker.getMru();
+          tracker.mru;
       }
     }
   });

@@ -1,5 +1,5 @@
 import { deepmerge } from "deepmerge-ts";
-import { cloneDeep, get, unset } from "lodash-es";
+import { cloneDeep, fromPairs, get, isEqual, unset } from "lodash-es";
 import { z } from "zod/v4";
 import { LruTracker } from "./lru-tracker.js";
 
@@ -174,7 +174,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    */
   constructor(
     entriesOrOptions?:
-      | readonly (readonly [K, V])[]
+      | (readonly [K, V])[]
+      | Record<K, V>
       | z.input<typeof StoreOptions>
       | null,
     maybeOptions?: z.input<typeof StoreOptions>,
@@ -182,26 +183,52 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     super();
 
     // Helper functions for type checks
-    const isEntriesArray = (
-      arr: unknown,
-    ): arr is readonly (readonly [K, V])[] => {
+    const isEntriesArray = (arr: unknown): arr is (readonly [K, V])[] => {
       return (
         Array.isArray(arr) &&
         (arr.length === 0 || (Array.isArray(arr[0]) && arr[0].length === 2))
       );
     };
 
+    const isEntriesObject = (obj: unknown): obj is Record<K, V> => {
+      if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
+        return false;
+      }
+
+      const keys = Object.keys(obj);
+      if (keys.length === 0) {
+        return true;
+      }
+
+      // Check if all keys are valid StoreKey types
+      return !keys.every((key) => StoreOptions.keyof().safeParse(key).success);
+    };
+
     const isOptions = (obj: unknown): obj is z.input<typeof StoreOptions> => {
-      return obj !== null && typeof obj === "object" && !Array.isArray(obj);
+      if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
+        return false;
+      }
+
+      const keys = Object.keys(obj);
+      if (keys.length === 0) {
+        return false;
+      }
+
+      // Check if all keys are valid StoreOptions keys
+      return keys.every((key) => StoreOptions.keyof().safeParse(key).success);
     };
 
     // Determine actual parameters based on overloaded constructor
-    let actualEntries: readonly (readonly [K, V])[] | null | undefined = null;
+    let actualEntries: (readonly [K, V])[] | null | undefined = null;
     let actualOptions: z.input<typeof StoreOptions> = {};
 
     if (isEntriesArray(entriesOrOptions)) {
       // First parameter is an entries array
       actualEntries = entriesOrOptions;
+      actualOptions = maybeOptions ?? {};
+    } else if (isEntriesObject(entriesOrOptions)) {
+      // First parameter is an entries object
+      actualEntries = Object.entries(entriesOrOptions) as [K, V][];
       actualOptions = maybeOptions ?? {};
     } else if (isOptions(entriesOrOptions)) {
       // First parameter is an options object
@@ -214,7 +241,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     } else {
       // First parameter is neither an entries array nor an options object
       throw new Error(
-        "First argument must be either an array of entries or an options object",
+        "First argument must be either an array of entries, an object, or an options object",
       );
     }
 
@@ -314,7 +341,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       );
     }
 
-    // Create shallow copy to avoid modifying the original object
+    // Create deep copy to avoid modifying the original object
     const newValue = cloneDeep(value);
     const pathsArray = Array.isArray(paths) ? paths : [paths];
 
@@ -476,7 +503,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @returns A new Store instance with sorted entries
    */
   sort(compareFn?: (a: V, b: V) => number): Store<K, V> {
-    const sorted = [...this.entries()].sort(
+    const sorted = this.entriesArray().sort(
       ([, a], [, b]) => compareFn?.(a, b) ?? String(a).localeCompare(String(b)),
     );
     return new Store(sorted, this.#options);
@@ -498,7 +525,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       throw new Error(`Page size must be positive: ${pageSize}`);
     }
 
-    return [...this.values()].slice(page * pageSize, (page + 1) * pageSize);
+    return this.toArray().slice(page * pageSize, (page + 1) * pageSize);
   }
 
   /**
@@ -529,6 +556,405 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    */
   entriesArray(): [K, V][] {
     return [...this.entries()];
+  }
+
+  /**
+   * Returns the first value(s) in the store.
+   * If count is provided, returns an array of the first count values.
+   *
+   * @param count - Number of values to return (optional)
+   * @returns The first value, array of values, or undefined if empty
+   */
+  first(): V | undefined;
+  first(count: number): V[];
+  first(count?: number): V | V[] | undefined {
+    const values = this.toArray();
+
+    if (count === undefined) {
+      return values[0];
+    }
+
+    if (count <= 0) {
+      return [];
+    }
+
+    return values.slice(0, Math.max(0, count));
+  }
+
+  /**
+   * Returns the last value(s) in the store.
+   * If count is provided, returns an array of the last count values.
+   *
+   * @param count - Number of values to return (optional)
+   * @returns The last value, array of values, or undefined if empty
+   */
+  last(): V | undefined;
+  last(count: number): V[];
+  last(count?: number): V | V[] | undefined {
+    const values = this.toArray();
+
+    if (count === undefined) {
+      return values[values.length - 1];
+    }
+
+    if (count <= 0) {
+      return [];
+    }
+
+    return values.slice(-Math.max(0, count));
+  }
+
+  /**
+   * Returns random value(s) from the store.
+   * If count is provided, returns an array of random values without duplicates.
+   *
+   * @param count - Number of random values to return (optional)
+   * @returns A random value, array of values, or undefined if empty
+   */
+  random(): V | undefined;
+  random(count: number): V[];
+  random(count?: number): V | V[] | undefined {
+    const values = this.toArray();
+
+    if (values.length === 0) {
+      return count === undefined ? undefined : [];
+    }
+
+    if (count === undefined) {
+      const randomIndex = Math.floor(Math.random() * values.length);
+      return values[randomIndex];
+    }
+
+    if (count <= 0) {
+      return [];
+    }
+
+    // Fisher-Yates shuffle for multiple random values
+    const shuffled = [...values];
+    const resultCount = Math.min(count, values.length);
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]] as [V, V];
+    }
+
+    return shuffled.slice(0, Math.max(0, resultCount));
+  }
+
+  /**
+   * Returns the value at the specified index in the store.
+   * Negative indices count from the end.
+   *
+   * @param index - The index of the value to return
+   * @returns The value at the index, or undefined if out of bounds
+   */
+  at(index: number): V | undefined {
+    const values = this.toArray();
+    const normalizedIndex = index < 0 ? values.length + index : index;
+    return values[normalizedIndex];
+  }
+
+  /**
+   * Returns a new Store with entries in reverse order.
+   * The new store inherits the same configuration options.
+   *
+   * @returns A new Store instance with reversed entries
+   */
+  reverse(): Store<K, V> {
+    const reversed = this.entriesArray().reverse();
+    return new Store(reversed, this.#options);
+  }
+
+  /**
+   * Reduces the store to a single value using the provided callback function.
+   * Similar to Array.reduce but for Store entries.
+   *
+   * @param callback - Function to execute on each entry
+   * @param initialValue - Initial value for the accumulator
+   * @returns The final accumulated value
+   */
+  reduce<T>(
+    callback: (accumulator: T, value: V, key: K, store: this) => T,
+    initialValue: T,
+  ): T {
+    let accumulator = initialValue;
+
+    for (const [key, value] of this) {
+      accumulator = callback(accumulator, value, key, this);
+    }
+
+    return accumulator;
+  }
+
+  /**
+   * Tests whether at least one entry in the store passes the test implemented by the provided predicate.
+   *
+   * @param predicate - A function or pattern object to test each entry
+   * @returns true if at least one entry passes the test, false otherwise
+   */
+  some(predicate: StorePredicate<K, V>): boolean {
+    if (typeof predicate === "function") {
+      for (const [key, value] of this) {
+        if (predicate(value, key)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Handle object pattern matching
+    const entries = Object.entries(predicate);
+    for (const [_, value] of this) {
+      if (this.#matchesPattern(value, entries)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Tests whether all entries in the store pass the test implemented by the provided predicate.
+   *
+   * @param predicate - A function or pattern object to test each entry
+   * @returns true if all entries pass the test, false otherwise
+   */
+  every(predicate: StorePredicate<K, V>): boolean {
+    if (typeof predicate === "function") {
+      for (const [key, value] of this) {
+        if (!predicate(value, key)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Handle object pattern matching
+    const entries = Object.entries(predicate);
+    for (const [_, value] of this) {
+      if (!this.#matchesPattern(value, entries)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Splits the store into two stores based on the provided predicate.
+   * The first store contains entries that match the predicate, the second contains those that don't.
+   *
+   * @param predicate - A function or pattern object to test each entry
+   * @returns A tuple of two Store instances [matching, nonMatching]
+   */
+  partition(predicate: StorePredicate<K, V>): [Store<K, V>, Store<K, V>] {
+    const matching = new Store<K, V>(null, this.#options);
+    const nonMatching = new Store<K, V>(null, this.#options);
+
+    if (typeof predicate === "function") {
+      for (const [key, value] of this) {
+        if (predicate(value, key)) {
+          matching.set(key, value);
+        } else {
+          nonMatching.set(key, value);
+        }
+      }
+    } else {
+      const entries = Object.entries(predicate);
+      for (const [key, value] of this) {
+        if (this.#matchesPattern(value, entries)) {
+          matching.set(key, value);
+        } else {
+          nonMatching.set(key, value);
+        }
+      }
+    }
+
+    return [matching, nonMatching];
+  }
+
+  /**
+   * Concatenates multiple stores into a new store.
+   * Later stores take precedence for duplicate keys.
+   *
+   * @param stores - Stores to concatenate with this store
+   * @returns A new Store instance containing all entries
+   */
+  concat(...stores: Store<K, V>[]): Store<K, V> {
+    const result = new Store<K, V>(null, this.#options);
+
+    // Add entries from this store first
+    for (const [key, value] of this) {
+      result.set(key, value);
+    }
+
+    // Add entries from other stores (later ones override earlier ones)
+    for (const store of stores) {
+      for (const [key, value] of store) {
+        result.set(key, value);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns a new store containing all entries that exist in this store but not in the other store.
+   *
+   * @param other - The store to compare against
+   * @returns A new Store instance containing the difference
+   */
+  difference(other: Store<K, V>): Store<K, V> {
+    const result = new Store<K, V>(null, this.#options);
+
+    for (const [key, value] of this) {
+      if (!other.has(key)) {
+        result.set(key, value);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns a new store containing only entries that exist in both stores.
+   * Values from this store take precedence.
+   *
+   * @param other - The store to intersect with
+   * @returns A new Store instance containing the intersection
+   */
+  intersect(other: Store<K, V>): Store<K, V> {
+    const result = new Store<K, V>(null, this.#options);
+
+    for (const [key, value] of this) {
+      if (other.has(key)) {
+        result.set(key, value);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns a new store containing all entries that exist in either store but not in both.
+   *
+   * @param other - The store to compare against
+   * @returns A new Store instance containing the symmetric difference
+   */
+  symmetricDifference(other: Store<K, V>): Store<K, V> {
+    const result = new Store<K, V>(null, this.#options);
+
+    // Add entries from this store that don't exist in other
+    for (const [key, value] of this) {
+      if (!other.has(key)) {
+        result.set(key, value);
+      }
+    }
+
+    // Add entries from other store that don't exist in this
+    for (const [key, value] of other) {
+      if (!this.has(key)) {
+        result.set(key, value);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns a new store containing all entries from this store and the other store.
+   * Values from the other store take precedence for duplicate keys.
+   *
+   * @param other - The store to union with
+   * @returns A new Store instance containing the union
+   */
+  union(other: Store<K, V>): Store<K, V> {
+    const result = new Store<K, V>(null, this.#options);
+
+    // Add all entries from this store
+    for (const [key, value] of this) {
+      result.set(key, value);
+    }
+
+    // Add all entries from other store (overrides duplicates)
+    for (const [key, value] of other) {
+      result.set(key, value);
+    }
+
+    return result;
+  }
+
+  /**
+   * Creates a deep or shallow clone of the store.
+   * The cloned store has the same configuration options but independent data.
+   *
+   * @param deep - Whether to perform deep cloning of values (default: true)
+   * @returns A new Store instance with cloned data
+   */
+  clone(deep = true): Store<K, V> {
+    const clonedEntries: [K, V][] = [];
+
+    for (const [key, value] of this) {
+      const clonedValue = deep ? cloneDeep(value) : value;
+      clonedEntries.push([key, clonedValue]);
+    }
+
+    return new Store(clonedEntries, this.#options);
+  }
+
+  /**
+   * Checks if this store is equal to another store.
+   * Compares both keys and values for equality.
+   *
+   * @param other - The store to compare against
+   * @param deep - Whether to perform deep comparison of values (default: false)
+   * @returns true if stores are equal, false otherwise
+   */
+  equals(other: Store<K, V>, deep = false): boolean {
+    if (this.size !== other.size) {
+      return false;
+    }
+
+    for (const [key, value] of this) {
+      if (!other.has(key)) {
+        return false;
+      }
+
+      const otherValue = other.get(key);
+
+      if (deep) {
+        // Use lodash isEqual for deep comparison
+        if (!isEqual(value, otherValue)) {
+          return false;
+        }
+      } // For shallow comparison, use strict equality
+      else if (value !== otherValue) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Executes a provided function once for this store and returns the store.
+   * Useful for method chaining and debugging.
+   *
+   * @param callback - Function to execute with the store as argument
+   * @returns This store instance for method chaining
+   */
+  tap(callback: (store: this) => void): this {
+    callback(this);
+    return this;
+  }
+
+  /**
+   * Converts the store to a JSON object when keys are strings.
+   * Only works when K extends string.
+   *
+   * @returns A plain object representation of the store
+   */
+  toJson(): Record<string, V> {
+    // Use lodash fromPairs for cleaner implementation
+    return fromPairs(this.entriesArray()) as Record<string, V>;
   }
 
   /**
@@ -736,7 +1162,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @param entries - The entries to set
    * @internal
    */
-  #bulkSet(entries: readonly (readonly [K, V])[]): void {
+  #bulkSet(entries: (readonly [K, V])[]): void {
     for (const [key, value] of entries) {
       this.set(key, value);
     }
@@ -805,7 +1231,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       }
     }
 
-    // Cleanup final
+    // Cleanup final batch
     this.#sweepBatch(expiredKeys);
   }
 
@@ -813,8 +1239,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * Continues the sweep operation after processing a batch of expired items.
    * This method is called recursively until all expired items are processed.
    *
-   * @param keys
-   * @private
+   * @param keys - The keys to process in this batch
+   * @internal
    */
   #sweepBatch(keys: K[]): void {
     for (const key of keys) {
@@ -871,7 +1297,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       return;
     }
 
-    const leastUsedKey = this.#lruTracker.getLru();
+    const leastUsedKey = this.#lruTracker.lru;
     if (leastUsedKey) {
       this.delete(leastUsedKey);
     } else {
@@ -907,11 +1333,11 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       return false;
     }
 
-    // Optimisation: if the pattern is empty, always return true
+    // If the pattern is empty, always return true
     for (const [path, expectedValue] of pattern) {
       const actualValue = get(value, path);
 
-      // If the actual value is undefined, it doesn't match
+      // Handle array comparison
       if (Array.isArray(actualValue)) {
         if (Array.isArray(expectedValue)) {
           // If both are arrays, check if they match in length and content
