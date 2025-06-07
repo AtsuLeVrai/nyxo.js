@@ -14,7 +14,6 @@ export const metadata: Metadata = {
     "TypeScript",
     "Framework",
     "Bot development",
-    "Discord.js",
     "Node.js",
     "Type-safe",
     "Modern development",
