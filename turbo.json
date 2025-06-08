@@ -30,6 +30,11 @@
       "cache": false,
       "persistent": true
     },
+    "build:native": {
+      "dependsOn": ["//#biome:check", "^build:native"],
+      "outputs": ["build/**"],
+      "cache": true
+    },
     "type-check": {
       "dependsOn": ["//#biome:check"],
       "outputs": [],

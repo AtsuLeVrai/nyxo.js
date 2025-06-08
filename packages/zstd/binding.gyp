@@ -4,7 +4,6 @@
       "target_name": "zstd",
       "sources": [
         "native/zstd.cpp",
-        # Compile zstd from source for maximum compatibility
         "deps/zstd/lib/common/entropy_common.c",
         "deps/zstd/lib/common/error_private.c",
         "deps/zstd/lib/common/fse_decompress.c",
@@ -20,9 +19,6 @@
         "deps/zstd/lib",
         "deps/zstd/lib/common",
         "deps/zstd/lib/decompress"
-      ],
-      "dependencies": [
-        "<!(node -p \"require('node-addon-api').gyp\")"
       ],
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS",

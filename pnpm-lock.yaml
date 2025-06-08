@@ -35,6 +35,9 @@ importers:
 
   apps/bot:
     dependencies:
+      '@nyxojs/zstd':
+        specifier: workspace:^
+        version: link:../../packages/zstd
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0

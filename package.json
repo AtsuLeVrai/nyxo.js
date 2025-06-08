@@ -10,12 +10,11 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "turbo run dev",
-    "start": "turbo run start",
     "clean": "turbo run clean",
     "build:dev": "turbo run build:dev",
     "build:watch": "turbo run build:watch",
     "build:prod": "turbo run build:prod",
+    "build:native": "turbo run build:native",
     "biome:check": "biome check --write --unsafe --verbose",
     "type-check": "turbo run type-check",
     "test": "vitest --run",
@@ -25,7 +24,8 @@
     "test:bench": "vitest bench --run",
     "prepare": "husky",
     "publish": "pnpm run build:prod && changeset publish",
-    "update:submodules": "git submodule update --force --remote"
+    "submodules:init": "git submodule update --init --recursive",
+    "submodules:update": "git submodule update --force --remote"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

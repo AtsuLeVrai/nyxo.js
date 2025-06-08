@@ -27,6 +27,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@nyxojs/zstd": "workspace:^",
     "dotenv": "^16.5.0",
     "nyxo.js": "workspace:^"
   },

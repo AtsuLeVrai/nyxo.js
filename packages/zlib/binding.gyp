@@ -4,7 +4,6 @@
       "target_name": "zlib",
       "sources": [
         "native/zlib.cpp",
-        # Compile zlib from source for maximum compatibility
         "deps/zlib/adler32.c",
         "deps/zlib/compress.c",
         "deps/zlib/crc32.c",
@@ -24,9 +23,6 @@
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
         "deps/zlib"
-      ],
-      "dependencies": [
-        "<!(node -p \"require('node-addon-api').gyp\")"
       ],
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS",
