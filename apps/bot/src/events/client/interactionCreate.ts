@@ -1,4 +1,4 @@
-import { commands } from "../../index.js";
+import { commandRegistry } from "../../registries/index.js";
 import { defineEvent } from "../../types/index.js";
 
 /**
@@ -30,7 +30,7 @@ export default defineEvent({
     }
 
     // Retrieve the command handler from the commands store
-    const command = commands.get(interaction.commandName);
+    const command = commandRegistry.get(interaction.commandName);
 
     // Handle case where command doesn't exist
     if (!command) {

@@ -1,11 +1,6 @@
 import { config } from "dotenv";
-import { Client, GatewayIntentsBits, Store } from "nyxo.js";
-import {
-  loadCommands,
-  loadEvents,
-  registerCommands,
-} from "./handlers/index.js";
-import type { SlashCommand } from "./types/index.js";
+import { Client, GatewayIntentsBits } from "nyxo.js";
+import { registerCommands, registerEvents } from "./registries/index.js";
 
 /**
  * Load environment variables from .env file
@@ -19,46 +14,46 @@ if (!parsed?.DISCORD_TOKEN) {
 }
 
 /**
- * Configure the Discord client with token and required intents
+ * Configure the Discord client with token and optimized intents
  *
- * Intents determine which events the bot will receive from Discord.
- * Including all intents here for comprehensive functionality, but
- * in production, you should only include the intents you actually need.
+ * ⚠️ MEMORY OPTIMIZATION: Only include intents you actually need!
+ * Each intent adds memory overhead, especially GuildMembers and GuildPresences
+ * which can consume significant RAM in large servers.
  */
 const client = new Client({
   token: parsed.DISCORD_TOKEN,
   intents: [
+    // Core functionality
     GatewayIntentsBits.Guilds,
-    GatewayIntentsBits.GuildMembers,
+    GatewayIntentsBits.GuildMessages,
+    GatewayIntentsBits.MessageContent,
+
+    // Add only if needed:
+    // GatewayIntentsBits.GuildMembers,     // Heavy memory usage
+    // GatewayIntentsBits.GuildPresences,   // Very heavy memory usage
+    // GatewayIntentsBits.GuildVoiceStates, // Only if voice features needed
+
+    // Uncomment specific intents as your bot grows:
+    /*
     GatewayIntentsBits.GuildModeration,
     GatewayIntentsBits.GuildExpressions,
     GatewayIntentsBits.GuildIntegrations,
     GatewayIntentsBits.GuildWebhooks,
     GatewayIntentsBits.GuildInvites,
-    GatewayIntentsBits.GuildVoiceStates,
-    GatewayIntentsBits.GuildPresences,
-    GatewayIntentsBits.GuildMessages,
     GatewayIntentsBits.GuildMessageReactions,
     GatewayIntentsBits.GuildMessageTyping,
     GatewayIntentsBits.DirectMessages,
     GatewayIntentsBits.DirectMessageReactions,
     GatewayIntentsBits.DirectMessageTyping,
-    GatewayIntentsBits.MessageContent,
     GatewayIntentsBits.GuildScheduledEvents,
     GatewayIntentsBits.AutoModerationConfiguration,
     GatewayIntentsBits.AutoModerationExecution,
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
+    */
   ],
-  compressionType: "zstd-stream",
-  encodingType: "etf",
+  compressionType: "zlib-stream",
 });
-
-/**
- * Store containing all loaded commands
- * Uses a key-value structure where the key is the command name
- */
-export const commands = new Store<string, SlashCommand>();
 
 /**
  * Toggle for registering commands with Discord API
@@ -68,28 +63,113 @@ export const commands = new Store<string, SlashCommand>();
 const registeredCommands = true;
 
 /**
+ * Memory monitoring interval (in milliseconds)
+ * Set to 0 to disable periodic memory monitoring
+ */
+const MEMORY_MONITOR_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Memory monitoring state
+ */
+let memoryMonitorTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Logs current memory usage in a readable format
+ * Useful for detecting memory leaks and monitoring resource usage
+ */
+function logMemoryUsage(label = "MEMORY"): void {
+  const memoryUsage = process.memoryUsage();
+  const mbDivisor = 1024 * 1024;
+  const rss = Math.round((memoryUsage.rss / mbDivisor) * 100) / 100;
+  const heapTotal = Math.round((memoryUsage.heapTotal / mbDivisor) * 100) / 100;
+  const heapUsed = Math.round((memoryUsage.heapUsed / mbDivisor) * 100) / 100;
+  const external = Math.round((memoryUsage.external / mbDivisor) * 100) / 100;
+
+  console.log(
+    `[${label}] RSS: ${rss}MB | Heap: ${heapUsed}/${heapTotal}MB | External: ${external}MB`,
+  );
+}
+
+/**
+ * Starts periodic memory monitoring to detect potential leaks
+ * Logs memory usage at regular intervals for monitoring
+ */
+function startMemoryMonitoring(): void {
+  if (MEMORY_MONITOR_INTERVAL <= 0) {
+    return;
+  }
+
+  memoryMonitorTimer = setInterval(() => {
+    logMemoryUsage("MEMORY_MONITOR");
+
+    // Optional: Force garbage collection if available (requires --expose-gc flag)
+    if (global.gc) {
+      global.gc();
+      logMemoryUsage("MEMORY_AFTER_GC");
+    }
+  }, MEMORY_MONITOR_INTERVAL);
+
+  console.log(
+    `[MEMORY] Started memory monitoring (interval: ${MEMORY_MONITOR_INTERVAL}ms)`,
+  );
+}
+
+/**
+ * Stops memory monitoring and cleans up the timer
+ */
+function stopMemoryMonitoring(): void {
+  if (memoryMonitorTimer) {
+    clearInterval(memoryMonitorTimer);
+    memoryMonitorTimer = null;
+    console.log("[MEMORY] Stopped memory monitoring");
+  }
+}
+
+/**
+ * Performs comprehensive cleanup to prevent memory leaks
+ * This function should be called before process termination
+ */
+async function cleanup(): Promise<void> {
+  console.log("[CLEANUP] Starting cleanup process...");
+
+  try {
+    // Stop memory monitoring
+    stopMemoryMonitoring();
+
+    // Destroy Discord client and cleanup all connections
+    if (client) {
+      console.log("[CLEANUP] Destroying Discord client...");
+      await client.destroy();
+    }
+
+    // Force garbage collection if available
+    if (global.gc) {
+      console.log("[CLEANUP] Running garbage collection...");
+      global.gc();
+    }
+
+    // Log final memory state
+    logMemoryUsage("CLEANUP_FINAL");
+
+    console.log("[CLEANUP] Cleanup completed successfully");
+  } catch (error) {
+    console.error("[CLEANUP] Error during cleanup:", error);
+  }
+}
+
+/**
  * Main initialization function that orchestrates the bot startup process
  * Handles the loading of commands and events, connecting to Discord,
  * and registering slash commands with the Discord API
  */
 async function main(): Promise<void> {
   try {
-    // Calculate and log memory usage in MB for monitoring
-    const memoryUsage = process.memoryUsage();
-    const mbDivisor = 1024 * 1024;
-    const rss = Math.round((memoryUsage.rss / mbDivisor) * 100) / 100;
-    const heapTotal =
-      Math.round((memoryUsage.heapTotal / mbDivisor) * 100) / 100;
-    const heapUsed = Math.round((memoryUsage.heapUsed / mbDivisor) * 100) / 100;
-
-    // Log memory usage statistics
-    console.log(
-      `[MEMORY] RSS: ${rss} MB | Heap Total: ${heapTotal} MB | Heap Used: ${heapUsed} MB`,
-    );
+    // Log initial memory usage
+    logMemoryUsage("STARTUP");
 
     // Load events and commands
-    await loadEvents(client);
-    await loadCommands();
+    console.log("[INIT] Registering events...");
+    registerEvents(client);
 
     // Date.now() is used to measure connection time
     const start = Date.now();
@@ -98,42 +178,72 @@ async function main(): Promise<void> {
     console.log("[CLIENT] Connecting to Discord...");
     await client.gateway.connect();
 
-    // Log connection time
+    // Log connection time and memory after connection
     console.log(`[CLIENT] Connected to Discord in ${Date.now() - start}ms`);
+    logMemoryUsage("POST_CONNECTION");
 
     // Register commands after connection if enabled
     if (registeredCommands) {
+      console.log("[INIT] Registering commands...");
       await registerCommands(client);
+      logMemoryUsage("POST_COMMANDS");
     }
+
+    // Start memory monitoring for leak detection
+    startMemoryMonitoring();
+
+    console.log("[INIT] Bot initialization completed successfully");
   } catch (error) {
     console.error("[ERROR] Initialization error:", error);
+    await cleanup();
+    process.exit(1);
   }
 }
 
 /**
- * Global error handlers to catch unhandled rejections and exceptions
- * Prevents the bot from crashing without logging when errors occur
+ * Enhanced error handlers to catch unhandled rejections and exceptions
+ * Includes cleanup to prevent resource leaks during error states
  */
 process.on("unhandledRejection", (error) => {
   console.error("[PROCESS] Unhandled rejection:", error);
+  // Note: In production, you might want to restart the process
+  // after cleanup for critical unhandled rejections
 });
 
-process.on("uncaughtException", (error) => {
+process.on("uncaughtException", async (error) => {
   console.error("[PROCESS] Uncaught exception:", error);
+  await cleanup();
+  process.exit(1); // Exit after uncaught exception
 });
 
 /**
- * Clean shutdown handler
- * Properly closes connections when the process is terminated
- * Prevents potential issues with zombie connections
+ * Enhanced shutdown handlers for graceful termination
+ * Handles multiple termination signals and ensures proper cleanup
  */
-process.on("SIGINT", async () => {
-  console.log("[PROCESS] Shutting down...");
-  await client.destroy();
-  commands.destroy();
-  console.log("[PROCESS] All connections closed, exiting");
-  process.exit(0);
+const shutdownSignals = ["SIGINT", "SIGTERM", "SIGUSR1", "SIGUSR2"] as const;
+
+for (const signal of shutdownSignals) {
+  process.on(signal, async () => {
+    console.log(`[PROCESS] Received ${signal}, shutting down gracefully...`);
+    await cleanup();
+    console.log("[PROCESS] Process terminated cleanly");
+    process.exit(0);
+  });
+}
+
+/**
+ * Handle process warnings (useful for debugging memory issues)
+ */
+process.on("warning", (warning) => {
+  console.warn("[PROCESS] Warning:", warning.name, warning.message);
+  if (warning.stack) {
+    console.warn(warning.stack);
+  }
 });
 
 // Start the bot
-main().catch(console.error);
+main().catch(async (error) => {
+  console.error("[MAIN] Fatal error:", error);
+  await cleanup();
+  process.exit(1);
+});

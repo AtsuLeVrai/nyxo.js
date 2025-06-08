@@ -1,3 +1,9 @@
 [submodule "docs/discord-api-docs"]
 	path = docs/discord-api-docs
 	url = https://github.com/discord/discord-api-docs.git
+[submodule "packages/zlib/deps/zlib"]
+	path = packages/zlib/deps/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "packages/zstd/deps/zstd"]
+	path = packages/zstd/deps/zstd
+	url = https://github.com/facebook/zstd

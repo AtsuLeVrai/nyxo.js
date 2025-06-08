@@ -49,18 +49,6 @@ export const HeartbeatOptions = z.object({
    * @default 1000
    */
   reconnectDelay: z.number().int().positive().default(1000),
-
-  /**
-   * Minimum allowed heartbeat interval in milliseconds
-   *
-   * Safety check to prevent extremely low heartbeat intervals that could
-   * cause excessive traffic or resource usage. Discord typically sends
-   * intervals around 41.25 seconds (41250ms), but this safeguard prevents
-   * errors if Discord were to send an unusually small value.
-   *
-   * @default 1
-   */
-  minInterval: z.number().int().positive().default(1),
 });
 
 export type HeartbeatOptions = z.infer<typeof HeartbeatOptions>;
@@ -234,19 +222,30 @@ export class HeartbeatManager {
    * @throws {Error} If the interval is too small or the service is already running
    */
   start(interval: number): void {
-    // Validate that the interval meets minimum requirements
-    if (interval <= this.#options.minInterval) {
-      throw new Error(
-        `Invalid heartbeat interval: ${interval}ms (minimum: ${this.#options.minInterval}ms)`,
-      );
-    }
-
     // Prevent duplicate running instances
     if (this.isRunning) {
       throw new Error("Heartbeat service is already running");
     }
 
-    this.#startHeartbeat(interval);
+    // Clean up existing timers and reset state
+    this.destroy();
+
+    // Store the heartbeat interval for future reference
+    this.intervalMs = interval;
+
+    // Use jitter to prevent thundering herd problem
+    // Discord documentation recommends adding random jitter to the first heartbeat
+    // This distributes the load when many clients connect simultaneously
+    const initialDelay = interval * Math.random();
+
+    // Send first heartbeat after the jittered delay, then set up regular interval
+    this.#initialTimeout = setTimeout(() => {
+      // Send initial heartbeat
+      this.sendHeartbeat();
+
+      // Set up regular heartbeat interval
+      this.#interval = setInterval(() => this.sendHeartbeat(), this.intervalMs);
+    }, initialDelay);
   }
 
   /**
@@ -346,39 +345,6 @@ export class HeartbeatManager {
 
     // Send the actual heartbeat to Discord with the current sequence number
     this.#gateway.send(GatewayOpcodes.Heartbeat, this.#gateway.sequence);
-  }
-
-  /**
-   * Starts the heartbeat with the specified interval
-   * Implements Discord's recommended jitter to prevent thundering herd
-   *
-   * The jitter added to the initial heartbeat helps distribute heartbeats
-   * across time when multiple clients connect simultaneously, preventing
-   * server load spikes (thundering herd problem).
-   *
-   * @param interval - Heartbeat interval in milliseconds
-   * @internal
-   */
-  #startHeartbeat(interval: number): void {
-    // Clean up existing timers and reset state
-    this.destroy();
-
-    // Store the heartbeat interval for future reference
-    this.intervalMs = interval;
-
-    // Use jitter to prevent thundering herd problem
-    // Discord documentation recommends adding random jitter to the first heartbeat
-    // This distributes the load when many clients connect simultaneously
-    const initialDelay = interval * Math.random();
-
-    // Send first heartbeat after the jittered delay, then set up regular interval
-    this.#initialTimeout = setTimeout(() => {
-      // Send initial heartbeat
-      this.sendHeartbeat();
-
-      // Set up regular heartbeat interval
-      this.#interval = setInterval(() => this.sendHeartbeat(), this.intervalMs);
-    }, initialDelay);
   }
 
   /**

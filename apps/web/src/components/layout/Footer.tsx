@@ -56,13 +56,6 @@ export default function Footer() {
       color: "hover:text-indigo-400",
       description: "Community support and discussions",
     },
-    {
-      name: "Twitter",
-      href: "https://twitter.com/nyxojs",
-      icon: <Twitter className="h-5 w-5" />,
-      color: "hover:text-blue-400",
-      description: "Latest updates and announcements",
-    },
   ];
 
   // Updated footer sections with working links only
@@ -137,7 +130,13 @@ export default function Footer() {
           description: "Node.js runtime documentation",
         },
         {
-          title: "License (MIT)",
+          title: "Discord Developer Portal",
+          href: "https://discord.com/developers/docs/intro",
+          isExternal: true,
+          description: "Official Discord API documentation",
+        },
+        {
+          title: "License (Apache 2.0)",
           href: `${GITHUB_REPO}/blob/main/LICENSE`,
           isExternal: true,
           description: "Open source license information",

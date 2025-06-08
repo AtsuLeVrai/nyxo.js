@@ -1,34 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxojs/rest",
-  "version": "0.2.3",
-  "description": "Type-Safe Discord REST API Client with Advanced Rate Limiting",
-  "keywords": [
-    "discord",
-    "rest",
-    "api",
-    "client",
-    "rate-limiting",
-    "typescript",
-    "type-safe",
-    "discord-api",
-    "bot",
-    "discord-bot",
-    "http-client",
-    "rate-limit",
-    "undici",
-    "form-data",
-    "file-upload",
-    "eventemitter",
-    "zod",
-    "validation",
-    "discord-rest"
-  ],
-  "homepage": "https://github.com/AtsuLeVrai/nyxo.js/tree/main/packages/rest",
+  "name": "@nyxojs/zlib",
+  "version": "0.0.1",
+  "description": "High-performance zlib decompression for Discord Gateway with modern C++ and TypeScript support",
+  "homepage": "https://github.com/AtsuLeVrai/nyxo.js/tree/main/packages/zlib",
   "readme": "README.md",
   "license": "Apache-2.0",
   "type": "module",
-  "files": ["dist"],
+  "files": ["dist", "deps", "native", "binding.gyp"],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -48,7 +27,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/AtsuLeVrai/nyxo.js",
-    "directory": "packages/rest"
+    "directory": "packages/zlib"
   },
   "bugs": {
     "url": "https://github.com/AtsuLeVrai/nyxo.js/issues"
@@ -57,27 +36,43 @@
     "name": "AtsuLeVrai",
     "url": "https://github.com/AtsuLeVrai"
   },
+  "keywords": [
+    "discord",
+    "gateway",
+    "zlib",
+    "decompression",
+    "inflate",
+    "sync",
+    "stream",
+    "transport-compression",
+    "payload-compression",
+    "native",
+    "addon",
+    "typescript",
+    "esm",
+    "performance",
+    "websocket"
+  ],
   "scripts": {
+    "prepack": "pnpm run build:prod",
+    "install": "node-gyp rebuild",
     "build:dev": "rimraf dist && tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json --preserveWatchOutput",
-    "build:prod": "tsdown",
+    "build:prod": "pnpm run build:native && tsdown",
+    "build:native": "node-gyp rebuild",
+    "build:native:debug": "node-gyp rebuild --debug",
     "type-check": "tsc --noEmit",
-    "clean": "rimraf dist"
+    "clean": "node-gyp clean && rimraf dist"
   },
   "dependencies": {
-    "@nyxojs/core": "workspace:^",
-    "@nyxojs/store": "workspace:^",
-    "eventemitter3": "^5.0.1",
-    "form-data": "^4.0.3",
-    "mime-types": "^3.0.1",
-    "undici": "^7.10.0",
+    "node-addon-api": "^8.3.1",
     "zod": "^3.25.56"
   },
   "devDependencies": {
-    "@types/mime-types": "^2.1.4",
     "@types/node": "^22.15.30",
     "rimraf": "^6.0.1",
     "tsdown": "^0.12.7",
     "typescript": "^5.8.3"
-  }
+  },
+  "gypfile": true
 }

@@ -2,12 +2,17 @@ packages:
   - apps/*
   - packages/*
 onlyBuiltDependencies:
+  - '@biomejs/biome'
   - '@discordjs/opus'
+  - '@tailwindcss/oxide'
+  - '@vercel/speed-insights'
   - bufferutil
   - erlpack
-  - zlib-sync
+  - esbuild
+  - ffmpeg-static
+  - sharp
 publicHoistPattern:
+  - '@nyxojs/zlib'
+  - '@nyxojs/zstd'
   - '*bufferutil*'
   - '*erlpack*'
-  - '*fzstd*'
-  - '*zlib-sync*'

@@ -243,37 +243,37 @@ export default function CTA() {
         </FadeIn>
 
         {/* Developer testimonial */}
-        <FadeIn delay={shouldReduceMotion ? 0 : 0.5}>
-          <div className="mx-auto mt-16 max-w-3xl">
-            <div className="relative overflow-hidden rounded-2xl border border-dark-500/30 bg-gradient-to-br from-dark-700/50 via-dark-600/30 to-dark-700/50 p-8 backdrop-blur-sm">
-              <div className="absolute top-0 left-0 h-24 w-24 rounded-full bg-primary-500/10 blur-2xl" />
-              <div className="absolute right-0 bottom-0 h-20 w-20 rounded-full bg-cyan-500/10 blur-2xl" />
+        {/*<FadeIn delay={shouldReduceMotion ? 0 : 0.5}>*/}
+        {/*  <div className="mx-auto mt-16 max-w-3xl">*/}
+        {/*    <div className="relative overflow-hidden rounded-2xl border border-dark-500/30 bg-gradient-to-br from-dark-700/50 via-dark-600/30 to-dark-700/50 p-8 backdrop-blur-sm">*/}
+        {/*      <div className="absolute top-0 left-0 h-24 w-24 rounded-full bg-primary-500/10 blur-2xl" />*/}
+        {/*      <div className="absolute right-0 bottom-0 h-20 w-20 rounded-full bg-cyan-500/10 blur-2xl" />*/}
 
-              <div className="relative text-center">
-                <blockquote className="mb-6 text-lg text-slate-300 italic leading-relaxed">
-                  "Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                  Blanditiis eligendi, fugiat id libero mollitia nam non nulla
-                  numquam quos, recusandae vel vero! Deleniti dolorum explicabo
-                  modi mollitia nam quia quisquam quod sequi veritatis vero!
-                  Alias, aliquam atque culpa dolore ducimus eligendi fugiat
-                  fugit, minima, odio perspiciatis placeat quod tempore vel?
-                  Debitis, natus."
-                </blockquote>
-                <div className="flex items-center justify-center">
-                  <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-cyan-500 font-bold text-white">
-                    A
-                  </div>
-                  <div className="text-left">
-                    <div className="font-medium text-white">John Doe</div>
-                    <div className="text-slate-400 text-sm">
-                      Senior Discord Bot Developer
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </FadeIn>
+        {/*      <div className="relative text-center">*/}
+        {/*        <blockquote className="mb-6 text-lg text-slate-300 italic leading-relaxed">*/}
+        {/*          "Lorem ipsum dolor sit amet, consectetur adipisicing elit.*/}
+        {/*          Blanditiis eligendi, fugiat id libero mollitia nam non nulla*/}
+        {/*          numquam quos, recusandae vel vero! Deleniti dolorum explicabo*/}
+        {/*          modi mollitia nam quia quisquam quod sequi veritatis vero!*/}
+        {/*          Alias, aliquam atque culpa dolore ducimus eligendi fugiat*/}
+        {/*          fugit, minima, odio perspiciatis placeat quod tempore vel?*/}
+        {/*          Debitis, natus."*/}
+        {/*        </blockquote>*/}
+        {/*        <div className="flex items-center justify-center">*/}
+        {/*          <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-cyan-500 font-bold text-white">*/}
+        {/*            A*/}
+        {/*          </div>*/}
+        {/*          <div className="text-left">*/}
+        {/*            <div className="font-medium text-white">John Doe</div>*/}
+        {/*            <div className="text-slate-400 text-sm">*/}
+        {/*              Senior Discord Bot Developer*/}
+        {/*            </div>*/}
+        {/*          </div>*/}
+        {/*        </div>*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*  </div>*/}
+        {/*</FadeIn>*/}
 
         {/* Final call to action */}
         <FadeIn delay={shouldReduceMotion ? 0 : 0.7}>

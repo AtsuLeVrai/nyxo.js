@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "start": "turbo run start",
+    "clean": "turbo run clean",
     "build:dev": "turbo run build:dev",
     "build:watch": "turbo run build:watch",
     "build:prod": "turbo run build:prod",
