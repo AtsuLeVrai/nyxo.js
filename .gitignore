@@ -2,6 +2,7 @@
 
 ### Build outputs ###
 dist/
+deps/
 tmp/
 temp/
 temps/

@@ -22,6 +22,8 @@ if (!parsed?.DISCORD_TOKEN) {
  */
 const client = new Client({
   token: parsed.DISCORD_TOKEN,
+  compressionType: "zstd-stream",
+  encodingType: "etf",
   intents: [
     // Core functionality
     GatewayIntentsBits.Guilds,
@@ -52,8 +54,6 @@ const client = new Client({
     GatewayIntentsBits.DirectMessagePolls,
     */
   ],
-  compressionType: "zstd-stream",
-  encodingType: "etf",
 });
 
 /**

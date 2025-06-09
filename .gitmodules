@@ -2,15 +2,12 @@
 	path = docs/discord-api-docs
 	url = https://github.com/discord/discord-api-docs.git
 	branch = main
-[submodule "packages/zlib/deps/zlib"]
-	path = packages/zlib/deps/zlib
+[submodule "libs/zlib"]
+	path = libs/zlib
 	url = https://github.com/madler/zlib.git
-[submodule "packages/zstd/deps/zstd"]
-	path = packages/zstd/deps/zstd
+[submodule "libs/zstd"]
+	path = libs/zstd
 	url = https://github.com/facebook/zstd
-[submodule "packages/opus/deps/opus"]
-	path = packages/opus/deps/opus
+[submodule "libs/opus"]
+	path = libs/opus
 	url = https://github.com/xiph/opus.git
-[submodule "packages/opus/deps/libsodium"]
-	path = packages/opus/deps/libsodium
-	url = https://github.com/jedisct1/libsodium.git

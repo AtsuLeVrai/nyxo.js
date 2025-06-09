@@ -24,11 +24,8 @@
 ## 🚀 About
 
 `@nyxojs/opus` is a high-performance Opus audio codec library specifically optimized for Discord Voice applications.
-Built with modern C++ and TypeScript, it provides enterprise-grade audio encoding/decoding with native RTP packet
-handling and transport encryption.
-
-Designed to handle Discord Voice Gateway connections with intelligent frame processing, encryption handling, and
-automatic Discord format compliance for seamless real-time voice communication.
+Built with modern C++ and TypeScript, it provides enterprise-grade audio encoding/decoding capabilities with a focus on
+low latency, high throughput, and minimal resource usage.
 
 > [!NOTE]
 > This package is part of the Nyxo.js ecosystem but can be used independently in any Discord bot or Node.js application

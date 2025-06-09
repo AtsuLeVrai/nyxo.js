@@ -4,7 +4,6 @@
       "target_name": "opus",
       "sources": [
         "native/opus.cpp",
-        "native/crypto.cpp",
         "deps/opus/src/opus.c",
         "deps/opus/src/opus_decoder.c",
         "deps/opus/src/opus_encoder.c",
@@ -127,19 +126,7 @@
         "deps/opus/silk/fixed/pitch_analysis_core_FIX.c",
         "deps/opus/silk/fixed/vector_ops_FIX.c",
         "deps/opus/silk/fixed/schur64_FIX.c",
-        "deps/opus/silk/fixed/schur_FIX.c",
-        "deps/libsodium/src/libsodium/crypto_aead/aes256gcm/aesni/aead_aes256gcm_aesni.c",
-        "deps/libsodium/src/libsodium/crypto_aead/xchacha20poly1305/aead_xchacha20poly1305.c",
-        "deps/libsodium/src/libsodium/crypto_stream/chacha20/stream_chacha20.c",
-        "deps/libsodium/src/libsodium/crypto_stream/chacha20/ref/chacha20_ref.c",
-        "deps/libsodium/src/libsodium/crypto_onetimeauth/poly1305/onetimeauth_poly1305.c",
-        "deps/libsodium/src/libsodium/crypto_onetimeauth/poly1305/donna/poly1305_donna.c",
-        "deps/libsodium/src/libsodium/crypto_core/hchacha20/core_hchacha20.c",
-        "deps/libsodium/src/libsodium/sodium/core.c",
-        "deps/libsodium/src/libsodium/sodium/runtime.c",
-        "deps/libsodium/src/libsodium/sodium/utils.c",
-        "deps/libsodium/src/libsodium/sodium/version.c",
-        "deps/libsodium/src/libsodium/randombytes/randombytes.c"
+        "deps/opus/silk/fixed/schur_FIX.c"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
@@ -149,8 +136,6 @@
         "deps/opus/celt",
         "deps/opus/silk",
         "deps/opus/silk/fixed"
-        "deps/libsodium/src/libsodium/include",
-        "deps/libsodium/src/libsodium/include/sodium"
       ],
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS",
@@ -163,9 +148,7 @@
         "DISCORD_SAMPLE_RATE=48000",
         "DISCORD_CHANNELS=2",
         "DISCORD_FRAME_SIZE=960",
-        "DISCORD_BITRATE=64000",
-        "SODIUM_STATIC",
-        "SODIUM_EXPORT="
+        "DISCORD_BITRATE=64000"
       ],
       "cflags!": ["-fno-exceptions"],
       "cflags_cc!": ["-fno-exceptions"],

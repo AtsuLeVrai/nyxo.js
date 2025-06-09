@@ -6,6 +6,8 @@ import {
   Colors,
   EmbedBuilder,
   GuildCommandBuilder,
+  code,
+  quote,
 } from "nyxo.js";
 import { defineSlashCommand } from "../../types/index.js";
 
@@ -47,12 +49,6 @@ export default defineSlashCommand({
   data: new GuildCommandBuilder()
     .setName("ping")
     .setDescription("Check the bot's latency and API response time")
-    .addUserOption((option) =>
-      option
-        .setName("user")
-        .setDescription("The user to ping")
-        .setRequired(false),
-    )
     .build(),
   execute: async (client, interaction) => {
     // Record timestamp when command is received
@@ -66,10 +62,6 @@ export default defineSlashCommand({
     const roundtripLatency = end - start;
     const wsHeartbeat = client.gateway.latency; // Websocket heartbeat latency
 
-    const user = await interaction.getUser("user");
-
-    const cache = client.cache.channels?.size;
-
     // Create an aesthetic embed with the latency information
     const embed = new EmbedBuilder()
       .setTitle("🏓 Pong!")
@@ -78,29 +70,20 @@ export default defineSlashCommand({
       .addFields(
         {
           name: "Websocket Heartbeat",
-          value: `${wsHeartbeat}ms`,
+          value: quote(`🌐 ${code(`${wsHeartbeat}ms`)}`),
           inline: true,
         },
         {
           name: "Roundtrip Latency",
-          value: `${roundtripLatency}ms`,
-          inline: true,
-        },
-        // If user is specified, show their ping
-        {
-          name: "User Ping",
-          value: user
-            ? `${user.toString()} - ${roundtripLatency}ms`
-            : "No user specified",
-          inline: true,
-        },
-        {
-          name: "Guild Cache Size",
-          value: `${cache} guilds`,
+          value: quote(`🌐 ${code(`${roundtripLatency}ms`)}`),
           inline: true,
         },
       )
+      .setThumbnail({
+        url: client.user.getAvatarUrl() as string,
+      })
       .setFooter({
+        icon_url: client.user.getAvatarUrl() as string,
         text: `Nyxo.js | Shard ${client.gateway.shard.totalShards}`,
       })
       .setTimestamp()

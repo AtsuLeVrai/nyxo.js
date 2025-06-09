@@ -19,12 +19,17 @@
     "build:native": {
       "dependsOn": ["^build:native"],
       "outputs": ["build/**"],
-      "cache": true
+      "cache": false
     },
     "build:prod": {
       "dependsOn": ["//#biome:check", "^build:prod"],
       "outputs": ["dist/**"],
       "cache": true
+    },
+    "extract:libs": {
+      "dependsOn": ["^extract:libs"],
+      "outputs": ["deps/**"],
+      "cache": false
     },
     "type-check": {
       "dependsOn": ["//#biome:check"],
