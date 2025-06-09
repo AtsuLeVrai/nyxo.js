@@ -6,15 +6,6 @@
     "//#biome:check": {
       "outputs": []
     },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "start": {
-      "dependsOn": ["^start"],
-      "outputs": [],
-      "cache": false
-    },
     "clean": {
       "dependsOn": ["^clean"],
       "outputs": [],
@@ -25,24 +16,19 @@
       "outputs": ["dist/**"],
       "cache": true
     },
-    "build:watch": {
-      "outputs": ["dist/**"],
-      "cache": false,
-      "persistent": true
-    },
     "build:native": {
-      "dependsOn": ["//#biome:check", "^build:native"],
+      "dependsOn": ["^build:native"],
       "outputs": ["build/**"],
-      "cache": true
-    },
-    "type-check": {
-      "dependsOn": ["//#biome:check"],
-      "outputs": [],
       "cache": true
     },
     "build:prod": {
       "dependsOn": ["//#biome:check", "^build:prod"],
       "outputs": ["dist/**"],
+      "cache": true
+    },
+    "type-check": {
+      "dependsOn": ["//#biome:check"],
+      "outputs": [],
       "cache": true
     }
   }

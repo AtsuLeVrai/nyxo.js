@@ -9,9 +9,11 @@
   "files": {
     "ignoreUnknown": true,
     "ignore": [
+      "**/build/**",
       "**/dist/**",
       "**/node_modules/**",
       "**/*.d.ts",
+      "**/deps/**",
       "./docs/discord-api-docs/**"
     ]
   },

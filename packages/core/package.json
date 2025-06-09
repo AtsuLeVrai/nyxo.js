@@ -60,7 +60,6 @@
   "scripts": {
     "clean": "rimraf dist",
     "build:dev": "rimraf dist && tsc -p tsconfig.json",
-    "build:watch": "tsc -w -p tsconfig.json --preserveWatchOutput",
     "build:prod": "tsdown",
     "type-check": "tsc --noEmit"
   },

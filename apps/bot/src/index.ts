@@ -52,7 +52,8 @@ const client = new Client({
     GatewayIntentsBits.DirectMessagePolls,
     */
   ],
-  compressionType: "zlib-stream",
+  compressionType: "zstd-stream",
+  encodingType: "etf",
 });
 
 /**
@@ -66,7 +67,7 @@ const registeredCommands = true;
  * Memory monitoring interval (in milliseconds)
  * Set to 0 to disable periodic memory monitoring
  */
-const MEMORY_MONITOR_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const MEMORY_MONITOR_INTERVAL = 10000; // 10 seconds
 
 /**
  * Memory monitoring state

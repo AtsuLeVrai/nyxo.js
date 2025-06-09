@@ -54,15 +54,16 @@
     "websocket"
   ],
   "scripts": {
+    "install": "node-gyp-build",
     "clean": "node-gyp clean && rimraf dist",
     "build:dev": "rimraf dist && tsc -p tsconfig.json",
-    "build:watch": "tsc -w -p tsconfig.json --preserveWatchOutput",
     "build:prod": "pnpm run build:native && tsdown",
     "build:native": "node-gyp rebuild",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "node-addon-api": "^8.3.1",
+    "node-gyp-build": "^4.8.4",
     "zod": "^3.25.56"
   },
   "devDependencies": {

@@ -141,9 +141,9 @@ interface NativeInflateSync {
 function loadNativeAddon(): NativeAddon {
   const possiblePaths = [
     // Built binary (development/production)
-    join(__dirname, "..", "build", "Release", "zstd_stream.node"),
+    join(__dirname, "..", "build", "Release", "zstd.node"),
     // Debug binary (development with debugging symbols)
-    join(__dirname, "..", "build", "Debug", "zstd_stream.node"),
+    join(__dirname, "..", "build", "Debug", "zstd.node"),
   ];
 
   let lastError: Error | null = null;

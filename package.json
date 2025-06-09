@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/source",
-  "packageManager": "pnpm@10.11.1+sha512.e519b9f7639869dc8d5c3c5dfef73b3f091094b0a006d7317353c72b124e80e1afd429732e28705ad6bfa1ee879c1fce46c128ccebd3192101f43dd67c667912",
+  "packageManager": "pnpm@10.12.1",
   "readme": "README.md",
   "license": "Apache-2.0",
   "private": true,
@@ -12,20 +12,20 @@
   "scripts": {
     "clean": "turbo run clean",
     "build:dev": "turbo run build:dev",
-    "build:watch": "turbo run build:watch",
     "build:prod": "turbo run build:prod",
     "build:native": "turbo run build:native",
-    "biome:check": "biome check --write --unsafe --verbose",
+    "biome:check": "biome check --write --unsafe",
     "type-check": "turbo run type-check",
     "test": "vitest --run",
     "test:watch": "vitest",
     "test:coverage": "vitest --coverage --run",
     "test:ui": "vitest --ui",
     "test:bench": "vitest bench --run",
-    "prepare": "husky",
-    "publish": "pnpm run build:prod && changeset publish",
     "submodules:init": "git submodule update --init --recursive",
-    "submodules:update": "git submodule update --force --remote"
+    "submodules:update": "git submodule update --force --remote",
+    "submodules:stable": "git submodule foreach 'git fetch --tags && git checkout $(git describe --tags $(git rev-list --tags --max-count=1))'",
+    "prepare": "husky",
+    "publish": "pnpm run build:prod && changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

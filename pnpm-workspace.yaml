@@ -3,13 +3,11 @@ packages:
   - packages/*
 onlyBuiltDependencies:
   - '@biomejs/biome'
-  - '@discordjs/opus'
   - '@tailwindcss/oxide'
   - '@vercel/speed-insights'
   - bufferutil
   - erlpack
   - esbuild
-  - ffmpeg-static
   - sharp
 publicHoistPattern:
   - '@nyxojs/zlib'
