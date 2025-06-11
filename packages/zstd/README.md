@@ -1,5 +1,3 @@
-# @nyxojs/zstd
-
 <div align="center">
   <h1>🗜️ @nyxojs/zstd</h1>
   <h3>High-Performance Zstandard Decompression for Discord Applications</h3>
