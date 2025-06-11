@@ -28,10 +28,6 @@
   --color-danger-500: oklch(0.68 0.17 25);
   --color-warning-400: oklch(0.76 0.17 90);
   --color-warning-500: oklch(0.68 0.17 85);
-
-  /* Fonts */
-  --font-display: "Inter", sans-serif;
-  --font-code: "JetBrains Mono", monospace;
 }
 
 @layer base {

@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   GitFork,
@@ -14,15 +13,41 @@ import { FadeIn } from "~/components/animations/FadeIn";
 import { Button } from "~/components/ui/Button";
 import { DISCORD_LINK, GITHUB_REPO } from "~/utils/constants";
 
+/**
+ * GitHub repository statistics interface
+ */
 interface GitHubStats {
+  /** Number of stars on the repository */
   stars: number;
+  /** Number of forks of the repository */
   forks: number;
+  /** Whether the API request is currently in progress */
   loading: boolean;
+  /** Whether an error occurred during the API request */
   error: boolean;
 }
 
+/**
+ * Call-to-Action section component for the landing page
+ *
+ * This component renders a comprehensive CTA section that includes:
+ * - Primary action buttons for documentation and GitHub
+ * - Real-time GitHub statistics fetching
+ * - Community stats display with visual cards
+ * - Secondary action buttons for additional resources
+ * - Responsive design with background effects
+ *
+ * Features:
+ * - Fetches live GitHub stats with error handling and fallbacks
+ * - Number formatting for large values (1000+ becomes 1.0k)
+ * - Accessible design with proper ARIA labels
+ * - Multiple CTAs for different user journeys
+ * - Visual stat cards with icons and blur effects
+ *
+ * @returns JSX element containing the complete CTA section
+ */
 export default function CTA() {
-  const shouldReduceMotion = useReducedMotion();
+  // State for managing GitHub API data and loading states
   const [githubStats, setGithubStats] = useState<GitHubStats>({
     stars: 0,
     forks: 0,
@@ -30,7 +55,10 @@ export default function CTA() {
     error: false,
   });
 
-  // Fetch GitHub stats
+  /**
+   * Fetches GitHub repository statistics from the GitHub API
+   * Includes error handling with fallback values and proper loading states
+   */
   useEffect(() => {
     const fetchGitHubStats = async () => {
       try {
@@ -52,13 +80,14 @@ export default function CTA() {
             error: false,
           });
         } else {
-          throw new Error("Failed to fetch");
+          throw new Error("Failed to fetch repository data");
         }
       } catch (error) {
         console.error("Failed to fetch GitHub stats:", error);
+        // Set fallback values when API fails
         setGithubStats({
-          stars: 120, // Fallback values
-          forks: 15,
+          stars: 120, // Fallback star count
+          forks: 15, // Fallback fork count
           loading: false,
           error: true,
         });
@@ -68,7 +97,12 @@ export default function CTA() {
     fetchGitHubStats();
   }, []);
 
-  // Format numbers for display
+  /**
+   * Formats numbers for better display readability
+   * Converts numbers 1000+ to "k" notation (e.g., 1200 → "1.2k")
+   * @param num - The number to format
+   * @returns Formatted string representation of the number
+   */
   const formatNumber = (num: number): string => {
     if (num >= 1000) {
       return `${(num / 1000).toFixed(1)}k`;
@@ -81,52 +115,21 @@ export default function CTA() {
       className="relative bg-dark-800 py-24"
       aria-label="Call to action section"
     >
-      {/* Enhanced background effects */}
+      {/* Background visual effects */}
       <div className="absolute inset-0">
+        {/* Grid pattern overlay */}
         <div className="absolute inset-0 bg-[center_top_-1px] bg-grid-pattern opacity-10" />
+        {/* Radial gradient for depth */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(138,75,255,0.2),transparent_70%)]" />
 
-        {/* Animated orbs with reduced motion support */}
-        <motion.div
-          className="absolute top-0 left-0 h-[50vh] w-[50vh] rounded-full bg-primary-500/10"
-          style={{ filter: "blur(100px)" }}
-          animate={
-            shouldReduceMotion
-              ? {}
-              : {
-                  x: ["-25%", "5%", "-25%"],
-                  y: ["-25%", "10%", "-25%"],
-                }
-          }
-          transition={{
-            duration: 20,
-            repeat: shouldReduceMotion ? 0 : Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
-        />
-
-        <motion.div
-          className="absolute right-0 bottom-0 h-[40vh] w-[40vh] rounded-full bg-cyan-500/10"
-          style={{ filter: "blur(100px)" }}
-          animate={
-            shouldReduceMotion
-              ? {}
-              : {
-                  x: ["25%", "-5%", "25%"],
-                  y: ["25%", "-10%", "25%"],
-                }
-          }
-          transition={{
-            duration: 25,
-            repeat: shouldReduceMotion ? 0 : Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
-        />
+        {/* Decorative blur orbs for visual interest */}
+        <div className="absolute top-0 left-0 h-[50vh] w-[50vh] rounded-full bg-primary-500/10 blur-[100px]" />
+        <div className="absolute right-0 bottom-0 h-[40vh] w-[40vh] rounded-full bg-cyan-500/10 blur-[100px]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeIn className="text-center">
-          {/* Main heading */}
+          {/* Primary heading with gradient text effect */}
           <h2 className="font-extrabold text-3xl text-white tracking-tight sm:text-4xl lg:text-5xl">
             <span className="block">
               Ready to revolutionize your Discord bot development?
@@ -136,14 +139,14 @@ export default function CTA() {
             </span>
           </h2>
 
-          {/* Description */}
+          {/* Supporting description text */}
           <p className="mx-auto mt-6 max-w-3xl text-slate-300 text-xl leading-relaxed">
             Become part of a growing ecosystem of developers building
             next-generation Discord bots with modern TypeScript tools and best
             practices.
           </p>
 
-          {/* Action buttons */}
+          {/* Primary action buttons */}
           <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
             <Button
               href="/docs"
@@ -151,7 +154,6 @@ export default function CTA() {
               size="lg"
               trailingIcon={<ArrowRight className="h-5 w-5" />}
               className="min-w-[220px] text-lg"
-              animated={!shouldReduceMotion}
             >
               Start Building Now
             </Button>
@@ -163,7 +165,6 @@ export default function CTA() {
               external
               leadingIcon={<Github className="h-5 w-5" />}
               className="min-w-[220px] text-lg"
-              animated={!shouldReduceMotion}
             >
               {githubStats.loading
                 ? "GitHub"
@@ -171,7 +172,7 @@ export default function CTA() {
             </Button>
           </div>
 
-          {/* Secondary action */}
+          {/* Secondary community action */}
           <div className="mt-6">
             <Button
               href={DISCORD_LINK}
@@ -180,22 +181,18 @@ export default function CTA() {
               external
               leadingIcon={<MessageSquare className="h-5 w-5" />}
               className="text-primary-400 hover:text-primary-300"
-              animated={!shouldReduceMotion}
             >
               Join our Discord Community
             </Button>
           </div>
         </FadeIn>
 
-        {/* Community stats */}
-        <FadeIn delay={shouldReduceMotion ? 0 : 0.3}>
+        {/* Community statistics cards */}
+        <FadeIn delay={0.3}>
           <div className="mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
-            {/* GitHub Stars */}
-            <motion.div
-              className="relative overflow-hidden rounded-xl border border-dark-500/50 bg-dark-700/30 p-6 text-center backdrop-blur-sm"
-              whileHover={shouldReduceMotion ? {} : { y: -2 }}
-              transition={{ duration: 0.2 }}
-            >
+            {/* GitHub Stars stat card */}
+            <div className="relative overflow-hidden rounded-xl border border-dark-500/50 bg-dark-700/30 p-6 text-center backdrop-blur-sm">
+              {/* Decorative background blur effect */}
               <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-primary-500/10 blur-xl" />
               <div className="relative">
                 <Star className="mx-auto mb-3 h-8 w-8 text-primary-400" />
@@ -206,28 +203,20 @@ export default function CTA() {
                 </div>
                 <div className="text-slate-400 text-sm">GitHub Stars</div>
               </div>
-            </motion.div>
+            </div>
 
-            {/* Community Members */}
-            <motion.div
-              className="relative overflow-hidden rounded-xl border border-dark-500/50 bg-dark-700/30 p-6 text-center backdrop-blur-sm"
-              whileHover={shouldReduceMotion ? {} : { y: -2 }}
-              transition={{ duration: 0.2 }}
-            >
+            {/* Community Members stat card */}
+            <div className="relative overflow-hidden rounded-xl border border-dark-500/50 bg-dark-700/30 p-6 text-center backdrop-blur-sm">
               <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-cyan-500/10 blur-xl" />
               <div className="relative">
                 <Users className="mx-auto mb-3 h-8 w-8 text-cyan-400" />
                 <div className="font-bold text-2xl text-white">1+</div>
                 <div className="text-slate-400 text-sm">Community Members</div>
               </div>
-            </motion.div>
+            </div>
 
-            {/* GitHub Forks */}
-            <motion.div
-              className="relative overflow-hidden rounded-xl border border-dark-500/50 bg-dark-700/30 p-6 text-center backdrop-blur-sm"
-              whileHover={shouldReduceMotion ? {} : { y: -2 }}
-              transition={{ duration: 0.2 }}
-            >
+            {/* GitHub Forks stat card */}
+            <div className="relative overflow-hidden rounded-xl border border-dark-500/50 bg-dark-700/30 p-6 text-center backdrop-blur-sm">
               <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-purple-500/10 blur-xl" />
               <div className="relative">
                 <GitFork className="mx-auto mb-3 h-8 w-8 text-purple-400" />
@@ -238,45 +227,12 @@ export default function CTA() {
                 </div>
                 <div className="text-slate-400 text-sm">GitHub Forks</div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </FadeIn>
 
-        {/* Developer testimonial */}
-        {/*<FadeIn delay={shouldReduceMotion ? 0 : 0.5}>*/}
-        {/*  <div className="mx-auto mt-16 max-w-3xl">*/}
-        {/*    <div className="relative overflow-hidden rounded-2xl border border-dark-500/30 bg-gradient-to-br from-dark-700/50 via-dark-600/30 to-dark-700/50 p-8 backdrop-blur-sm">*/}
-        {/*      <div className="absolute top-0 left-0 h-24 w-24 rounded-full bg-primary-500/10 blur-2xl" />*/}
-        {/*      <div className="absolute right-0 bottom-0 h-20 w-20 rounded-full bg-cyan-500/10 blur-2xl" />*/}
-
-        {/*      <div className="relative text-center">*/}
-        {/*        <blockquote className="mb-6 text-lg text-slate-300 italic leading-relaxed">*/}
-        {/*          "Lorem ipsum dolor sit amet, consectetur adipisicing elit.*/}
-        {/*          Blanditiis eligendi, fugiat id libero mollitia nam non nulla*/}
-        {/*          numquam quos, recusandae vel vero! Deleniti dolorum explicabo*/}
-        {/*          modi mollitia nam quia quisquam quod sequi veritatis vero!*/}
-        {/*          Alias, aliquam atque culpa dolore ducimus eligendi fugiat*/}
-        {/*          fugit, minima, odio perspiciatis placeat quod tempore vel?*/}
-        {/*          Debitis, natus."*/}
-        {/*        </blockquote>*/}
-        {/*        <div className="flex items-center justify-center">*/}
-        {/*          <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-cyan-500 font-bold text-white">*/}
-        {/*            A*/}
-        {/*          </div>*/}
-        {/*          <div className="text-left">*/}
-        {/*            <div className="font-medium text-white">John Doe</div>*/}
-        {/*            <div className="text-slate-400 text-sm">*/}
-        {/*              Senior Discord Bot Developer*/}
-        {/*            </div>*/}
-        {/*          </div>*/}
-        {/*        </div>*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </div>*/}
-        {/*</FadeIn>*/}
-
-        {/* Final call to action */}
-        <FadeIn delay={shouldReduceMotion ? 0 : 0.7}>
+        {/* Final call to action section */}
+        <FadeIn delay={0.5}>
           <div className="mt-16 text-center">
             <p className="mb-6 text-lg text-slate-300">
               Ready to build the future of Discord bots? 🚀
@@ -287,7 +243,6 @@ export default function CTA() {
                 variant="outline"
                 size="lg"
                 className="flex-1"
-                animated={!shouldReduceMotion}
               >
                 Quick Start Guide
               </Button>
@@ -296,7 +251,6 @@ export default function CTA() {
                 variant="ghost"
                 size="lg"
                 className="flex-1 text-primary-400"
-                animated={!shouldReduceMotion}
               >
                 View Examples
               </Button>

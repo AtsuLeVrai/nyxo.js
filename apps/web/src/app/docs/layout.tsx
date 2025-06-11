@@ -13,9 +13,9 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Footer from "~/components/layout/Footer";
-import Header from "~/components/layout/Header";
 import { Badge } from "~/components/ui/Badge";
+import Footer from "~/layouts/Footer";
+import Header from "~/layouts/Header";
 
 interface SidebarItem {
   title: string;
@@ -95,11 +95,10 @@ function SidebarSection({
 }: SidebarSectionProps) {
   return (
     <div className="mb-6">
-      <motion.button
+      <button
+        type="button"
         onClick={onToggle}
         className="flex w-full items-center justify-between rounded-xl px-4 py-3 font-medium text-slate-300 transition-all hover:bg-primary-500/10 hover:text-primary-300 focus:bg-primary-500/10 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
-        whileHover={{ scale: 1.01, x: 2 }}
-        whileTap={{ scale: 0.99 }}
         aria-expanded={isExpanded}
         aria-controls={`section-${section.title}`}
       >
@@ -107,86 +106,56 @@ function SidebarSection({
           <div className="mr-3 h-2 w-2 rounded-full bg-gradient-to-r from-primary-400 to-primary-500" />
           {section.title}
         </span>
-        <motion.div
-          initial={false}
-          animate={{ rotate: isExpanded ? 180 : 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </motion.div>
-      </motion.button>
+        <ChevronDown
+          className={`h-4 w-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+        />
+      </button>
 
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.ul
-            id={`section-${section.title}`}
-            className="mt-3 space-y-1 pl-6"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            {section.items.map((item, index) => {
-              const isActive = pathname === item.href;
+      {isExpanded && (
+        <ul className="mt-3 space-y-1 pl-6">
+          {section.items.map((item) => {
+            const isActive = pathname === item.href;
 
-              return (
-                <motion.li
-                  key={item.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                >
-                  {item.isExternal ? (
-                    <a
-                      href={item.href}
-                      className={`group flex items-center rounded-xl px-4 py-2.5 text-sm transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-primary-500/20 to-primary-600/20 text-primary-300 shadow-lg shadow-primary-500/20"
-                          : "text-slate-400 hover:bg-gradient-to-r hover:from-primary-500/10 hover:to-primary-600/10 hover:text-primary-300"
-                      }`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-current={isActive ? "page" : undefined}
-                    >
-                      <div className="mr-3 h-1.5 w-1.5 rounded-full bg-slate-500 transition-all group-hover:bg-primary-400" />
-                      {item.title}
-                      <ExternalLink
-                        className="ml-auto h-3 w-3 opacity-60"
-                        aria-hidden="true"
-                      />
-                    </a>
-                  ) : (
-                    <Link
-                      href={item.href}
-                      className={`group flex items-center rounded-xl px-4 py-2.5 text-sm transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-primary-500/20 to-primary-600/20 text-primary-300 shadow-lg shadow-primary-500/20"
-                          : "text-slate-400 hover:bg-gradient-to-r hover:from-primary-500/10 hover:to-primary-600/10 hover:text-primary-300"
-                      }`}
-                      aria-current={isActive ? "page" : undefined}
-                    >
-                      <div className="mr-3 h-1.5 w-1.5 rounded-full bg-slate-500 transition-all group-hover:bg-primary-400" />
-                      {item.title}
-                      {isActive && (
-                        <motion.div
-                          className="ml-auto h-2 w-2 rounded-full bg-primary-400"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{
-                            type: "spring",
-                            stiffness: 500,
-                            damping: 30,
-                          }}
-                        />
-                      )}
-                    </Link>
-                  )}
-                </motion.li>
-              );
-            })}
-          </motion.ul>
-        )}
-      </AnimatePresence>
+            return (
+              <li key={item.href}>
+                {item.isExternal ? (
+                  <a
+                    href={item.href}
+                    className={`group flex items-center rounded-xl px-4 py-2.5 text-sm transition-all ${
+                      isActive
+                        ? "bg-gradient-to-r from-primary-500/20 to-primary-600/20 text-primary-300 shadow-lg shadow-primary-500/20"
+                        : "text-slate-400 hover:bg-gradient-to-r hover:from-primary-500/10 hover:to-primary-600/10 hover:text-primary-300"
+                    }`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    <div className="mr-3 h-1.5 w-1.5 rounded-full bg-slate-500 transition-all group-hover:bg-primary-400" />
+                    {item.title}
+                    <ExternalLink className="ml-auto h-3 w-3 opacity-60" />
+                  </a>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={`group flex items-center rounded-xl px-4 py-2.5 text-sm transition-all ${
+                      isActive
+                        ? "bg-gradient-to-r from-primary-500/20 to-primary-600/20 text-primary-300 shadow-lg shadow-primary-500/20"
+                        : "text-slate-400 hover:bg-gradient-to-r hover:from-primary-500/10 hover:to-primary-600/10 hover:text-primary-300"
+                    }`}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    <div className="mr-3 h-1.5 w-1.5 rounded-full bg-slate-500 transition-all group-hover:bg-primary-400" />
+                    {item.title}
+                    {isActive && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary-400" />
+                    )}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
@@ -266,70 +235,16 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
     closeSidebar();
   }, [closeSidebar]);
 
-  const backgroundElements = useMemo(
-    () => (
-      <div className="-z-10 fixed inset-0 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 bg-[center_top_-1px] bg-grid-pattern opacity-5"
-          animate={{
-            backgroundPosition: ["0px 0px", "40px 40px", "0px 0px"],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "linear",
-          }}
-        />
+  const backgroundElements = (
+    <div className="-z-10 fixed inset-0 overflow-hidden">
+      <div className="absolute inset-0 bg-[center_top_-1px] bg-grid-pattern opacity-5" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(138,75,255,0.08),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.06),transparent_60%)]" />
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(138,75,255,0.08),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.06),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(138,75,255,0.04),transparent_70%)]" />
-
-        <motion.div
-          className="absolute top-0 left-0 h-[60vh] w-[60vh] rounded-full bg-gradient-to-r from-primary-500/10 to-purple-500/10"
-          style={{ filter: "blur(120px)" }}
-          animate={{
-            x: ["-30%", "10%", "-30%"],
-            y: ["-30%", "15%", "-30%"],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute right-0 bottom-0 h-[45vh] w-[45vh] rounded-full bg-gradient-to-r from-cyan-500/8 to-blue-500/8"
-          style={{ filter: "blur(100px)" }}
-          animate={{
-            x: ["30%", "-10%", "30%"],
-            y: ["30%", "-15%", "30%"],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 30,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/3 h-[35vh] w-[35vh] rounded-full bg-gradient-to-r from-purple-500/6 to-pink-500/6"
-          style={{ filter: "blur(90px)" }}
-          animate={{
-            x: ["-20%", "20%", "-20%"],
-            y: ["-20%", "20%", "-20%"],
-            scale: [1, 1.15, 1],
-          }}
-          transition={{
-            duration: 35,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
-        />
-      </div>
-    ),
-    [],
+      {/* Orbs statiques */}
+      <div className="absolute top-0 left-0 h-[60vh] w-[60vh] rounded-full bg-gradient-to-r from-primary-500/10 to-purple-500/10 blur-[120px]" />
+      <div className="absolute right-0 bottom-0 h-[45vh] w-[45vh] rounded-full bg-gradient-to-r from-cyan-500/8 to-blue-500/8 blur-[100px]" />
+    </div>
   );
 
   const sidebarHeader = useMemo(
@@ -396,12 +311,10 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
               : "bg-dark-800/80"
           }`}
         >
-          <motion.button
+          <button
             type="button"
             className="px-5 py-4 text-slate-300 transition-colors hover:text-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             onClick={toggleSidebar}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
             aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
           >
             {isSidebarOpen ? (
@@ -409,7 +322,7 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
             ) : (
               <Menu className="h-6 w-6" />
             )}
-          </motion.button>
+          </button>
 
           <div className="flex-1 px-4 py-4">
             <div className="flex items-center">
@@ -427,15 +340,13 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
           </div>
 
           <div className="px-4">
-            <motion.button
+            <button
               type="button"
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-dark-600/60 text-slate-300 transition-all hover:bg-primary-500/20 hover:text-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               aria-label="Search documentation"
             >
               <Search className="h-5 w-5" />
-            </motion.button>
+            </button>
           </div>
         </div>
 

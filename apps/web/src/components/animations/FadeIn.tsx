@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { ReactNode, RefObject } from "react";
-import { useInView } from "~/hooks/useInView";
+import type { ReactNode } from "react";
+import { useInView } from "react-intersection-observer";
 
 export interface FadeInProps {
   /** Child elements to render with the fade effect */
@@ -27,7 +27,7 @@ export function FadeIn({
   direction = "up",
   className = "",
 }: FadeInProps) {
-  const { ref, isInView } = useInView({
+  const { ref, inView } = useInView({
     threshold,
     triggerOnce: true,
   });
@@ -52,10 +52,10 @@ export function FadeIn({
 
   return (
     <motion.div
-      ref={ref as RefObject<HTMLDivElement>}
+      ref={ref}
       className={className}
       initial={initial}
-      animate={isInView ? { opacity: 1, y: 0, x: 0 } : initial}
+      animate={inView ? { opacity: 1, y: 0, x: 0 } : initial}
       transition={{
         duration,
         delay,

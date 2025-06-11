@@ -2,46 +2,86 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  ArrowRight,
   BookOpen,
   Code,
   ExternalLink,
   Github,
   Heart,
-  Mail,
   MessageSquare,
-  Twitter,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { FadeIn } from "~/components/animations/FadeIn";
-import { Button } from "~/components/ui/Button";
 import { DISCORD_LINK, GITHUB_REPO } from "~/utils/constants";
 
+/**
+ * Interface for individual footer link items
+ */
 interface FooterLink {
+  /** Display text for the link */
   title: string;
+  /** URL or path for the link */
   href: string;
+  /** Whether the link opens in a new tab */
   isExternal?: boolean;
+  /** Tooltip description for the link */
   description?: string;
 }
 
+/**
+ * Interface for footer navigation sections
+ */
 interface FooterSection {
+  /** Section heading title */
   title: string;
+  /** Array of links within this section */
   links: FooterLink[];
 }
 
 /**
- * Enhanced Footer component with improved links and better organization
+ * Interface for social media links with additional styling
+ */
+interface SocialLink {
+  /** Display name for the social platform */
+  name: string;
+  /** URL to the social profile */
+  href: string;
+  /** Icon component for the platform */
+  icon: React.ReactElement;
+  /** Tailwind classes for hover color effects */
+  color: string;
+  /** Accessible description of the link */
+  description: string;
+}
+
+/**
+ * Comprehensive footer component for the application
+ *
+ * This component provides a complete footer experience including:
+ * - Brand identity section with logo and description
+ * - Organized navigation sections (Documentation, Community, Resources)
+ * - Social media links with hover animations
+ * - Legal links and copyright information
+ * - Responsive grid layout for different screen sizes
+ * - Accessibility features with proper ARIA labels
+ *
+ * Features:
+ * - Motion animations with reduced motion support
+ * - Background decorative effects with blur orbs
+ * - Grid pattern overlay for texture
+ * - Icon-enhanced section headings
+ * - External link indicators
+ * - Hover effects with scale animations
+ * - Semantic markup for screen readers
+ *
+ * @returns Complete footer with navigation, social links, and legal information
  */
 export default function Footer() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const currentYear = new Date().getFullYear();
   const shouldReduceMotion = useReducedMotion();
 
-  // Enhanced social links with better descriptions
-  const socialLinks = [
+  /**
+   * Social media platform links with styling and accessibility information
+   */
+  const socialLinks: SocialLink[] = [
     {
       name: "GitHub",
       href: GITHUB_REPO,
@@ -58,7 +98,10 @@ export default function Footer() {
     },
   ];
 
-  // Updated footer sections with working links only
+  /**
+   * Organized footer navigation sections with comprehensive links
+   * Each section includes relevant documentation, community, and resource links
+   */
   const footerSections: FooterSection[] = [
     {
       title: "Documentation",
@@ -145,28 +188,9 @@ export default function Footer() {
     },
   ];
 
-  // Handle newsletter subscription
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || isSubmitting) return;
-
-    setIsSubmitting(true);
-
-    // Simulate API call - replace with actual implementation
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setSubscribed(true);
-      setEmail("");
-    } catch (error) {
-      console.error("Subscription failed:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <footer className="relative overflow-hidden bg-dark-800">
-      {/* Background decorations */}
+      {/* Background decorative effects */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5" />
       <div
         className="absolute bottom-0 left-0 h-[50vh] w-[50vh] rounded-full bg-primary-500/5"
@@ -180,7 +204,7 @@ export default function Footer() {
       {/* Main footer content */}
       <div className="relative mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
         <div className="xl:grid xl:grid-cols-4 xl:gap-8">
-          {/* Brand section */}
+          {/* Brand identity section */}
           <div className="space-y-8 xl:col-span-1">
             <div>
               <Link href="/" className="group flex items-center">
@@ -220,7 +244,7 @@ export default function Footer() {
               </p>
             </div>
 
-            {/* Social links */}
+            {/* Social media links section */}
             <div>
               <h3 className="mb-4 font-semibold text-sm text-white">
                 Connect with us
@@ -245,10 +269,11 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation sections */}
+          {/* Navigation sections grid */}
           <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3 xl:col-span-3 xl:mt-0">
             {footerSections.map((section) => (
               <div key={section.title}>
+                {/* Section heading with appropriate icon */}
                 <h3 className="mb-4 flex items-center font-semibold text-sm text-white">
                   {section.title === "Documentation" && (
                     <BookOpen className="mr-2 h-4 w-4 text-primary-400" />
@@ -261,6 +286,7 @@ export default function Footer() {
                   )}
                   {section.title}
                 </h3>
+                {/* Links list with external link indicators */}
                 <ul className="space-y-3">
                   {section.links.map((link) => (
                     <li key={link.title}>
@@ -286,9 +312,10 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom section */}
+        {/* Footer bottom section with legal and attribution */}
         <div className="mt-12 border-dark-500 border-t pt-8 pb-12">
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
+            {/* Copyright and legal links */}
             <div className="flex flex-col items-center space-y-2 md:flex-row md:space-x-6 md:space-y-0">
               <p className="text-slate-400 text-sm">
                 &copy; {currentYear} Nyxo.js. All rights reserved.
@@ -310,6 +337,7 @@ export default function Footer() {
               </div>
             </div>
 
+            {/* Attribution section */}
             <div className="flex items-center text-slate-400 text-sm">
               <span>Made with</span>
               <Heart className="mx-1 h-4 w-4 text-primary-400" />
@@ -325,7 +353,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Additional info */}
+          {/* Community call-to-action footer */}
           <div className="mt-6 border-dark-500/50 border-t pt-6 text-center">
             <p className="mx-auto max-w-2xl text-slate-500 text-xs leading-relaxed">
               Nyxo.js is an open-source project. We welcome contributions from
