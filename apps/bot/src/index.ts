@@ -25,18 +25,12 @@ const client = new Client({
   compressionType: "zstd-stream",
   encodingType: "etf",
   intents: [
-    // Core functionality
     GatewayIntentsBits.Guilds,
     GatewayIntentsBits.GuildMessages,
     GatewayIntentsBits.MessageContent,
-
-    // Add only if needed:
-    // GatewayIntentsBits.GuildMembers,     // Heavy memory usage
-    // GatewayIntentsBits.GuildPresences,   // Very heavy memory usage
-    // GatewayIntentsBits.GuildVoiceStates, // Only if voice features needed
-
-    // Uncomment specific intents as your bot grows:
-    /*
+    GatewayIntentsBits.GuildMembers,
+    GatewayIntentsBits.GuildPresences,
+    GatewayIntentsBits.GuildVoiceStates,
     GatewayIntentsBits.GuildModeration,
     GatewayIntentsBits.GuildExpressions,
     GatewayIntentsBits.GuildIntegrations,
@@ -52,7 +46,6 @@ const client = new Client({
     GatewayIntentsBits.AutoModerationExecution,
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
-    */
   ],
 });
 

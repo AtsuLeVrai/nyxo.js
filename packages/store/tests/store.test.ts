@@ -51,7 +51,7 @@ describe("Store", () => {
 
     it("throws error for invalid first argument", () => {
       expect(() => new Store("invalid" as any)).toThrow(
-        "First argument must be either an array of entries, an object, or an options object",
+        "First argument must be either an array of entries or an options object",
       );
     });
 
@@ -1510,51 +1510,6 @@ describe("Store", () => {
             undefined: undefined,
           });
         });
-      });
-    });
-
-    describe("Constructor with Record", () => {
-      it("creates store from Record object", () => {
-        const data = { x: 10, y: 20, z: 30 };
-        const recordStore = new Store(data);
-
-        expect(recordStore.size).toBe(3);
-        expect(recordStore.get("x")).toBe(10);
-        expect(recordStore.get("y")).toBe(20);
-        expect(recordStore.get("z")).toBe(30);
-
-        recordStore.destroy();
-      });
-
-      it("creates store from Record with options", () => {
-        const data = { a: 1, b: 2 };
-        const options = { maxSize: 5, ttl: 1000 };
-        const recordStore = new Store(data, options);
-
-        expect(recordStore.size).toBe(2);
-        expect(recordStore.get("a")).toBe(1);
-
-        recordStore.destroy();
-      });
-
-      it("handles empty Record object", () => {
-        const data = {};
-        const recordStore = new Store(data);
-
-        expect(recordStore.size).toBe(0);
-
-        recordStore.destroy();
-      });
-
-      it("differentiates between Record and options object", () => {
-        const optionsOnly = new Store({ maxSize: 10 });
-        expect(optionsOnly.size).toBe(0);
-        optionsOnly.destroy();
-
-        const recordWithData = new Store({ key: "value" });
-        expect(recordWithData.size).toBe(1);
-        expect(recordWithData.get("key")).toBe("value");
-        recordWithData.destroy();
       });
     });
   });

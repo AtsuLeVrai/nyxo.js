@@ -456,6 +456,7 @@ export class Message
     "member" in this.rawData
       ? new GuildMember(this.client, {
           ...(this.rawData.member as GuildMemberEntity),
+          user: this.rawData.author,
           guild_id: this.guildId as Snowflake,
         })
       : undefined;

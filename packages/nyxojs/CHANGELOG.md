@@ -1,5 +1,16 @@
 # nyxo.js
 
+## 0.2.6
+
+### Patch Changes
+
+- simplify intent handling in index.ts, enhance error message in Store constructor, and remove redundant tests from store.test.ts
+- Updated dependencies
+  - @nyxojs/store@0.2.5
+  - @nyxojs/rest@0.2.5
+  - @nyxojs/builders@0.2.5
+  - @nyxojs/gateway@0.2.5
+
 ## 0.2.5
 
 ### Patch Changes

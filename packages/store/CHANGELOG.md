@@ -1,5 +1,11 @@
 # @nyxojs/store
 
+## 0.2.5
+
+### Patch Changes
+
+- simplify intent handling in index.ts, enhance error message in Store constructor, and remove redundant tests from store.test.ts
+
 ## 0.2.4
 
 ### Patch Changes

@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/voice",
   "private": true,
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Enterprise-Grade Voice Communication for Discord Applications",
   "readme": "README.md",
   "license": "Apache-2.0",

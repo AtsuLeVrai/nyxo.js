@@ -1,5 +1,12 @@
 # @nyxojs/rest
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies
+  - @nyxojs/store@0.2.5
+
 ## 0.2.4
 
 ### Patch Changes

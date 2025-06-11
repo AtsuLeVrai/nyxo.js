@@ -175,7 +175,6 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   constructor(
     entriesOrOptions?:
       | (readonly [K, V])[]
-      | Record<K, V>
       | z.input<typeof StoreOptions>
       | null,
     maybeOptions?: z.input<typeof StoreOptions>,
@@ -190,32 +189,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       );
     };
 
-    const isEntriesObject = (obj: unknown): obj is Record<K, V> => {
-      if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
-        return false;
-      }
-
-      const keys = Object.keys(obj);
-      if (keys.length === 0) {
-        return true;
-      }
-
-      // Check if all keys are valid StoreKey types
-      return !keys.every((key) => StoreOptions.keyof().safeParse(key).success);
-    };
-
     const isOptions = (obj: unknown): obj is z.input<typeof StoreOptions> => {
-      if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
-        return false;
-      }
-
-      const keys = Object.keys(obj);
-      if (keys.length === 0) {
-        return false;
-      }
-
-      // Check if all keys are valid StoreOptions keys
-      return keys.every((key) => StoreOptions.keyof().safeParse(key).success);
+      return obj !== null && typeof obj === "object" && !Array.isArray(obj);
     };
 
     // Determine actual parameters based on overloaded constructor
@@ -225,10 +200,6 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     if (isEntriesArray(entriesOrOptions)) {
       // First parameter is an entries array
       actualEntries = entriesOrOptions;
-      actualOptions = maybeOptions ?? {};
-    } else if (isEntriesObject(entriesOrOptions)) {
-      // First parameter is an entries object
-      actualEntries = Object.entries(entriesOrOptions) as [K, V][];
       actualOptions = maybeOptions ?? {};
     } else if (isOptions(entriesOrOptions)) {
       // First parameter is an options object
@@ -241,7 +212,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     } else {
       // First parameter is neither an entries array nor an options object
       throw new Error(
-        "First argument must be either an array of entries, an object, or an options object",
+        "First argument must be either an array of entries or an options object",
       );
     }
 
