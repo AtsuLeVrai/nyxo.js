@@ -1,5 +1,17 @@
 # nyxo.js
 
+## 0.2.5
+
+### Patch Changes
+
+- update @types/node and tsx versions in package.json, enhance error messages in loadNativeAddon function
+- Updated dependencies
+  - @nyxojs/builders@0.2.4
+  - @nyxojs/gateway@0.2.4
+  - @nyxojs/store@0.2.4
+  - @nyxojs/core@0.2.4
+  - @nyxojs/rest@0.2.4
+
 ## 0.2.4
 
 ### Patch Changes

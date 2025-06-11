@@ -139,10 +139,11 @@ interface NativeInflateSync {
  * @internal
  */
 function loadNativeAddon(): NativeAddon {
+  // Define possible paths for the native addon binary
   const possiblePaths = [
-    // Built binary (development/production)
+    // Release build (production/optimized)
     join(__dirname, "..", "build", "Release", "zstd.node"),
-    // Debug binary (development with debugging symbols)
+    // Debug build (development with debugging symbols)
     join(__dirname, "..", "build", "Debug", "zstd.node"),
   ];
 
@@ -152,21 +153,31 @@ function loadNativeAddon(): NativeAddon {
     try {
       const addon = require(path) as NativeAddon;
 
-      // Validate the addon has required exports for basic functionality
-      if (!(addon.InflateStream && addon.inflateSync)) {
-        throw new Error(
-          "Invalid native addon: missing required exports (InflateStream, inflateSync)",
-        );
+      // Validate the addon has required exports
+      if (
+        addon &&
+        typeof addon.InflateStream === "function" &&
+        typeof addon.inflateSync === "function"
+      ) {
+        return addon;
       }
 
-      return addon;
+      throw new Error(
+        "Native addon loaded but missing required exports (InflateStream, inflateSync)",
+      );
     } catch (error) {
       lastError = error as Error;
     }
   }
 
+  // Provide helpful error message
+  const platform = `${process.platform}-${process.arch}`;
+  const nodeVersion = process.version;
+
   throw new Error(
-    `Failed to load native zstd addon from any of the attempted paths: ${possiblePaths.join(", ")}. This usually indicates the native module needs to be compiled. Last error encountered: ${lastError?.message || "Unknown error"}`,
+    `Failed to load native zstd addon for platform ${platform} and Node.js version ${nodeVersion}. Tried paths: ${possiblePaths.join(
+      ", ",
+    )}. Last error: ${(lastError as Error).message}. Ensure the addon is built correctly for your environment.`,
   );
 }
 

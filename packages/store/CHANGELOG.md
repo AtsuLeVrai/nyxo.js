@@ -1,5 +1,11 @@
 # @nyxojs/store
 
+## 0.2.4
+
+### Patch Changes
+
+- update @types/node and tsx versions in package.json, enhance error messages in loadNativeAddon function
+
 ## 0.2.3
 
 ### Patch Changes

@@ -1,22 +1,17 @@
 <div align="center">
   <h1>🎵 @nyxojs/opus</h1>
-  <h3>Enterprise-Grade Opus Audio Codec for Discord Voice Applications</h3>
-
+  <h3>High-Performance Opus Audio Codec for Discord Applications</h3>
   <p align="center">
+    <a href="https://www.npmjs.com/package/@nyxojs/opus">
+      <img src="https://img.shields.io/npm/v/@nyxojs/opus?style=for-the-badge&logo=npm&color=CB3837" alt="NPM Version">
+    </a>
+    <a href="https://www.npmjs.com/package/@nyxojs/opus">
+      <img src="https://img.shields.io/npm/dm/@nyxojs/opus?style=for-the-badge&logo=npm&color=CB3837" alt="NPM Downloads">
+    </a>
     <a href="https://github.com/AtsuLeVrai/nyxo.js/blob/main/LICENSE">
-      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyxo.js?style=for-the-badge&logo=gnu&color=A42E2B" alt="License">
-    </a>
-    <a href="https://www.typescriptlang.org/">
-      <img src="https://img.shields.io/badge/TypeScript-100%25-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
-    </a>
-    <a href="https://nodejs.org/">
-      <img src="https://img.shields.io/badge/Node.js-%3E%3D22.0.0-339933?style=for-the-badge&logo=node.js" alt="Node.js">
-    </a>
-    <a href="https://discord.gg/hfMzQMbaMg">
-      <img src="https://img.shields.io/discord/1301585513651634236?color=5865F2&label=Discord&logo=discord&style=for-the-badge" alt="Discord">
+      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyxo.js?style=for-the-badge&logo=apache&color=D22128" alt="License">
     </a>
   </p>
-
   <br />
   <img src="../../public/nyxojs_banner.png" alt="Nyxo.js Banner" width="70%" style="border-radius: 8px;">
 </div>
@@ -27,17 +22,31 @@
 Built with modern C++ and TypeScript, it provides enterprise-grade audio encoding/decoding capabilities with a focus on
 low latency, high throughput, and minimal resource usage.
 
+Perfect for Discord voice applications requiring real-time audio processing, music streaming, voice communication, and
+any application demanding high-quality audio codec performance with optimal resource efficiency.
+
 > [!NOTE]
-> This package is part of the Nyxo.js ecosystem but can be used independently in any Discord bot or Node.js application
-> requiring high-performance Opus audio processing.
+> **Beta Release** - Core features are stable and ready for testing. Part of the Nyxo.js ecosystem but can be used
+> independently.
 
-## ⚠️ Project Status
+## 📦 Installation
 
-> [!IMPORTANT]
-> **Current Status: Beta Development**  
-> This project is in active development. The core functionality is stable and ready for testing, but breaking changes
-> may still occur before the stable release.
+```bash
+npm install @nyxojs/opus
+yarn add @nyxojs/opus
+pnpm add @nyxojs/opus
+bun add @nyxojs/opus
+```
 
-## 📜 License
+---
 
-This package is [Apache 2.0 licensed](LICENSE).
+<div align="center">
+  <h3>Part of the Nyxo.js Ecosystem</h3>
+  <p>
+    <a href="../../README.md">🌌 Main Project</a> •
+    <a href="../../LICENSE">📜 License</a> •
+    <a href="https://nyxojs.dev">📖 Documentation</a> •
+    <a href="https://discord.gg/hfMzQMbaMg">💬 Discord</a> •
+    <a href="https://github.com/AtsuLeVrai/nyxo.js/issues">🐛 Issues</a>
+  </p>
+</div>

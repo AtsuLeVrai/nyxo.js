@@ -1,22 +1,17 @@
 <div align="center">
   <h1>🎵 @nyxojs/voice</h1>
-  <h3>Enterprise-Grade Voice Communication for Discord Applications</h3>
-
+  <h3>High-Performance Voice Communication for Discord Applications</h3>
   <p align="center">
+    <a href="https://www.npmjs.com/package/@nyxojs/voice">
+      <img src="https://img.shields.io/npm/v/@nyxojs/voice?style=for-the-badge&logo=npm&color=CB3837" alt="NPM Version">
+    </a>
+    <a href="https://www.npmjs.com/package/@nyxojs/voice">
+      <img src="https://img.shields.io/npm/dm/@nyxojs/voice?style=for-the-badge&logo=npm&color=CB3837" alt="NPM Downloads">
+    </a>
     <a href="https://github.com/AtsuLeVrai/nyxo.js/blob/main/LICENSE">
-      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyxo.js?style=for-the-badge&logo=gnu&color=A42E2B" alt="License">
-    </a>
-    <a href="https://www.typescriptlang.org/">
-      <img src="https://img.shields.io/badge/TypeScript-100%25-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
-    </a>
-    <a href="https://nodejs.org/">
-      <img src="https://img.shields.io/badge/Node.js-%3E%3D22.0.0-339933?style=for-the-badge&logo=node.js" alt="Node.js">
-    </a>
-    <a href="https://discord.gg/hfMzQMbaMg">
-      <img src="https://img.shields.io/discord/1301585513651634236?color=5865F2&label=Discord&logo=discord&style=for-the-badge" alt="Discord">
+      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyxo.js?style=for-the-badge&logo=apache&color=D22128" alt="License">
     </a>
   </p>
-
   <br />
   <img src="../../public/nyxojs_banner.png" alt="Nyxo.js Banner" width="70%" style="border-radius: 8px;">
 </div>
@@ -28,16 +23,31 @@ audio processing, voice channel management, and real-time audio streaming capabi
 reliability in mind, it offers advanced features like adaptive bitrate encoding, noise suppression, and seamless voice
 connection handling.
 
+Perfect for building music bots, voice assistants, audio streaming applications, and any Discord bot requiring
+high-quality voice communication with advanced audio processing capabilities.
+
 > [!NOTE]
-> This package is part of the Nyxo.js ecosystem but can be used independently in any Discord bot or Node.js application
-> requiring voice capabilities.
+> **Alpha Release** - Core features are in early development. Part of the Nyxo.js ecosystem but can be used
+> independently.
 
-## ⚠️ Project Status
+## 📦 Installation
 
-> [!IMPORTANT]
-> **Current Status: Alpha Development**  
-> This project is still in early development stages. Nothing is production-ready yet.
+```bash
+npm install @nyxojs/voice
+yarn add @nyxojs/voice
+pnpm add @nyxojs/voice
+bun add @nyxojs/voice
+```
 
-## 📜 License
+---
 
-This package is [Apache 2.0 licensed](LICENSE).
+<div align="center">
+  <h3>Part of the Nyxo.js Ecosystem</h3>
+  <p>
+    <a href="../../README.md">🌌 Main Project</a> •
+    <a href="../../LICENSE">📜 License</a> •
+    <a href="https://nyxojs.dev">📖 Documentation</a> •
+    <a href="https://discord.gg/hfMzQMbaMg">💬 Discord</a> •
+    <a href="https://github.com/AtsuLeVrai/nyxo.js/issues">🐛 Issues</a>
+  </p>
+</div>
