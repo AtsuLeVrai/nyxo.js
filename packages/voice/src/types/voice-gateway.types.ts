@@ -1,5 +1,3 @@
-import type { Snowflake } from "@nyxojs/core";
-
 /**
  * Voice Connection State
  *
@@ -501,15 +499,6 @@ export enum VoiceAudioCodec {
    * **Use Case:** Primary codec for Discord voice communications
    */
   Opus = "opus",
-
-  /**
-   * PCM audio codec
-   *
-   * **Type:** Uncompressed Pulse Code Modulation
-   * **Quality:** Perfect quality but high bandwidth
-   * **Use Case:** Raw audio for special applications
-   */
-  Pcm = "pcm",
 }
 
 /**
@@ -614,7 +603,7 @@ export interface VoiceIdentifyEntity {
    * Identifies which guild's voice server this connection belongs to.
    * Must match the guild_id from the Voice Server Update event.
    */
-  serverId: Snowflake;
+  server_id: string;
 
   /**
    * User ID
@@ -622,7 +611,7 @@ export interface VoiceIdentifyEntity {
    * Identifies the user or bot establishing the voice connection.
    * Must match the authenticated user's ID.
    */
-  userId: Snowflake;
+  user_id: string;
 
   /**
    * Session ID from the gateway voice state update
@@ -630,7 +619,7 @@ export interface VoiceIdentifyEntity {
    * Session identifier received in the Voice State Update event.
    * Required for associating the voice connection with the gateway session.
    */
-  sessionId: string;
+  session_id: string;
 
   /**
    * Voice connection token from the gateway voice server update
@@ -646,7 +635,7 @@ export interface VoiceIdentifyEntity {
    * Indicates the highest E2EE protocol version this client supports.
    * Omitting this field or setting to 0 indicates no E2EE support.
    */
-  maxDaveProtocolVersion?: DaveProtocolVersion;
+  max_dave_protocol_version?: DaveProtocolVersion;
 }
 
 /**
@@ -698,15 +687,7 @@ export interface VoiceReadyEntity {
    * **Warning:** This field is incorrect and should be ignored.
    * The actual heartbeat interval comes from the Hello payload (opcode 8).
    */
-  heartbeatInterval: number;
-
-  /**
-   * Experiments enabled for this connection
-   *
-   * Array of experimental features enabled for this voice connection.
-   * Used for A/B testing and gradual feature rollouts.
-   */
-  experiments?: string[];
+  heartbeat_interval: number;
 }
 
 /**
@@ -798,39 +779,7 @@ export interface VoiceSessionDescriptionEntity {
    * 32-byte array used for voice data encryption and decryption.
    * This key is used with the selected encryption mode for all voice packets.
    */
-  secretKey: number[];
-
-  /**
-   * Audio codec used
-   *
-   * The audio codec that will be used for voice transmission.
-   * Typically Opus for high-quality audio compression.
-   */
-  audioCodec?: VoiceAudioCodec;
-
-  /**
-   * Video codec used
-   *
-   * The video codec that will be used for video transmission.
-   * Various codecs supported depending on client and server capabilities.
-   */
-  videoCodec?: VoiceVideoCodec;
-
-  /**
-   * Media session ID
-   *
-   * Unique identifier for this media session.
-   * Used for tracking and debugging voice connection issues.
-   */
-  mediaSessionId?: string;
-
-  /**
-   * DAVE protocol version being used
-   *
-   * The E2EE protocol version negotiated for this session.
-   * If present and > 0, end-to-end encryption is enabled.
-   */
-  daveProtocolVersion?: DaveProtocolVersion;
+  secret_key: number[];
 }
 
 /**
@@ -851,7 +800,7 @@ export interface VoiceHeartbeatEntity {
    * Unique identifier for this heartbeat, typically a timestamp.
    * Used to match heartbeat acknowledgments with sent heartbeats.
    */
-  nonce: number;
+  t: number;
 
   /**
    * Sequence acknowledgment (required for gateway version 8+)
@@ -859,7 +808,7 @@ export interface VoiceHeartbeatEntity {
    * Sequence number of the last numbered message received from the gateway.
    * Used for reliable message delivery and resume functionality.
    */
-  seqAck?: number;
+  seq_ack?: number;
 }
 
 /**
@@ -878,7 +827,7 @@ export interface VoiceHeartbeatAckEntity {
    * The same nonce value that was sent in the heartbeat.
    * Used to correlate ACKs with specific heartbeat messages.
    */
-  nonce: number;
+  t: number;
 }
 
 /**
@@ -898,7 +847,7 @@ export interface VoiceHelloEntity {
    * The interval at which the client should send heartbeat messages.
    * This is the authoritative heartbeat interval, not the one in Ready payload.
    */
-  heartbeatInterval: number;
+  heartbeat_interval: number;
 }
 
 /**
@@ -943,7 +892,7 @@ export interface VoiceSpeakingEntity {
    * ID of the user whose speaking state changed.
    * Only present in server-to-client speaking updates.
    */
-  user_id?: Snowflake;
+  user_id?: string;
 }
 
 /**
@@ -964,7 +913,7 @@ export interface VoiceResumeEntity {
    * Must match the server ID from the original session.
    * Used to validate the resume request.
    */
-  server_id: Snowflake;
+  server_id: string;
 
   /**
    * Session ID
@@ -981,239 +930,14 @@ export interface VoiceResumeEntity {
    * Must be valid and match the original session.
    */
   token: string;
-}
-
-/**
- * Voice Video Sink Wants Data
- *
- * Payload data requesting video streams from specific users in the voice channel.
- * Used for performance optimization by selectively receiving video streams.
- *
- * **Performance:** Allows clients to request only the video streams they need,
- * reducing bandwidth and processing requirements.
- *
- * @see {@link https://discord.com/developers/docs/topics/voice-connections#video-sink-wants}
- */
-export interface VoiceVideoSinkWantsEntity {
-  /**
-   * Array of user SSRCs to receive video from
-   *
-   * List of users whose video streams should be sent to this client.
-   * Each entry can specify quality preferences for the video stream.
-   */
-  wants: Array<{
-    /**
-     * User SSRC
-     *
-     * Synchronization Source identifier for the user's video stream.
-     * Identifies which user's video is being requested.
-     */
-    ssrc: number;
-
-    /**
-     * Video quality settings
-     *
-     * Preferred quality configuration for this video stream.
-     * Server will attempt to honor these preferences when possible.
-     */
-    quality?: VoiceVideoQualityEntity;
-  }>;
-}
-
-/**
- * Voice Channel Options Data
- *
- * Payload data providing channel-specific configuration options for audio and video.
- * Contains settings that can be dynamically adjusted based on channel requirements.
- *
- * **Dynamic Configuration:** These settings can change during a voice session
- * based on channel policies and server performance.
- */
-export interface VoiceChannelOptionsEntity {
-  /**
-   * Audio quality settings
-   *
-   * Recommended audio quality configuration for this channel.
-   * Clients should adjust their encoding parameters accordingly.
-   */
-  audio_quality?: VoiceAudioQualityEntity;
 
   /**
-   * Video quality settings
+   * Sequence acknowledgment (required for gateway version 8+)
    *
-   * Recommended video quality configuration for this channel.
-   * Clients should adjust their encoding parameters accordingly.
+   * Sequence number of the last numbered message received from the gateway.
+   * Used for reliable message delivery and resume functionality.
    */
-  video_quality?: VoiceVideoQualityEntity;
-
-  /**
-   * Auto gain control enabled
-   *
-   * Indicates whether automatic gain control should be applied.
-   * Helps normalize audio levels across different microphones.
-   */
-  auto_gain_control?: boolean;
-
-  /**
-   * Echo cancellation enabled
-   *
-   * Indicates whether echo cancellation should be applied.
-   * Reduces feedback between speakers and microphones.
-   */
-  echo_cancellation?: boolean;
-
-  /**
-   * Noise suppression enabled
-   *
-   * Indicates whether noise suppression should be applied.
-   * Reduces background noise in voice transmission.
-   */
-  noise_suppression?: boolean;
-
-  /**
-   * Noise gate enabled
-   *
-   * Indicates whether noise gate should be applied.
-   * Mutes audio below a certain threshold to eliminate background noise.
-   */
-  noise_gate?: boolean;
-}
-
-/**
- * Voice Code Version Data
- *
- * Payload data providing version information about the voice server.
- * Used for compatibility checking and feature capability detection.
- *
- * **Compatibility:** Clients can use this information to adjust behavior
- * based on server capabilities and known version differences.
- */
-export interface VoiceCodeVersionEntity {
-  /**
-   * Voice server version
-   *
-   * Version string identifying the voice server software version.
-   * Format may vary but typically includes major and minor version numbers.
-   */
-  version: string;
-
-  /**
-   * Build information
-   *
-   * Additional build details such as build number or commit hash.
-   * Useful for detailed debugging and support scenarios.
-   */
-  build?: string;
-}
-
-/**
- * Voice Audio Quality
- *
- * Configuration options for audio transmission quality and processing.
- * These settings control the balance between audio quality and bandwidth usage.
- *
- * **Adaptive Quality:** Settings may be adjusted automatically based on network
- * conditions and server recommendations.
- */
-export interface VoiceAudioQualityEntity {
-  /**
-   * Audio bitrate in kbps
-   *
-   * Target bitrate for audio encoding. Higher values provide better quality
-   * but require more bandwidth. Typical range: 8-512 kbps.
-   */
-  bitrate?: number;
-
-  /**
-   * Sample rate in Hz
-   *
-   * Audio sampling frequency. Higher rates provide better frequency response.
-   * Common values: 8000, 16000, 24000, 48000 Hz.
-   */
-  sample_rate?: number;
-
-  /**
-   * Number of audio channels
-   *
-   * Channel configuration for audio transmission.
-   * 1 = mono, 2 = stereo. Discord typically uses stereo (2 channels).
-   */
-  channels?: number;
-
-  /**
-   * Packet loss concealment enabled
-   *
-   * Whether to enable audio recovery techniques for lost packets.
-   * Improves audio quality in poor network conditions.
-   */
-  packet_loss_concealment?: boolean;
-
-  /**
-   * Forward error correction enabled
-   *
-   * Whether to include redundant data for error recovery.
-   * Increases bandwidth but improves reliability.
-   */
-  forward_error_correction?: boolean;
-
-  /**
-   * Discontinuous transmission enabled
-   *
-   * Whether to reduce transmission during silence periods.
-   * Saves bandwidth by not transmitting during quiet periods.
-   */
-  discontinuous_transmission?: boolean;
-}
-
-/**
- * Voice Video Quality
- *
- * Configuration options for video transmission quality and performance.
- * These settings control the balance between video quality and system resources.
- *
- * **Performance Impact:** Higher quality settings require more CPU/GPU resources
- * and network bandwidth.
- */
-export interface VoiceVideoQualityEntity {
-  /**
-   * Video width in pixels
-   *
-   * Horizontal resolution of the video stream.
-   * Common values: 320, 640, 1280, 1920 pixels.
-   */
-  width?: number;
-
-  /**
-   * Video height in pixels
-   *
-   * Vertical resolution of the video stream.
-   * Common values: 240, 480, 720, 1080 pixels.
-   */
-  height?: number;
-
-  /**
-   * Frame rate in fps
-   *
-   * Number of video frames per second.
-   * Common values: 15, 30, 60 fps. Higher rates provide smoother motion.
-   */
-  framerate?: number;
-
-  /**
-   * Video bitrate in kbps
-   *
-   * Target bitrate for video encoding. Higher values provide better quality
-   * but require more bandwidth. Typical range: 100-8000 kbps.
-   */
-  bitrate?: number;
-
-  /**
-   * Hardware acceleration enabled
-   *
-   * Whether to use hardware encoding/decoding when available.
-   * Improves performance and reduces CPU usage on supported devices.
-   */
-  hardware_acceleration?: boolean;
+  seq_ack?: number; // Sequence acknowledgment for reliable delivery (optional, version 8+)
 }
 
 /**
@@ -1264,18 +988,6 @@ export interface VoiceReceivePayloads {
    * Indicates the voice connection has been restored without re-identification.
    */
   [VoiceGatewayOpcode.Resumed]: null;
-
-  /**
-   * Channel-specific audio/video configuration options.
-   * Provides recommended settings for this voice channel.
-   */
-  [VoiceGatewayOpcode.ChannelOptionsUpdate]: VoiceChannelOptionsEntity;
-
-  /**
-   * Voice server version information.
-   * Used for compatibility checking and feature detection.
-   */
-  [VoiceGatewayOpcode.CodeVersion]: VoiceCodeVersionEntity;
 }
 
 /**
@@ -1320,10 +1032,4 @@ export interface VoiceSendPayloads {
    * Used instead of Identify when reconnecting to an existing session.
    */
   [VoiceGatewayOpcode.Resume]: VoiceResumeEntity;
-
-  /**
-   * Request specific video streams for performance optimization.
-   * Allows selective video reception to reduce bandwidth usage.
-   */
-  [VoiceGatewayOpcode.VideoSinkWants]: VoiceVideoSinkWantsEntity;
 }
