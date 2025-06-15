@@ -69,7 +69,7 @@
     "@nyxojs/store": "workspace:^",
     "eventemitter3": "^5.0.1",
     "reflect-metadata": "^0.2.2",
-    "zod": "^3.25.63"
+    "zod": "^3.25.64"
   },
   "devDependencies": {
     "@types/node": "^22.15.31",

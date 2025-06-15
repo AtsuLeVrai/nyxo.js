@@ -10,7 +10,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "setup": "pnpm install --frozen-lockfile && pnpm run submodules:init && pnpm run build:dev",
+    "setup": "pnpm run submodules:init && pnpm run extract:libs && pnpm install -r && pnpm run build:dev",
     "clean": "turbo run clean",
     "build:dev": "turbo run build:dev",
     "build:prod": "turbo run build:prod",

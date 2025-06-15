@@ -10,6 +10,6 @@
     "node": ">=22"
   },
   "devDependencies": {
-    "glob": "^11.0.2"
+    "glob": "^11.0.3"
   }
 }
