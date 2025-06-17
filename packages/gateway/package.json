@@ -69,7 +69,7 @@
     "@nyxojs/rest": "workspace:^",
     "eventemitter3": "^5.0.1",
     "ws": "^8.18.2",
-    "zod": "^3.25.65"
+    "zod": "^3.25.67"
   },
   "optionalDependencies": {
     "@nyxojs/zlib": "workspace:^",

@@ -6,7 +6,34 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "~/components/ui/Button";
-import { DISCORD_LINK, GITHUB_REPO, NAV_LINKS } from "~/utils/constants";
+import {
+  DISCORD_LINK,
+  GITHUB_CONTRIBUTORS,
+  GITHUB_LICENSE,
+  GITHUB_REPO,
+} from "~/utils/constants";
+
+/**
+ * Interface representing a navigation link in the header
+ * Contains title, href, and optional external link flag
+ */
+export interface NavLink {
+  /**
+   * Title of the navigation link
+   * Used as the visible text in the navigation menu
+   */
+  title: string;
+  /**
+   * Href for the navigation link
+   * Can be an internal route or an external URL
+   */
+  href: string;
+  /**
+   * Optional flag indicating if the link is external
+   * If true, opens in a new tab and adds rel="noopener noreferrer"
+   */
+  isExternal?: boolean;
+}
 
 /**
  * Main navigation header component with mobile menu support
@@ -35,6 +62,19 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
 
   /**
+   * Navigation links for the header
+   * Contains links to documentation, examples, API, license, and contributors
+   * Each link can be external or internal
+   */
+  const NAV_LINKS: NavLink[] = [
+    { title: "Docs", href: "/docs" },
+    { title: "Examples", href: "/examples" },
+    { title: "API", href: "/docs/api" },
+    { title: "License", href: GITHUB_LICENSE, isExternal: true },
+    { title: "Contributors", href: GITHUB_CONTRIBUTORS, isExternal: true },
+  ];
+
+  /**
    * Handles scroll events to change header appearance based on scroll position
    * Adds background blur and border when scrolled past threshold
    */
@@ -54,7 +94,7 @@ export default function Header() {
    */
   useEffect(() => {
     setIsMenuOpen(false);
-  }, [pathname]);
+  }, []);
 
   /**
    * Handles keyboard navigation and body scroll management for mobile menu
