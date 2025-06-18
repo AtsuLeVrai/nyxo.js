@@ -7,7 +7,12 @@
   "readme": "README.md",
   "license": "Apache-2.0",
   "type": "module",
-  "files": ["dist", "deps", "native", "binding.gyp"],
+  "files": [
+    "dist",
+    "deps",
+    "native",
+    "binding.gyp"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

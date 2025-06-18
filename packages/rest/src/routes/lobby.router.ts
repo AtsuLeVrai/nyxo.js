@@ -1,5 +1,4 @@
-import type { LobbyEntity, LobbyMemberEntity } from "@nyxojs/core";
-import type { Snowflake } from "@nyxojs/core";
+import type { LobbyEntity, LobbyMemberEntity, Snowflake } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

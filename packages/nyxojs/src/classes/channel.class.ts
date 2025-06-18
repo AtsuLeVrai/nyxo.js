@@ -12,6 +12,8 @@ import {
   type FormattedUser,
   type ForumLayoutType,
   type ForumTagEntity,
+  formatChannel,
+  formatUser,
   type InviteEntity,
   type OverwriteEntity,
   type Snowflake,
@@ -20,8 +22,6 @@ import {
   type ThreadMemberEntity,
   type ThreadMetadataEntity,
   type VideoQualityMode,
-  formatChannel,
-  formatUser,
 } from "@nyxojs/core";
 import type {
   ChannelInviteCreateOptions,

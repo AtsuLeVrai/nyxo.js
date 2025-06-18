@@ -82,8 +82,7 @@ export default function CTA() {
         } else {
           throw new Error("Failed to fetch repository data");
         }
-      } catch (error) {
-        console.error("Failed to fetch GitHub stats:", error);
+      } catch (_error) {
         // Set fallback values when API fails
         setGithubStats({
           stars: 120, // Fallback star count

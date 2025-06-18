@@ -1,3 +1,4 @@
+import * as LucideIcons from "lucide-react";
 import {
   AlertTriangle,
   CheckCircle,
@@ -7,7 +8,6 @@ import {
   Link2,
   XCircle,
 } from "lucide-react";
-import * as LucideIcons from "lucide-react";
 import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
@@ -473,7 +473,6 @@ function Icon({ name, size = 20, className = "", color, ...props }: IconProps) {
   const IconComponent = LucideIcons[name] as React.ComponentType<any>;
 
   if (!IconComponent) {
-    console.warn(`Icon "${name}" not found in Lucide React icons`);
     return null;
   }
 

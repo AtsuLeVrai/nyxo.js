@@ -5,12 +5,12 @@ import {
   InflateStream,
   InflateStreamOptions,
   InflateSync,
+  inflateSync,
   ZSTD_VERSION_MAJOR,
   ZSTD_VERSION_MINOR,
   ZSTD_VERSION_NUMBER,
   ZSTD_VERSION_RELEASE,
   ZSTD_VERSION_STRING,
-  inflateSync,
 } from "../src/index.js";
 
 // Test data - using simple buffers for basic functionality testing

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
   "vcs": {
     "clientKind": "git",
     "defaultBranch": "main",
@@ -8,18 +8,19 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": [
-      "**/build/**",
-      "**/dist/**",
-      "**/node_modules/**",
-      "**/*.d.ts",
-      "./libs/**",
-      "./docs/discord-api-docs/**"
+    "includes": [
+      "**",
+      "!**/build/**",
+      "!**/dist/**",
+      "!**/node_modules/**",
+      "!**/*.d.ts",
+      "!libs/**",
+      "!docs/discord-api-docs/**"
     ]
   },
   "formatter": {
     "enabled": true,
-    "formatWithErrors": false,
+    "formatWithErrors": true,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
@@ -37,13 +38,16 @@
       "trailingCommas": "all"
     }
   },
-  "organizeImports": {
-    "enabled": true
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "all": true,
       "correctness": {
         "noNodejsModules": "off",
         "noUndeclaredDependencies": "off"
@@ -54,17 +58,22 @@
       },
       "suspicious": {
         "noExplicitAny": "warn"
+      },
+      "style": {
+        "useAsConstAssertion": "error",
+        "noUnusedTemplateLiteral": "error",
+        "noInferrableTypes": "error",
+        "noUselessElse": "error"
       }
     }
   },
   "overrides": [
     {
-      "include": ["apps/bot", "apps/benchmark", "scripts"],
+      "includes": ["**/apps/bot/**", "**/apps/benchmark/**", "**/scripts/**"],
       "linter": {
         "rules": {
           "suspicious": {
-            "noConsole": "off",
-            "noConsoleLog": "off"
+            "noConsole": "off"
           },
           "style": {
             "noDefaultExport": "off"
@@ -73,23 +82,22 @@
       }
     },
     {
-      "include": ["apps/web"],
+      "includes": ["**/apps/web/**"],
       "linter": {
         "enabled": true,
         "rules": {
-          "all": false,
           "recommended": true,
           "correctness": {
             "noUnusedVariables": "warn",
             "noUnusedImports": "warn",
             "useExhaustiveDependencies": "warn",
-            "useHookAtTopLevel": "error"
+            "useHookAtTopLevel": "error",
+            "useValidTypeof": "error"
           },
           "style": {
             "noNegationElse": "warn",
             "noParameterAssign": "warn",
             "noRestrictedGlobals": "error",
-            "noVar": "error",
             "useBlockStatements": "warn",
             "useCollapsedElseIf": "warn",
             "useConsistentArrayType": {
@@ -141,17 +149,17 @@
             },
             "useNodejsImportProtocol": "warn",
             "useNumberNamespace": "warn",
-            "useNumericLiterals": "warn",
             "useSelfClosingElements": "warn",
-            "useShorthandArrayType": "warn",
             "useShorthandAssign": "warn",
             "useSingleVarDeclarator": "warn",
-            "useTemplate": "warn"
+            "useTemplate": "warn",
+            "useComponentExportOnlyModules": "warn",
+            "useConsistentMemberAccessibility": "warn",
+            "useTrimStartEnd": "warn"
           },
           "complexity": {
             "noBannedTypes": "warn",
             "noExtraBooleanCast": "warn",
-            "noMultipleSpacesInRegularExpressionLiterals": "warn",
             "noStaticOnlyClass": "warn",
             "noThisInStatic": "warn",
             "noUselessCatch": "warn",
@@ -166,13 +174,15 @@
             "noUselessThisAlias": "warn",
             "noUselessTypeConstraint": "warn",
             "noVoid": "warn",
-            "noWith": "error",
             "useLiteralKeys": "warn",
             "useOptionalChain": "warn",
-            "useRegexLiterals": "warn"
+            "useRegexLiterals": "warn",
+            "useNumericLiterals": "warn",
+            "noAdjacentSpacesInRegex": "warn"
           },
           "security": {
-            "noDangerouslySetInnerHtml": "warn"
+            "noDangerouslySetInnerHtml": "warn",
+            "noBlankTarget": "warn"
           },
           "performance": {
             "noAccumulatingSpread": "warn",
@@ -180,7 +190,6 @@
           },
           "a11y": {
             "noAriaUnsupportedElements": "warn",
-            "noBlankTarget": "warn",
             "noDistractingElements": "warn",
             "noHeaderScope": "warn",
             "noPositiveTabindex": "warn",
@@ -212,7 +221,6 @@
             "noClassAssign": "warn",
             "noCommentText": "warn",
             "noCompareNegZero": "warn",
-            "noConsoleLog": "warn",
             "noControlCharactersInRegex": "warn",
             "noDebugger": "warn",
             "noDoubleEquals": "warn",
@@ -243,7 +251,14 @@
             "useDefaultSwitchClauseLast": "warn",
             "useGetterReturn": "error",
             "useNamespaceKeyword": "warn",
-            "useValidTypeof": "error"
+            "noVar": "error",
+            "noWith": "error",
+            "noConsole": {
+              "level": "warn",
+              "options": {
+                "allow": ["log"]
+              }
+            }
           },
           "nursery": {
             "useSortedClasses": {
@@ -252,11 +267,7 @@
               "options": {
                 "functions": ["clsx", "cva", "cn", "twMerge", "classNames"]
               }
-            },
-            "useComponentExportOnlyModules": "warn",
-            "useConsistentMemberAccessibility": "warn",
-            "useImportRestrictions": "warn",
-            "useTrimStartEnd": "warn"
+            }
           }
         }
       }

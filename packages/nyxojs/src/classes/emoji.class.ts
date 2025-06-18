@@ -1,11 +1,11 @@
 import {
   type EmojiEntity,
   type FormattedCustomEmoji,
+  formatCustomEmoji,
   type Link,
+  link,
   type Snowflake,
   type UserEntity,
-  formatCustomEmoji,
-  link,
 } from "@nyxojs/core";
 import {
   type AnimatedImageOptions,

@@ -3,6 +3,7 @@ import {
   type BanEntity,
   BitField,
   type FormattedChannel,
+  formatChannel,
   type GuildEntity,
   GuildFeature,
   type GuildMemberEntity,
@@ -18,7 +19,6 @@ import {
   type VoiceRegionEntity,
   type VoiceStateEntity,
   type WelcomeScreenEntity,
-  formatChannel,
 } from "@nyxojs/core";
 import type { GuildBanEntity, GuildCreateEntity } from "@nyxojs/gateway";
 import type {
@@ -29,9 +29,9 @@ import type {
   GuildBansBulkResponse,
   GuildBansFetchParams,
   GuildMemberAddOptions,
-  GuildMemberUpdateOptions,
   GuildMembersFetchParams,
   GuildMembersSearchParams,
+  GuildMemberUpdateOptions,
   GuildOnboardingUpdateOptions,
   GuildPruneOptions,
   GuildRoleCreateOptions,

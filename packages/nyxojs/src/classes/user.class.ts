@@ -4,12 +4,12 @@ import {
   type ConnectionEntity,
   type ConnectionService,
   type FormattedUser,
+  formatUser,
+  isValidUsername,
   type Snowflake,
   SnowflakeUtil,
   type UserEntity,
   type UserFlags,
-  formatUser,
-  isValidUsername,
 } from "@nyxojs/core";
 import type { GuildCreateEntity } from "@nyxojs/gateway";
 import {

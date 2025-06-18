@@ -5,12 +5,12 @@ import {
   type EmojiEntity,
   type GuildMemberEntity,
   type Link,
+  link,
   type MessageEntity,
   MessageFlags,
   MessageReferenceType,
   MessageType,
   type Snowflake,
-  link,
 } from "@nyxojs/core";
 import type {
   MessageCreateEntity,

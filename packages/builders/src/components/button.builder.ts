@@ -3,8 +3,8 @@ import {
   ButtonStyle,
   ComponentType,
   type EmojiResolvable,
-  type Snowflake,
   resolveEmoji,
+  type Snowflake,
 } from "@nyxojs/core";
 
 /**

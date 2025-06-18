@@ -73,7 +73,7 @@ export const FILE_CONSTANTS = {
    * ```
    */
   DATA_URI_PATTERN:
-    /^data:([a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_.]*);base64,([A-Za-z0-9+/]+={0,2})$/,
+    /^data:([a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_.]*);base64,([A-Za-z0-9+/]+={0,2})$/,
 
   /**
    * Cross-platform filesystem path detection pattern.

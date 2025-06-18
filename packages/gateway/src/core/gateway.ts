@@ -1,8 +1,8 @@
 import {
   ApiVersion,
   BitField,
-  type UnavailableGuildEntity,
   sleep,
+  type UnavailableGuildEntity,
 } from "@nyxojs/core";
 import type { Rest } from "@nyxojs/rest";
 import { EventEmitter } from "eventemitter3";

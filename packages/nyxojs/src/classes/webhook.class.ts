@@ -1,11 +1,11 @@
 import {
   type FormattedChannel,
+  formatChannel,
   type GuildEntity,
+  isValidWebhookName,
   type Snowflake,
   type WebhookEntity,
   WebhookType,
-  formatChannel,
-  isValidWebhookName,
 } from "@nyxojs/core";
 import {
   type AnimatedImageOptions,

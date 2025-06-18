@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  type EmojiResolvable,
   decodeEmoji,
+  type EmojiResolvable,
   encodeEmoji,
   resolveEmoji,
 } from "../src/index.js";

@@ -218,7 +218,6 @@ export default function Features(): ReactElement {
 
   return (
     <section
-      id="features"
       className="relative bg-dark-800 py-24"
       aria-label="Features section"
     >

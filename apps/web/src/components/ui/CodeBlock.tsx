@@ -290,9 +290,7 @@ export function CodeBlock({
       setCopied(true);
       // Reset copy state after 2 seconds
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy code to clipboard:", err);
-    }
+    } catch (_err) {}
   };
 
   // Human-readable language names for display

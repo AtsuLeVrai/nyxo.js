@@ -5,7 +5,7 @@ import {
   InflateStreamOptions,
   InflateSync,
   InflateSyncOptions,
-  ZLIB_SUFFIX,
+  inflateSync,
   Z_BUF_ERROR,
   Z_DATA_ERROR,
   Z_ERRNO,
@@ -19,7 +19,7 @@ import {
   Z_STREAM_END,
   Z_STREAM_ERROR,
   Z_SYNC_FLUSH,
-  inflateSync,
+  ZLIB_SUFFIX,
 } from "../src/index.js";
 
 // Test data - using simple buffers for basic functionality testing

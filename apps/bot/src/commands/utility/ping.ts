@@ -4,9 +4,9 @@ import {
   type ButtonEntity,
   ButtonStyle,
   Colors,
+  code,
   EmbedBuilder,
   GuildCommandBuilder,
-  code,
   quote,
 } from "nyxo.js";
 import { defineSlashCommand } from "../../types/index.js";

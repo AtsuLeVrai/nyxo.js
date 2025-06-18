@@ -6,12 +6,12 @@ import {
   type EmojiResolvable,
   type MentionableSelectMenuEntity,
   type RoleSelectMenuEntity,
+  resolveEmoji,
   type SelectMenuDefaultValueEntity,
   type SelectMenuOptionEntity,
   type Snowflake,
   type StringSelectMenuEntity,
   type UserSelectMenuEntity,
-  resolveEmoji,
 } from "@nyxojs/core";
 
 /**

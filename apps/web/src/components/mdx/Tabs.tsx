@@ -82,9 +82,7 @@ interface TabHeadingProps {
 export function TabHeading({ children, className = "" }: TabHeadingProps) {
   return (
     <div className={`border-dark-500 border-b ${className}`}>
-      <nav className="flex space-x-1" role="tablist">
-        {children}
-      </nav>
+      <nav className="flex space-x-1">{children}</nav>
     </div>
   );
 }

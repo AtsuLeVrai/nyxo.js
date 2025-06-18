@@ -1,4 +1,4 @@
-import { type Socket, createSocket } from "node:dgram";
+import { createSocket, type Socket } from "node:dgram";
 import { promisify } from "node:util";
 import { z } from "zod/v4";
 

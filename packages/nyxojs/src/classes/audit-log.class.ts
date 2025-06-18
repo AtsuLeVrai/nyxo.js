@@ -1,4 +1,3 @@
-import type {} from "@nyxojs/core";
 import type { GuildAuditLogEntryCreateEntity } from "@nyxojs/gateway";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce, PropsToCamel } from "../types/index.js";

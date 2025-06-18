@@ -195,7 +195,7 @@ export default function Header() {
           {/* Desktop navigation - centered layout */}
           <div className="flex flex-1 justify-center">
             <div className="hidden lg:block">
-              <nav className="flex items-center space-x-1" role="menubar">
+              <nav className="flex items-center space-x-1">
                 {NAV_LINKS.map((link) => (
                   <Link
                     key={link.title}
@@ -288,7 +288,6 @@ export default function Header() {
       <AnimatePresence mode="wait">
         {isMenuOpen && (
           <motion.div
-            id="mobile-menu"
             className="fixed inset-0 top-16 z-40 lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -384,7 +383,7 @@ export default function Header() {
                   </div>
 
                   {/* Mobile navigation links */}
-                  <nav className="mb-8 space-y-1" role="menu">
+                  <nav className="mb-8 space-y-1">
                     {NAV_LINKS.map((link) => (
                       <div key={link.title}>
                         <Link

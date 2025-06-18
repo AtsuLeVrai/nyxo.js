@@ -2,11 +2,11 @@ import {
   BitField,
   type BitwisePermissionFlags,
   type FormattedRole,
+  formatRole,
   type RoleEntity,
   RoleFlags,
   type Snowflake,
   SnowflakeUtil,
-  formatRole,
 } from "@nyxojs/core";
 import {
   Cdn,

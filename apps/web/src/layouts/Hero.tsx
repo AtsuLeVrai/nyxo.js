@@ -32,7 +32,6 @@ export default function Hero() {
   return (
     <section
       className="relative flex min-h-screen items-center justify-center overflow-hidden pt-16"
-      role="banner"
       aria-label="Hero section"
     >
       {/* Layered background effects for visual depth */}
