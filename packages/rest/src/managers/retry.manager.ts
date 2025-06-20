@@ -1,7 +1,7 @@
 import { sleep } from "@nyxojs/core";
 import { z } from "zod/v4";
 import type { Rest } from "../core/index.js";
-import type { HttpMethod, HttpResponse, RetryEvent } from "../types/index.js";
+import type { HttpMethod, HttpResponse } from "../types/index.js";
 
 /**
  * Configuration schema for intelligent retry behavior with Discord API optimizations.
@@ -191,38 +191,6 @@ export enum ErrorCategory {
  * Provides sophisticated retry logic with adaptive backoff strategies, comprehensive
  * error classification, and detailed observability. Designed specifically for
  * Discord's infrastructure patterns and optimized for production bot workloads.
- *
- * ## Core Features
- *
- * ### 🧠 **Intelligent Error Classification**
- * - **Contextual categorization**: Analyzes error types for optimal strategy
- * - **Network vs server differentiation**: Different handling for different failure modes
- * - **Pattern recognition**: Learns from error messages and status codes
- * - **Adaptive strategies**: Tailored backoff for each error category
- *
- * ### ⏱️ **Advanced Backoff Algorithms**
- * - **Exponential backoff**: Standard 2^n progression for most errors
- * - **Jittered delays**: ±25% randomization prevents thundering herd
- * - **Category-specific timing**: Network errors retry faster initially
- * - **Conservative fallbacks**: Unknown errors get longer delays
- *
- * ### 📊 **Comprehensive Observability**
- * - **Detailed event emission**: Every retry attempt tracked and logged
- * - **Error history collection**: Complete failure context for debugging
- * - **Performance metrics**: Timing and success rate tracking
- * - **Categorized monitoring**: Error type breakdown for analysis
- *
- * ### 🔄 **Production Resilience**
- * - **Resource protection**: Prevents retry storms and cascading failures
- * - **Graceful degradation**: Intelligent failure handling when retries exhausted
- * - **Memory efficiency**: Minimal overhead for high-throughput applications
- * - **Thread safety**: Safe for concurrent use across multiple requests
- *
- * ### 🎯 **Discord API Optimization**
- * - **Rate limit awareness**: Defers to RateLimitManager for 429 responses
- * - **Server pattern recognition**: Optimized for Discord's infrastructure
- * - **Gateway-specific handling**: Special logic for gateway connection errors
- * - **Bot-friendly defaults**: Configuration tuned for typical bot workloads
  *
  * @example
  * ```typescript
@@ -456,14 +424,16 @@ export class RetryManager {
         const delay = this.#calculateDelay(attempts, errorCategory);
 
         // Emit comprehensive retry event for monitoring
-        this.#emitRetryEvent({
+        this.#rest.emit("retry", {
           requestId,
           method,
           path,
+          delay,
           error: currentError,
           attempt: attempts,
-          delay,
           reason: errorCategory,
+          timestamp: new Date().toISOString(),
+          maxAttempts: this.#options.maxRetries,
         });
 
         // Wait for calculated delay before next attempt
@@ -493,14 +463,16 @@ export class RetryManager {
         const delay = this.#calculateDelay(attempts, errorCategory);
 
         // Emit retry event with network error context
-        this.#emitRetryEvent({
+        this.#rest.emit("retry", {
           requestId,
           method,
           path,
+          delay,
           error: currentError,
           attempt: attempts,
-          delay,
           reason: errorCategory,
+          timestamp: new Date().toISOString(),
+          maxAttempts: this.#options.maxRetries,
         });
 
         // Wait before attempting retry
@@ -743,56 +715,5 @@ export class RetryManager {
     return errors
       .map((error, index) => `Attempt ${index + 1}: ${error.message}`)
       .join("\n");
-  }
-
-  /**
-   * Emits comprehensive retry events for monitoring and observability.
-   *
-   * Creates and emits detailed retry events that provide complete context
-   * about retry attempts for monitoring systems, alerting, and debugging.
-   * Events include timing information, error details, and retry metadata.
-   *
-   * @param params - Event parameters containing all retry attempt details
-   *
-   * @example
-   * ```typescript
-   * // Example emitted event structure:
-   * {
-   *   timestamp: "2023-12-07T15:30:45.123Z",
-   *   requestId: "user-profile-req-123",
-   *   method: "GET",
-   *   path: "/users/@me",
-   *   error: Error("HTTP 503 Service Unavailable"),
-   *   attempt: 2,
-   *   maxAttempts: 3,
-   *   delay: 2150,
-   *   reason: "server_error"
-   * }
-   * ```
-   *
-   * @remarks Retry events are essential for production monitoring to:
-   * - Track system reliability and error patterns
-   * - Alert on unusual retry patterns or failure clusters
-   * - Analyze performance impact of retry logic
-   * - Debug specific request failures with complete context
-   *
-   * @internal
-   */
-  #emitRetryEvent(params: Omit<RetryEvent, "timestamp" | "maxAttempts">): void {
-    // Create comprehensive event object with standardized timestamp
-    const event: RetryEvent = {
-      timestamp: new Date().toISOString(),
-      requestId: params.requestId,
-      method: params.method,
-      path: params.path,
-      error: params.error,
-      attempt: params.attempt,
-      maxAttempts: this.#options.maxRetries,
-      delay: params.delay,
-      reason: params.reason,
-    };
-
-    // Emit event for external monitoring and logging systems
-    this.#rest.emit("retry", event);
   }
 }

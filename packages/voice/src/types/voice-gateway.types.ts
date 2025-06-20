@@ -163,13 +163,13 @@ export enum VoiceGatewayOpcode {
   VideoSinkWants = 10,
 
   /**
-   * Channel options.
+   * Clients connect notification.
    *
    * **Direction:** Server → Client
-   * **Purpose:** Provides channel-specific audio/video configuration options.
-   * **Contains:** Audio quality, video quality, noise suppression settings.
+   * **Purpose:** Notification that one or more clients have connected to the voice channel.
+   * **Contains:** User information for newly connected clients.
    */
-  ChannelOptionsUpdate = 11,
+  ClientsConnect = 11,
 
   /**
    * Code version.
@@ -179,6 +179,114 @@ export enum VoiceGatewayOpcode {
    * **Use Case:** Helps clients adapt behavior based on server capabilities.
    */
   CodeVersion = 12,
+
+  /**
+   * Client disconnect notification.
+   *
+   * **Direction:** Server → Client
+   * **Purpose:** Notification that a client has disconnected from the voice channel.
+   * **Contains:** User information for disconnected client.
+   */
+  ClientDisconnect = 13,
+
+  /**
+   * DAVE Protocol Prepare Transition.
+   *
+   * **Direction:** Server → Client
+   * **Purpose:** Announces an upcoming downgrade from the DAVE protocol.
+   * **DAVE:** Used when transitioning away from E2EE due to incompatible clients.
+   */
+  DavePrepareTransition = 21,
+
+  /**
+   * DAVE Protocol Execute Transition.
+   *
+   * **Direction:** Server → Client
+   * **Purpose:** Execute a previously announced protocol transition.
+   * **DAVE:** Confirms that the protocol transition should be applied.
+   */
+  DaveExecuteTransition = 22,
+
+  /**
+   * DAVE Protocol Transition Ready.
+   *
+   * **Direction:** Client → Server
+   * **Purpose:** Acknowledge readiness for previously announced transition.
+   * **DAVE:** Indicates client has prepared for the protocol transition.
+   */
+  DaveTransitionReady = 23,
+
+  /**
+   * DAVE Protocol Prepare Epoch.
+   *
+   * **Direction:** Server → Client
+   * **Purpose:** Announces a DAVE protocol version or MLS group change.
+   * **DAVE:** Used for protocol upgrades and MLS epoch transitions.
+   */
+  DavePrepareEpoch = 24,
+
+  /**
+   * DAVE MLS External Sender Package.
+   *
+   * **Direction:** Server → Client (Binary)
+   * **Purpose:** Provides credential and public key for MLS external sender.
+   * **DAVE:** Required for MLS group creation and validation.
+   */
+  DaveMlsExternalSender = 25,
+
+  /**
+   * DAVE MLS Key Package.
+   *
+   * **Direction:** Client → Server (Binary)
+   * **Purpose:** Sends MLS Key Package for pending group member.
+   * **DAVE:** Required to be added to an MLS group.
+   */
+  DaveMlsKeyPackage = 26,
+
+  /**
+   * DAVE MLS Proposals.
+   *
+   * **Direction:** Server → Client (Binary)
+   * **Purpose:** Sends MLS Proposals to be appended or revoked.
+   * **DAVE:** Part of the MLS group management process.
+   */
+  DaveMlsProposals = 27,
+
+  /**
+   * DAVE MLS Commit Welcome.
+   *
+   * **Direction:** Client → Server (Binary)
+   * **Purpose:** Sends MLS Commit with optional MLS Welcome messages.
+   * **DAVE:** Commits pending proposals to advance MLS group epoch.
+   */
+  DaveMlsCommitWelcome = 28,
+
+  /**
+   * DAVE MLS Announce Commit Transition.
+   *
+   * **Direction:** Server → Client
+   * **Purpose:** Announces MLS Commit to be processed for upcoming transition.
+   * **DAVE:** Indicates the winning commit for MLS group transition.
+   */
+  DaveMlsAnnounceCommitTransition = 29,
+
+  /**
+   * DAVE MLS Welcome.
+   *
+   * **Direction:** Server → Client (Binary)
+   * **Purpose:** Sends MLS Welcome to group for upcoming transition.
+   * **DAVE:** Welcomes new members to the MLS group.
+   */
+  DaveMlsWelcome = 30,
+
+  /**
+   * DAVE MLS Invalid Commit Welcome.
+   *
+   * **Direction:** Client → Server
+   * **Purpose:** Flag invalid commit or welcome, request re-add.
+   * **DAVE:** Indicates unprocessable MLS commit or welcome message.
+   */
+  DaveMlsInvalidCommitWelcome = 31,
 }
 
 /**
@@ -331,7 +439,7 @@ export enum VoiceEncryptionMode {
    * **Compatibility:** Better support for RTP extensions and CSRC
    * **Nonce:** 32-bit incremental value appended to payload
    */
-  Aes256GcmRtpSize = "aes256_gcm_rtpsize",
+  Aes256GcmRtpSize = "aead_aes256_gcm_rtpsize",
 
   /**
    * XChaCha20 Poly1305 encryption with RTP extension (Required)
@@ -353,7 +461,7 @@ export enum VoiceEncryptionMode {
    *
    * @deprecated Not recommended for new implementations, use Aes256GcmRtpSize or XChaCha20Poly1305RtpSize instead
    */
-  Aes256Gcm = "aes256_gcm",
+  Aes256Gcm = "aead_aes256_gcm",
 
   /**
    * XSalsa20 Poly1305 encryption (Deprecated)
@@ -780,6 +888,14 @@ export interface VoiceSessionDescriptionEntity {
    * This key is used with the selected encryption mode for all voice packets.
    */
   secret_key: number[];
+
+  /**
+   * DAVE protocol version for this session
+   *
+   * The E2EE protocol version negotiated for this voice session.
+   * May be lower than the client's maximum supported version.
+   */
+  dave_protocol_version?: DaveProtocolVersion;
 }
 
 /**
@@ -988,6 +1104,66 @@ export interface VoiceReceivePayloads {
    * Indicates the voice connection has been restored without re-identification.
    */
   [VoiceGatewayOpcode.Resumed]: null;
+
+  /**
+   * Notification of clients connecting to the voice channel.
+   * Contains information about newly connected users.
+   */
+  [VoiceGatewayOpcode.ClientsConnect]: VoiceClientsConnectEntity;
+
+  /**
+   * Voice server version information.
+   * Provides compatibility information for the voice server.
+   */
+  [VoiceGatewayOpcode.CodeVersion]: { version: string };
+
+  /**
+   * Notification of a client disconnecting from the voice channel.
+   * Contains information about the disconnected user.
+   */
+  [VoiceGatewayOpcode.ClientDisconnect]: VoiceClientDisconnectEntity;
+
+  /**
+   * DAVE protocol transition preparation announcement.
+   * Announces an upcoming downgrade from E2EE protocol.
+   */
+  [VoiceGatewayOpcode.DavePrepareTransition]: DavePrepareTransitionEntity;
+
+  /**
+   * DAVE protocol transition execution confirmation.
+   * Confirms that a protocol transition should be applied.
+   */
+  [VoiceGatewayOpcode.DaveExecuteTransition]: DaveExecuteTransitionEntity;
+
+  /**
+   * DAVE protocol epoch preparation announcement.
+   * Announces a protocol version change or MLS group transition.
+   */
+  [VoiceGatewayOpcode.DavePrepareEpoch]: DavePrepareEpochEntity;
+
+  /**
+   * DAVE MLS external sender package (binary).
+   * Contains credential and public key for MLS external sender.
+   */
+  [VoiceGatewayOpcode.DaveMlsExternalSender]: DaveMlsExternalSenderEntity;
+
+  /**
+   * DAVE MLS proposals (binary).
+   * Contains MLS proposals to be appended or revoked.
+   */
+  [VoiceGatewayOpcode.DaveMlsProposals]: DaveMlsProposalsEntity;
+
+  /**
+   * DAVE MLS announce commit transition.
+   * Announces the winning MLS commit for a transition.
+   */
+  [VoiceGatewayOpcode.DaveMlsAnnounceCommitTransition]: DaveMlsAnnounceCommitTransitionEntity;
+
+  /**
+   * DAVE MLS welcome message (binary).
+   * Contains MLS welcome message for group transition.
+   */
+  [VoiceGatewayOpcode.DaveMlsWelcome]: DaveMlsWelcomeEntity;
 }
 
 /**
@@ -1032,4 +1208,287 @@ export interface VoiceSendPayloads {
    * Used instead of Identify when reconnecting to an existing session.
    */
   [VoiceGatewayOpcode.Resume]: VoiceResumeEntity;
+
+  /**
+   * Request video streams from specific users.
+   * Enables selective video reception for performance optimization.
+   */
+  [VoiceGatewayOpcode.VideoSinkWants]: { ssrcs: number[] };
+
+  /**
+   * DAVE protocol transition readiness acknowledgment.
+   * Indicates client has prepared for a protocol transition.
+   */
+  [VoiceGatewayOpcode.DaveTransitionReady]: DaveTransitionReadyEntity;
+
+  /**
+   * DAVE MLS key package (binary).
+   * Sends MLS key package for pending group member.
+   */
+  [VoiceGatewayOpcode.DaveMlsKeyPackage]: DaveMlsKeyPackageEntity;
+
+  /**
+   * DAVE MLS commit welcome (binary).
+   * Sends MLS commit with optional welcome messages.
+   */
+  [VoiceGatewayOpcode.DaveMlsCommitWelcome]: DaveMlsCommitWelcomeEntity;
+
+  /**
+   * DAVE MLS invalid commit/welcome notification.
+   * Flags invalid MLS commit or welcome, requests re-add.
+   */
+  [VoiceGatewayOpcode.DaveMlsInvalidCommitWelcome]: DaveMlsInvalidCommitWelcomeEntity;
+}
+
+/**
+ * Voice Clients Connect Data
+ *
+ * Payload data for clients connect notification.
+ * Contains information about users who have joined the voice channel.
+ */
+export interface VoiceClientsConnectEntity {
+  /**
+   * Array of user IDs that connected
+   *
+   * List of user IDs for clients that have joined the voice channel.
+   */
+  user_ids: string[];
+}
+
+/**
+ * Voice Client Disconnect Data
+ *
+ * Payload data for client disconnect notification.
+ * Contains information about a user who has left the voice channel.
+ */
+export interface VoiceClientDisconnectEntity {
+  /**
+   * User ID that disconnected
+   *
+   * The ID of the user who has left the voice channel.
+   */
+  user_id: string;
+}
+
+/**
+ * DAVE Protocol Prepare Transition Data
+ *
+ * Payload data for DAVE protocol transition preparation.
+ * Announces an upcoming downgrade from E2EE protocol.
+ */
+export interface DavePrepareTransitionEntity {
+  /**
+   * Unique identifier for this transition
+   *
+   * Used to coordinate the transition across all participants.
+   */
+  transition_id: string;
+
+  /**
+   * Target protocol version (typically 0 for downgrades)
+   *
+   * The DAVE protocol version to transition to.
+   */
+  dave_protocol_version: DaveProtocolVersion;
+}
+
+/**
+ * DAVE Protocol Execute Transition Data
+ *
+ * Payload data for executing a previously announced protocol transition.
+ * Confirms that the protocol transition should be applied immediately.
+ */
+export interface DaveExecuteTransitionEntity {
+  /**
+   * Transition identifier matching the prepare transition
+   *
+   * Must match the transition_id from the corresponding prepare transition.
+   */
+  transition_id: string;
+}
+
+/**
+ * DAVE Protocol Transition Ready Data
+ *
+ * Payload data for indicating readiness for a protocol transition.
+ * Sent by clients to acknowledge they are prepared for the transition.
+ */
+export interface DaveTransitionReadyEntity {
+  /**
+   * Transition identifier
+   *
+   * Must match the transition_id from the corresponding prepare transition.
+   */
+  transition_id: string;
+}
+
+/**
+ * DAVE Protocol Prepare Epoch Data
+ *
+ * Payload data for DAVE protocol epoch preparation.
+ * Announces a protocol version change or MLS group transition.
+ */
+export interface DavePrepareEpochEntity {
+  /**
+   * Unique identifier for this transition
+   *
+   * Used to coordinate the epoch transition across all participants.
+   */
+  transition_id: string;
+
+  /**
+   * MLS epoch identifier
+   *
+   * The epoch ID for the upcoming MLS group state.
+   * Value of 1 indicates a new MLS group is being created.
+   */
+  epoch_id: number;
+
+  /**
+   * DAVE protocol version for the new epoch
+   *
+   * The protocol version that will be used after the transition.
+   */
+  dave_protocol_version: DaveProtocolVersion;
+}
+
+/**
+ * DAVE MLS External Sender Package Data
+ *
+ * Binary payload containing external sender credentials for MLS group.
+ * This is a binary opcode with variable-length payload format.
+ */
+export interface DaveMlsExternalSenderEntity {
+  /**
+   * Binary MLS external sender package
+   *
+   * Contains the credential and public key for the MLS external sender.
+   * Format is defined by the DAVE protocol specification.
+   */
+  external_sender_package: Uint8Array;
+}
+
+/**
+ * DAVE MLS Key Package Data
+ *
+ * Binary payload containing an MLS key package for pending group member.
+ * This is a binary opcode with variable-length payload format.
+ */
+export interface DaveMlsKeyPackageEntity {
+  /**
+   * Binary MLS key package
+   *
+   * MLS key package for a pending group member.
+   * Format is defined by the MLS specification.
+   */
+  key_package: Uint8Array;
+}
+
+/**
+ * DAVE MLS Proposals Data
+ *
+ * Binary payload containing MLS proposals to be processed.
+ * This is a binary opcode with variable-length payload format.
+ */
+export interface DaveMlsProposalsEntity {
+  /**
+   * Binary MLS proposals
+   *
+   * MLS proposals that must be appended or revoked.
+   * Format is defined by the MLS specification.
+   */
+  proposals: Uint8Array;
+}
+
+/**
+ * DAVE MLS Commit Welcome Data
+ *
+ * Binary payload containing MLS commit and optional welcome messages.
+ * This is a binary opcode with variable-length payload format.
+ */
+export interface DaveMlsCommitWelcomeEntity {
+  /**
+   * Binary MLS commit message
+   *
+   * MLS commit message committing pending proposals.
+   * Format is defined by the MLS specification.
+   */
+  commit: Uint8Array;
+
+  /**
+   * Optional binary MLS welcome messages
+   *
+   * MLS welcome messages for new group members (if any).
+   * Only present when the commit adds new members to the group.
+   */
+  welcome?: Uint8Array;
+}
+
+/**
+ * DAVE MLS Announce Commit Transition Data
+ *
+ * Payload announcing the winning MLS commit for a transition.
+ * Contains the commit and transition information.
+ */
+export interface DaveMlsAnnounceCommitTransitionEntity {
+  /**
+   * Transition identifier
+   *
+   * Must match the transition_id from the corresponding prepare epoch.
+   */
+  transition_id: string;
+
+  /**
+   * Binary MLS commit message
+   *
+   * The winning MLS commit to be processed for the transition.
+   * Format is defined by the MLS specification.
+   */
+  commit: Uint8Array;
+}
+
+/**
+ * DAVE MLS Welcome Data
+ *
+ * Binary payload containing MLS welcome message for group transition.
+ * This is a binary opcode with variable-length payload format.
+ */
+export interface DaveMlsWelcomeEntity {
+  /**
+   * Transition identifier
+   *
+   * Must match the transition_id from the corresponding announce commit.
+   */
+  transition_id: string;
+
+  /**
+   * Binary MLS welcome message
+   *
+   * MLS welcome message for joining the group.
+   * Format is defined by the MLS specification.
+   */
+  welcome: Uint8Array;
+}
+
+/**
+ * DAVE MLS Invalid Commit Welcome Data
+ *
+ * Payload for flagging invalid MLS commit or welcome messages.
+ * Requests removal and re-addition to the MLS group.
+ */
+export interface DaveMlsInvalidCommitWelcomeEntity {
+  /**
+   * Transition identifier (if applicable)
+   *
+   * The transition_id of the invalid commit or welcome.
+   * May be omitted if not related to a specific transition.
+   */
+  transition_id?: string;
+
+  /**
+   * Reason for invalidity
+   *
+   * Human-readable description of why the commit or welcome was invalid.
+   */
+  reason?: string;
 }

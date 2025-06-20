@@ -502,7 +502,14 @@ export class AudioService {
 
     if (!this.#encoder) {
       throw new Error(
-        "Encoder not available. Cannot adjust bitrate without an active encoder.",
+        "Encoder not available. Initialize the service with encoder: true to enable bitrate adjustment.",
+      );
+    }
+
+    // Validate bitrate range
+    if (!Number.isInteger(bitrate) || bitrate < 500 || bitrate > 512000) {
+      throw new Error(
+        `Invalid bitrate: ${bitrate}. Must be between 500 and 512000 bits per second.`,
       );
     }
 
@@ -637,5 +644,35 @@ export class AudioService {
 
     // Create new decoder
     this.#decoder = new OpusDecoder(this.#options.decoderOptions);
+  }
+
+  /**
+   * Generates Opus silence frame for voice data interpolation.
+   *
+   * According to Discord's specification: "When there's a break in the sent data,
+   * the packet transmission shouldn't simply stop. Instead, send five frames of
+   * silence (0xF8, 0xFF, 0xFE) before stopping to avoid unintended Opus
+   * interpolation with subsequent transmissions."
+   *
+   * This method generates the standard Discord silence frame that can be sent
+   * to maintain proper audio timing and prevent audio artifacts.
+   *
+   * @returns Discord-compatible Opus silence frame
+   */
+  generateSilenceFrame(): Uint8Array {
+    return new Uint8Array([0xf8, 0xff, 0xfe]);
+  }
+
+  /**
+   * Generates silent PCM audio data.
+   *
+   * Creates a buffer of silent PCM audio data that matches Discord Voice Gateway
+   * requirements. This can be used for generating silence periods or as input
+   * for encoding silence frames.
+   *
+   * @returns Silent PCM audio data (1920 samples, 16-bit signed integers)
+   */
+  generateSilentPCM(): Buffer {
+    return Buffer.alloc(TOTAL_SAMPLES_PER_FRAME * 2, 0); // 2 bytes per 16-bit sample
   }
 }

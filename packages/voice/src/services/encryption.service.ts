@@ -78,16 +78,6 @@ export class EncryptionService {
   mode: VoiceEncryptionMode | null = null;
 
   /**
-   * Gets the current nonce value.
-   *
-   * The nonce is automatically incremented with each encryption operation
-   * to ensure unique encryption contexts for each packet.
-   *
-   * @returns The current nonce value, or null if not initialized
-   */
-  #nonce = 0;
-
-  /**
    * The encryption context containing mode, secret key, and nonce.
    *
    * This context is initialized during the `initialize` method
@@ -154,10 +144,11 @@ export class EncryptionService {
    * 5. Returns encrypted result
    *
    * @param packet - Complete voice packet (RTP header + audio data)
+   * @param nonce - The nonce value for this encryption (should be a 32-bit unsigned integer)
    * @returns Encrypted packet with audio data and nonce information
    * @throws {Error} If not initialized, packet is invalid, or encryption fails
    */
-  encrypt(packet: Uint8Array): EncryptedPacket {
+  encrypt(packet: Uint8Array, nonce: number): EncryptedPacket {
     // Ensure service is initialized
     if (!this.isInitialized) {
       throw new Error(
@@ -173,22 +164,23 @@ export class EncryptionService {
       );
     }
 
+    // Validate nonce
+    if (!Number.isInteger(nonce) || nonce < 0 || nonce > 0xffffffff) {
+      throw new Error(
+        `Invalid nonce: must be a 32-bit unsigned integer (got: ${nonce})`,
+      );
+    }
+
     try {
-      // Extract the audio data (everything after RTP header)
+      // Extract audio data from the complete RTP packet (skip the 12-byte RTP header)
       const audioData = packet.subarray(RTP_HEADER_SIZE);
 
-      // Get the current nonce for this encryption
-      const currentNonce = this.#nonce;
-
-      // Encrypt the audio data
-      const encryptedAudio = this.#encryptAudio(audioData, currentNonce);
-
-      // Increment nonce for next packet (with overflow handling)
-      this.#nonce = (this.#nonce + 1) >>> 0; // Unsigned 32-bit increment
+      // Encrypt only the audio data
+      const encryptedAudio = this.#encryptAudio(audioData, nonce);
 
       return {
         encryptedAudio,
-        nonce: currentNonce,
+        nonce,
       };
     } catch (error) {
       throw new Error(`Failed to encrypt voice packet with ${this.mode}`, {
@@ -250,17 +242,6 @@ export class EncryptionService {
   }
 
   /**
-   * Resets the nonce counter to zero.
-   *
-   * This method should be used when starting a new voice session or
-   * when recovering from a connection interruption to ensure proper
-   * packet ordering and security.
-   */
-  resetNonce(): void {
-    this.#nonce = 0;
-  }
-
-  /**
    * Cleans up resources used by the encryption service.
    *
    * This method securely clears the secret key from memory and resets
@@ -271,7 +252,6 @@ export class EncryptionService {
     // Securely clear the secret key
     this.#secretKey?.fill(0);
     this.mode = null;
-    this.#nonce = 0;
   }
 
   /**
@@ -288,26 +268,35 @@ export class EncryptionService {
       throw new Error("Encryption context not available");
     }
 
-    // Create nonce buffer (4 bytes for incremental modes)
-    const nonceBuffer = new Uint8Array(12); // Standard nonce size for AEAD
-    const nonceView = new DataView(nonceBuffer.buffer);
-    nonceView.setUint32(8, nonce, false); // Big-endian, last 4 bytes
-
     switch (this.mode) {
-      case "aes256_gcm_rtpsize": {
+      case "aead_aes256_gcm_rtpsize": {
+        // Discord spec says nonce is just 32-bit incremental integer
+        // NOT combined with RTP header size!
+        const nonceBuffer = new Uint8Array(12);
+        const nonceView = new DataView(nonceBuffer.buffer);
+
+        // Only use the sequence number as nonce (Discord spec)
+        nonceView.setUint32(8, nonce, false); // Big endian, last 4 bytes
         const cipher = gcm(this.#secretKey as Uint8Array, nonceBuffer);
-        return cipher.encrypt(audioData);
+        const encrypted = cipher.encrypt(audioData);
+
+        return encrypted;
       }
 
       case "aead_xchacha20_poly1305_rtpsize": {
-        // XChaCha20 uses 24-byte nonces, extend our 12-byte nonce
+        // Discord spec says nonce is just 32-bit incremental integer
         const extendedNonce = new Uint8Array(24);
-        extendedNonce.set(nonceBuffer);
+        const nonceView = new DataView(extendedNonce.buffer);
+
+        // Only use the sequence number as nonce (Discord spec)
+        nonceView.setUint32(20, nonce, false); // Big endian, last 4 bytes
         const cipher = xchacha20poly1305(
           this.#secretKey as Uint8Array,
           extendedNonce,
         );
-        return cipher.encrypt(audioData);
+        const encrypted = cipher.encrypt(audioData);
+
+        return encrypted;
       }
 
       default:
@@ -335,7 +324,7 @@ export class EncryptionService {
     nonceView.setUint32(8, nonce, false); // Big-endian, last 4 bytes
 
     switch (this.mode) {
-      case "aes256_gcm_rtpsize": {
+      case "aead_aes256_gcm_rtpsize": {
         const cipher = gcm(this.#secretKey as Uint8Array, nonceBuffer);
         return cipher.decrypt(encryptedData);
       }

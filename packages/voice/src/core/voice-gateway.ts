@@ -14,8 +14,21 @@ import {
   IpDiscoveryService,
 } from "../services/index.js";
 import {
+  type DaveExecuteTransitionEntity,
+  type DaveMlsAnnounceCommitTransitionEntity,
+  type DaveMlsCommitWelcomeEntity,
+  type DaveMlsExternalSenderEntity,
+  type DaveMlsInvalidCommitWelcomeEntity,
+  type DaveMlsKeyPackageEntity,
+  type DaveMlsProposalsEntity,
+  type DaveMlsWelcomeEntity,
+  type DavePrepareEpochEntity,
+  type DavePrepareTransitionEntity,
   DaveProtocolVersion,
+  type DaveTransitionReadyEntity,
   SpeakingFlags,
+  type VoiceClientDisconnectEntity,
+  type VoiceClientsConnectEntity,
   VoiceConnectionState,
   VoiceEncryptionMode,
   VoiceGatewayOpcode,
@@ -517,6 +530,53 @@ export interface VoiceGatewayEvents {
 
   /** Emitted for warning messages */
   warn: [message: string, data?: any];
+
+  /** Emitted when clients connect to the voice channel */
+  clientsConnect: [data: VoiceClientsConnectEntity];
+
+  /** Emitted when voice server version is received */
+  codeVersion: [data: { version: string }];
+
+  /** Emitted when a client disconnects from the voice channel */
+  clientDisconnect: [data: VoiceClientDisconnectEntity];
+
+  /** Emitted when DAVE protocol transition is being prepared */
+  davePrepareTransition: [data: DavePrepareTransitionEntity];
+
+  /** Emitted when DAVE protocol transition should be executed */
+  daveExecuteTransition: [data: DaveExecuteTransitionEntity];
+
+  /** Emitted when DAVE protocol epoch is being prepared */
+  davePrepareEpoch: [data: DavePrepareEpochEntity];
+
+  /** Emitted when DAVE MLS external sender package is received */
+  daveMlsExternalSender: [data: DaveMlsExternalSenderEntity];
+
+  /** Emitted when DAVE MLS proposals are received */
+  daveMlsProposals: [data: DaveMlsProposalsEntity];
+
+  /** Emitted when DAVE MLS commit transition is announced */
+  daveMlsAnnounceCommitTransition: [
+    data: DaveMlsAnnounceCommitTransitionEntity,
+  ];
+
+  /** Emitted when DAVE MLS welcome message is received */
+  daveMlsWelcome: [data: DaveMlsWelcomeEntity];
+
+  /** Emitted when DAVE protocol transition ready acknowledgment is sent */
+  daveTransitionReady: [transitionId: string];
+
+  /** Emitted when DAVE MLS key package is sent */
+  daveMlsKeyPackage: [keyPackage: Uint8Array];
+
+  /** Emitted when DAVE MLS commit with welcome messages is sent */
+  daveMlsCommitWelcome: [commit: Uint8Array, welcome?: Uint8Array];
+
+  /** Emitted when DAVE MLS invalid commit/welcome notification is sent */
+  daveMlsInvalidCommitWelcome: [transitionId?: string, reason?: string];
+
+  /** Emitted when video streams are requested */
+  videoSinkWants: [ssrcs: number[]];
 }
 
 /**
@@ -556,6 +616,36 @@ export interface VoiceGatewayEvents {
  * @see {@link https://discord.com/developers/docs/topics/voice-connections}
  */
 export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
+  /**
+   * IP discovery service for NAT traversal.
+   * @internal
+   */
+  readonly ipDiscovery: IpDiscoveryService;
+
+  /**
+   * Encryption service for voice data security.
+   * @internal
+   */
+  readonly encryption: EncryptionService;
+
+  /**
+   * Audio service for Opus encoding/decoding.
+   * @internal
+   */
+  readonly audio: AudioService;
+
+  /**
+   * UDP manager for voice data transmission.
+   * @internal
+   */
+  readonly udp: UdpManager;
+
+  /**
+   * Speaking manager for speaking state management.
+   * @internal
+   */
+  readonly speaking: SpeakingManager;
+
   /**
    * Gateway configuration options.
    * @internal
@@ -653,36 +743,6 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
   #sessionReady = false;
 
   /**
-   * IP discovery service for NAT traversal.
-   * @internal
-   */
-  readonly #ipDiscovery: IpDiscoveryService;
-
-  /**
-   * Encryption service for voice data security.
-   * @internal
-   */
-  readonly #encryption: EncryptionService;
-
-  /**
-   * Audio service for Opus encoding/decoding.
-   * @internal
-   */
-  readonly #audio: AudioService;
-
-  /**
-   * UDP manager for voice data transmission.
-   * @internal
-   */
-  readonly #udp: UdpManager;
-
-  /**
-   * Speaking manager for speaking state management.
-   * @internal
-   */
-  readonly #speaking: SpeakingManager;
-
-  /**
    * Creates a new VoiceGateway instance.
    *
    * Initializes all required services and validates configuration options.
@@ -705,11 +765,11 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
     }
 
     // Initialize services
-    this.#ipDiscovery = new IpDiscoveryService();
-    this.#encryption = new EncryptionService();
-    this.#audio = new AudioService(this.#options.audio);
-    this.#udp = new UdpManager(this.#encryption, this.#options.udp);
-    this.#speaking = new SpeakingManager(this, this.#options.speaking);
+    this.ipDiscovery = new IpDiscoveryService();
+    this.encryption = new EncryptionService();
+    this.audio = new AudioService(this.#options.audio);
+    this.udp = new UdpManager(this.encryption, this.#options.udp);
+    this.speaking = new SpeakingManager(this, this.#options.speaking);
 
     this.#setupErrorHandling();
   }
@@ -769,7 +829,7 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
    * @returns Complete statistics object with connection, performance, and service info
    */
   get stats(): VoiceGatewayStats {
-    const speakingState = this.#speaking.currentState;
+    const speakingState = this.speaking.currentState;
 
     return {
       state: this.#state,
@@ -778,25 +838,25 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
       reconnectAttempts: this.#reconnectAttempts,
       connectedAt: this.#connectedAt,
       udp: {
-        connected: this.#udp.isConnected,
-        packetsSent: 0, // Would need to track this in UdpManager
-        sendFailures: 0, // Would need to track this in UdpManager
-        sequence: this.#udp.currentSequence,
-        timestamp: this.#udp.currentTimestamp,
+        connected: this.udp.isConnected,
+        packetsSent: this.udp.packetsSent,
+        sendFailures: this.udp.sendFailures,
+        sequence: this.udp.currentSequence,
+        timestamp: this.udp.currentTimestamp,
       },
       speaking: {
-        hasInitialSpeaking: this.#speaking.hasInitialSpeaking,
+        hasInitialSpeaking: this.speaking.hasInitialSpeaking,
         currentFlags: speakingState?.speaking ?? SpeakingFlags.None,
-        isSpeaking: this.#speaking.isSpeaking,
+        isSpeaking: this.speaking.isSpeaking,
       },
       audio: {
-        canEncode: this.#audio.canEncode,
-        canDecode: this.#audio.canDecode,
-        codec: this.#audio.codec,
+        canEncode: this.audio.canEncode,
+        canDecode: this.audio.canDecode,
+        codec: this.audio.codec,
       },
       encryption: {
-        mode: this.#encryption.mode,
-        initialized: this.#encryption.isInitialized,
+        mode: this.encryption.mode,
+        initialized: this.encryption.isInitialized,
       },
     };
   }
@@ -902,12 +962,12 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
     }
 
     // Disconnect UDP
-    this.#udp.disconnect();
+    this.udp.disconnect();
 
     // Clean up services
-    this.#audio.destroy();
-    this.#encryption.destroy();
-    this.#speaking.reset();
+    this.audio.destroy();
+    this.encryption.destroy();
+    this.speaking.reset();
 
     // Reset state
     this.#updateState(VoiceConnectionState.Disconnected);
@@ -959,25 +1019,33 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
       throw new Error("Not connected to voice gateway");
     }
 
-    if (!this.#udp.isConnected) {
+    if (!this.udp.isConnected) {
       throw new Error("UDP connection not established");
     }
 
-    // Ensure speaking state is set before transmission
-    this.#speaking.ensureSpeakingBeforeTransmission(this.#ssrc, speakingFlags);
-
     try {
-      // Send voice data via UDP
-      await this.#udp.sendVoiceData(audioData);
+      // Ensure initial speaking state is sent BEFORE first audio packet (Discord requirement)
+      this.speaking.ensureSpeakingBeforeTransmission(this.#ssrc, speakingFlags);
 
-      // Update timestamp for next packet (20ms frame = 960 samples)
-      this.#udp.updateTimestamp(960);
+      // Only update speaking state if it changed (not for every packet)
+      if (
+        !this.speaking.isSpeaking ||
+        this.speaking.currentState?.speaking !== speakingFlags
+      ) {
+        this.speaking.setSpeaking(speakingFlags, this.#ssrc, 0, false);
+      }
+
+      // Send voice data via UDP (will handle RTP + encryption)
+      await this.udp.sendVoiceData(audioData);
+
+      // Update timestamp for next packet
+      // Discord.js uses (48_000 / 100) * 2 channels = 1920 samples per 20ms frame
+      // Previous: 960 samples (mono) → Fixed: 1920 samples (stereo)
+      this.udp.updateTimestamp(1920);
     } catch (error) {
       throw new Error(
         `Failed to send voice data: ${(error as Error).message}`,
-        {
-          cause: error,
-        },
+        { cause: error },
       );
     }
   }
@@ -997,16 +1065,31 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
     pcmData: Buffer | Int16Array,
     speakingFlags: SpeakingFlags = SpeakingFlags.Microphone,
   ): Promise<void> {
-    if (!this.#audio.canEncode) {
+    if (!this.audio.canEncode) {
       throw new Error("Audio encoder not available");
     }
 
     try {
       // Encode PCM to Opus
-      const opusData = this.#audio.encode(pcmData);
+      const opusData = this.audio.encode(pcmData);
 
-      // Send encoded audio
-      await this.sendVoiceData(opusData, speakingFlags);
+      // Ensure initial speaking state is sent BEFORE first audio packet (Discord requirement)
+      this.speaking.ensureSpeakingBeforeTransmission(this.#ssrc, speakingFlags);
+
+      // Only update speaking state if it changed (not for every packet)
+      if (
+        !this.speaking.isSpeaking ||
+        this.speaking.currentState?.speaking !== speakingFlags
+      ) {
+        this.speaking.setSpeaking(speakingFlags, this.#ssrc, 0, false);
+      }
+
+      // Send encoded audio via UDP
+      await this.udp.sendVoiceData(opusData);
+
+      // Update timestamp for next packet
+      // Discord.js uses (48_000 / 100) * 2 channels = 1920 samples per 20ms frame
+      this.udp.updateTimestamp(1920);
     } catch (error) {
       throw new Error(`Failed to send PCM audio: ${(error as Error).message}`, {
         cause: error,
@@ -1031,7 +1114,151 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
       throw new Error("Not connected to voice gateway");
     }
 
-    this.#speaking.setSpeaking(speaking, this.#ssrc, delay, force);
+    this.speaking.setSpeaking(speaking, this.#ssrc, delay, force);
+  }
+
+  /**
+   * Sends silence frames for voice data interpolation.
+   *
+   * According to Discord's specification: "When there's a break in the sent data,
+   * the packet transmission shouldn't simply stop. Instead, send five frames of
+   * silence (0xF8, 0xFF, 0xFE) before stopping to avoid unintended Opus
+   * interpolation with subsequent transmissions."
+   *
+   * This method automatically sends the required silence frames and manages
+   * speaking state appropriately.
+   *
+   * @returns Promise resolving when all silence frames are sent
+   * @throws {Error} If not connected or transmission fails
+   */
+  async sendSilenceFrames(): Promise<void> {
+    if (!this.isConnected) {
+      throw new Error("Not connected to voice gateway");
+    }
+
+    if (!this.udp.isConnected) {
+      throw new Error("UDP connection not established");
+    }
+
+    try {
+      // Send silence frames via UDP
+      await this.udp.sendSilenceFrames();
+
+      // Update speaking state to none after silence
+      this.speaking.setSpeaking(SpeakingFlags.None, this.#ssrc, 0, true);
+    } catch (error) {
+      throw new Error(
+        `Failed to send silence frames: ${(error as Error).message}`,
+        { cause: error },
+      );
+    }
+  }
+
+  /**
+   * Sends DAVE protocol transition ready acknowledgment.
+   *
+   * Indicates that the client has prepared for a protocol transition
+   * and is ready to execute it.
+   *
+   * @param transitionId - The transition identifier from the prepare transition
+   * @throws {Error} If not connected or send fails
+   */
+  sendDaveTransitionReady(transitionId: string): void {
+    if (!this.isConnected) {
+      throw new Error("Not connected to voice gateway");
+    }
+
+    const data: DaveTransitionReadyEntity = {
+      transition_id: transitionId,
+    };
+
+    this.send(VoiceGatewayOpcode.DaveTransitionReady, data);
+  }
+
+  /**
+   * Sends DAVE MLS key package for pending group member.
+   *
+   * Required to be added to an MLS group for E2E encryption.
+   *
+   * @param keyPackage - Binary MLS key package data
+   * @throws {Error} If not connected or send fails
+   */
+  sendDaveMlsKeyPackage(keyPackage: Uint8Array): void {
+    if (!this.isConnected) {
+      throw new Error("Not connected to voice gateway");
+    }
+
+    const data: DaveMlsKeyPackageEntity = {
+      key_package: keyPackage,
+    };
+
+    this.send(VoiceGatewayOpcode.DaveMlsKeyPackage, data);
+  }
+
+  /**
+   * Sends DAVE MLS commit with optional welcome messages.
+   *
+   * Commits pending proposals to advance the MLS group epoch.
+   *
+   * @param commit - Binary MLS commit message
+   * @param welcome - Optional binary MLS welcome messages for new members
+   * @throws {Error} If not connected or send fails
+   */
+  sendDaveMlsCommitWelcome(commit: Uint8Array, welcome?: Uint8Array): void {
+    if (!this.isConnected) {
+      throw new Error("Not connected to voice gateway");
+    }
+
+    const data: DaveMlsCommitWelcomeEntity = {
+      commit,
+      welcome,
+    };
+
+    this.send(VoiceGatewayOpcode.DaveMlsCommitWelcome, data);
+  }
+
+  /**
+   * Sends DAVE MLS invalid commit/welcome notification.
+   *
+   * Flags an invalid MLS commit or welcome message and requests re-addition
+   * to the MLS group.
+   *
+   * @param transitionId - Optional transition identifier if related to a specific transition
+   * @param reason - Optional reason for the invalidity
+   * @throws {Error} If not connected or send fails
+   */
+  sendDaveMlsInvalidCommitWelcome(
+    transitionId?: string,
+    reason?: string,
+  ): void {
+    if (!this.isConnected) {
+      throw new Error("Not connected to voice gateway");
+    }
+
+    const data: DaveMlsInvalidCommitWelcomeEntity = {
+      transition_id: transitionId,
+      reason,
+    };
+
+    this.send(VoiceGatewayOpcode.DaveMlsInvalidCommitWelcome, data);
+  }
+
+  /**
+   * Requests video streams from specific users.
+   *
+   * Enables selective video reception for performance optimization.
+   *
+   * @param ssrcs - Array of SSRCs to request video streams from
+   * @throws {Error} If not connected or send fails
+   */
+  sendVideoSinkWants(ssrcs: number[]): void {
+    if (!this.isConnected) {
+      throw new Error("Not connected to voice gateway");
+    }
+
+    const data = { ssrcs };
+
+    this.send(VoiceGatewayOpcode.VideoSinkWants, data);
   }
 
   /**
@@ -1266,6 +1493,54 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
         this.#handleResumed();
         break;
 
+      case VoiceGatewayOpcode.ClientsConnect:
+        this.#handleClientsConnect(payload.d as VoiceClientsConnectEntity);
+        break;
+
+      case VoiceGatewayOpcode.CodeVersion:
+        this.#handleCodeVersion(payload.d as { version: string });
+        break;
+
+      case VoiceGatewayOpcode.ClientDisconnect:
+        this.#handleClientDisconnect(payload.d as VoiceClientDisconnectEntity);
+        break;
+
+      case VoiceGatewayOpcode.DavePrepareTransition:
+        this.#handleDavePrepareTransition(
+          payload.d as DavePrepareTransitionEntity,
+        );
+        break;
+
+      case VoiceGatewayOpcode.DaveExecuteTransition:
+        this.#handleDaveExecuteTransition(
+          payload.d as DaveExecuteTransitionEntity,
+        );
+        break;
+
+      case VoiceGatewayOpcode.DavePrepareEpoch:
+        this.#handleDavePrepareEpoch(payload.d as DavePrepareEpochEntity);
+        break;
+
+      case VoiceGatewayOpcode.DaveMlsExternalSender:
+        this.#handleDaveMlsExternalSender(
+          payload.d as DaveMlsExternalSenderEntity,
+        );
+        break;
+
+      case VoiceGatewayOpcode.DaveMlsProposals:
+        this.#handleDaveMlsProposals(payload.d as DaveMlsProposalsEntity);
+        break;
+
+      case VoiceGatewayOpcode.DaveMlsAnnounceCommitTransition:
+        this.#handleDaveMlsAnnounceCommitTransition(
+          payload.d as DaveMlsAnnounceCommitTransitionEntity,
+        );
+        break;
+
+      case VoiceGatewayOpcode.DaveMlsWelcome:
+        this.#handleDaveMlsWelcome(payload.d as DaveMlsWelcomeEntity);
+        break;
+
       default:
         this.#debug("Unhandled voice gateway opcode", {
           op: payload.op,
@@ -1335,10 +1610,10 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
 
     try {
       // Initialize encryption with session key
-      this.#encryption.initialize(data.mode, data.secret_key);
+      this.encryption.initialize(data.mode, data.secret_key);
 
       // Initialize audio service
-      this.#audio.initialize({ encoder: true, decoder: true });
+      this.audio.initialize({ encoder: true, decoder: true });
 
       // Mark session as ready
       this.#sessionReady = true;
@@ -1392,6 +1667,126 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
   }
 
   /**
+   * Handles Clients Connect payload.
+   *
+   * @param data - Clients connect payload data
+   * @internal
+   */
+  #handleClientsConnect(data: VoiceClientsConnectEntity): void {
+    this.#debug("Clients connected to voice channel", data);
+    this.emit("clientsConnect", data);
+  }
+
+  /**
+   * Handles Code Version payload.
+   *
+   * @param data - Code version payload data
+   * @internal
+   */
+  #handleCodeVersion(data: { version: string }): void {
+    this.#debug("Received voice server version", data);
+    this.emit("codeVersion", data);
+  }
+
+  /**
+   * Handles Client Disconnect payload.
+   *
+   * @param data - Client disconnect payload data
+   * @internal
+   */
+  #handleClientDisconnect(data: VoiceClientDisconnectEntity): void {
+    this.#debug("Client disconnected from voice channel", data);
+    this.emit("clientDisconnect", data);
+  }
+
+  /**
+   * Handles DAVE Protocol Prepare Transition payload.
+   *
+   * @param data - DAVE prepare transition payload data
+   * @internal
+   */
+  #handleDavePrepareTransition(data: DavePrepareTransitionEntity): void {
+    this.#debug("DAVE protocol prepare transition", data);
+    this.emit("davePrepareTransition", data);
+  }
+
+  /**
+   * Handles DAVE Protocol Execute Transition payload.
+   *
+   * @param data - DAVE execute transition payload data
+   * @internal
+   */
+  #handleDaveExecuteTransition(data: DaveExecuteTransitionEntity): void {
+    this.#debug("DAVE protocol execute transition", data);
+    this.emit("daveExecuteTransition", data);
+  }
+
+  /**
+   * Handles DAVE Protocol Prepare Epoch payload.
+   *
+   * @param data - DAVE prepare epoch payload data
+   * @internal
+   */
+  #handleDavePrepareEpoch(data: DavePrepareEpochEntity): void {
+    this.#debug("DAVE protocol prepare epoch", data);
+    this.emit("davePrepareEpoch", data);
+  }
+
+  /**
+   * Handles DAVE MLS External Sender payload.
+   *
+   * @param data - DAVE MLS external sender payload data
+   * @internal
+   */
+  #handleDaveMlsExternalSender(data: DaveMlsExternalSenderEntity): void {
+    this.#debug("DAVE MLS external sender", {
+      packageSize: data.external_sender_package.length,
+    });
+    this.emit("daveMlsExternalSender", data);
+  }
+
+  /**
+   * Handles DAVE MLS Proposals payload.
+   *
+   * @param data - DAVE MLS proposals payload data
+   * @internal
+   */
+  #handleDaveMlsProposals(data: DaveMlsProposalsEntity): void {
+    this.#debug("DAVE MLS proposals", { proposalsSize: data.proposals.length });
+    this.emit("daveMlsProposals", data);
+  }
+
+  /**
+   * Handles DAVE MLS Announce Commit Transition payload.
+   *
+   * @param data - DAVE MLS announce commit transition payload data
+   * @internal
+   */
+  #handleDaveMlsAnnounceCommitTransition(
+    data: DaveMlsAnnounceCommitTransitionEntity,
+  ): void {
+    this.#debug("DAVE MLS announce commit transition", {
+      transitionId: data.transition_id,
+      commitSize: data.commit.length,
+    });
+    this.emit("daveMlsAnnounceCommitTransition", data);
+  }
+
+  /**
+   * Handles DAVE MLS Welcome payload.
+   *
+   * @param data - DAVE MLS welcome payload data
+   * @internal
+   */
+  #handleDaveMlsWelcome(data: DaveMlsWelcomeEntity): void {
+    this.#debug("DAVE MLS welcome", {
+      transitionId: data.transition_id,
+      welcomeSize: data.welcome.length,
+    });
+    this.emit("daveMlsWelcome", data);
+  }
+
+  /**
    * Sends Identify payload to authenticate.
    *
    * @internal
@@ -1435,7 +1830,7 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
     }
 
     // Perform IP discovery
-    const discoveryResult = await this.#ipDiscovery.discover(
+    const discoveryResult = await this.ipDiscovery.discover(
       this.#serverInfo.ip,
       this.#serverInfo.port,
       this.#ssrc,
@@ -1444,7 +1839,7 @@ export class VoiceGateway extends EventEmitter<VoiceGatewayEvents> {
     this.#debug("IP discovery completed", discoveryResult);
 
     // Connect UDP manager
-    await this.#udp.connect(
+    await this.udp.connect(
       this.#serverInfo.ip,
       this.#serverInfo.port,
       this.#ssrc,

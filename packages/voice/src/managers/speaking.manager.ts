@@ -73,7 +73,7 @@ export const SpeakingManagerOptions = z.object({
    *
    * @default true
    */
-  autoUpdate: z.boolean().default(false),
+  autoUpdate: z.boolean().default(true),
 
   /**
    * Minimum interval between speaking updates in milliseconds.
@@ -489,6 +489,12 @@ export class SpeakingManager {
     ssrc: number,
     delay: number,
   ): boolean {
+    // NEVER throttle if initial speaking hasn't been sent yet
+    // Discord requires this for proper voice transmission
+    if (!this.#initialSpeakingSent) {
+      return false;
+    }
+
     // Don't throttle if no previous state
     if (!this.#state) {
       return false;

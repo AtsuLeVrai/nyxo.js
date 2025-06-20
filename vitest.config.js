@@ -1,9 +1,7 @@
 import { cpus } from "node:os";
-import codspeedPlugin from "@codspeed/vitest-plugin";
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [codspeedPlugin()],
   test: {
     projects: ["packages/*"],
     environment: "node",
@@ -15,6 +13,14 @@ export default defineConfig({
       "**/dist/**",
       "**/.turbo/**",
       "**/.next/**",
+      "**/apps/**",
+      "**/build/**",
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/*.d.ts",
+      "**/libs/**",
+      "**/docs/discord-api-docs/**",
+      "**/.turbo/**",
     ],
     testTimeout: 10000,
     hookTimeout: 15000,
@@ -39,9 +45,15 @@ export default defineConfig({
         "**/*.test.{js,ts}",
         "**/*.spec.{js,ts}",
         "**/node_modules/**",
+        "**/build/**",
         "**/dist/**",
+        "**/node_modules/**",
+        "**/*.d.ts",
+        "**/libs/**",
+        "**/docs/discord-api-docs/**",
         "**/.turbo/**",
         "**/.next/**",
+        "**/apps/**",
       ],
       all: true,
       thresholds: {

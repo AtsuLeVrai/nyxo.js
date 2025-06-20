@@ -48,6 +48,39 @@ export interface UdpConnectionInfo {
 }
 
 /**
+ * Voice connection statistics and metrics.
+ */
+export interface UdpConnectionStats {
+  /** Current connection state */
+  connected: boolean;
+  /** Packets sent successfully */
+  packetsSent: number;
+  /** Send failures encountered */
+  sendFailures: number;
+  /** Current sequence number */
+  sequence: number;
+  /** Current timestamp */
+  timestamp: number;
+  /** Silence frames sent for interpolation */
+  silenceFramesSent: number;
+}
+
+/**
+ * Discord silence frame for voice data interpolation.
+ *
+ * According to Discord documentation: "When there's a break in the sent data,
+ * the packet transmission shouldn't simply stop. Instead, send five frames of
+ * silence (0xF8, 0xFF, 0xFE) before stopping to avoid unintended Opus
+ * interpolation with subsequent transmissions."
+ */
+const DISCORD_SILENCE_FRAME = new Uint8Array([0xf8, 0xff, 0xfe]);
+
+/**
+ * Number of silence frames to send for proper voice data interpolation.
+ */
+const SILENCE_FRAME_COUNT = 5;
+
+/**
  * Zod schema for validating UDP manager configuration options.
  *
  * This schema ensures that all UDP connection and transmission parameters
@@ -303,6 +336,24 @@ export class UdpManager {
   #consecutiveFailures = 0;
 
   /**
+   * Total number of packets sent successfully.
+   * @internal
+   */
+  #packetsSent = 0;
+
+  /**
+   * Total number of send failures.
+   * @internal
+   */
+  #sendFailures = 0;
+
+  /**
+   * Total number of silence frames sent for interpolation.
+   * @internal
+   */
+  #silenceFramesSent = 0;
+
+  /**
    * Whether the UDP connection is currently active.
    * @internal
    */
@@ -362,6 +413,49 @@ export class UdpManager {
    */
   get ssrc(): number {
     return this.#ssrc;
+  }
+
+  /**
+   * Gets the total number of packets sent successfully.
+   *
+   * @returns Number of packets sent
+   */
+  get packetsSent(): number {
+    return this.#packetsSent;
+  }
+
+  /**
+   * Gets the total number of send failures.
+   *
+   * @returns Number of send failures
+   */
+  get sendFailures(): number {
+    return this.#sendFailures;
+  }
+
+  /**
+   * Gets the total number of silence frames sent.
+   *
+   * @returns Number of silence frames sent for interpolation
+   */
+  get silenceFramesSent(): number {
+    return this.#silenceFramesSent;
+  }
+
+  /**
+   * Gets comprehensive UDP connection statistics.
+   *
+   * @returns Complete statistics object with connection and performance info
+   */
+  get stats(): UdpConnectionStats {
+    return {
+      connected: this.#connected,
+      packetsSent: this.#packetsSent,
+      sendFailures: this.#sendFailures,
+      sequence: this.#sequence,
+      timestamp: this.#timestamp,
+      silenceFramesSent: this.#silenceFramesSent,
+    };
   }
 
   /**
@@ -480,10 +574,14 @@ export class UdpManager {
       // Increment sequence number (16-bit wraparound)
       this.#sequence = (this.#sequence + 1) & 0xffff;
 
+      // Increment packets sent counter
+      this.#packetsSent++;
+
       // Reset consecutive failure counter on success
       this.#consecutiveFailures = 0;
     } catch (error) {
       this.#consecutiveFailures++;
+      this.#sendFailures++;
 
       // Attempt automatic recovery if enabled
       if (this.#options.autoRecovery && this.#shouldAttemptRecovery()) {
@@ -544,6 +642,9 @@ export class UdpManager {
     this.#timestamp = 0;
     this.#ssrc = 0;
     this.#consecutiveFailures = 0;
+    this.#packetsSent = 0;
+    this.#sendFailures = 0;
+    this.#silenceFramesSent = 0;
   }
 
   /**
@@ -576,6 +677,39 @@ export class UdpManager {
     this.#sequence = 0;
     this.#timestamp = 0;
     this.#consecutiveFailures = 0;
+    this.#packetsSent = 0;
+    this.#sendFailures = 0;
+    this.#silenceFramesSent = 0;
+  }
+
+  /**
+   * Sends silence frames for voice data interpolation.
+   *
+   * According to Discord's specification: "When there's a break in the sent data,
+   * the packet transmission shouldn't simply stop. Instead, send five frames of
+   * silence (0xF8, 0xFF, 0xFE) before stopping to avoid unintended Opus
+   * interpolation with subsequent transmissions."
+   *
+   * This method sends the required number of silence frames to maintain proper
+   * audio timing and prevent audio artifacts when stopping voice transmission.
+   *
+   * @returns Promise resolving when all silence frames are sent
+   * @throws {Error} If not connected or transmission fails
+   */
+  async sendSilenceFrames(): Promise<void> {
+    this.#ensureConnected();
+
+    try {
+      for (let i = 0; i < SILENCE_FRAME_COUNT; i++) {
+        await this.sendVoiceData(DISCORD_SILENCE_FRAME);
+        this.#silenceFramesSent++;
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to send silence frames: ${(error as Error).message}`,
+        { cause: error },
+      );
+    }
   }
 
   /**
@@ -730,29 +864,36 @@ export class UdpManager {
    */
   #encryptVoicePacket(rtpPacket: Uint8Array): Uint8Array {
     try {
-      const encrypted = this.#encryption.encrypt(rtpPacket);
+      // Extract RTP header (unencrypted)
+      const rtpHeader = rtpPacket.subarray(0, RTP_HEADER.SIZE);
 
-      // Combine RTP header with encrypted audio and nonce
-      const header = rtpPacket.subarray(0, RTP_HEADER.SIZE);
-      const packet = new Uint8Array(
-        header.length + encrypted.encryptedAudio.length + 4,
+      // Encrypt the complete RTP packet (the service will handle separating header from audio)
+      const encrypted = this.#encryption.encrypt(rtpPacket, this.#sequence);
+
+      // Discord spec requires nonce appended to payload for *_rtpsize modes
+      // Structure: RTP Header + Encrypted Audio + 4-byte Nonce
+      const nonceBytes = new Uint8Array(4);
+      const nonceView = new DataView(nonceBytes.buffer);
+      nonceView.setUint32(0, encrypted.nonce, false); // Big endian
+
+      const finalPacket = new Uint8Array(
+        RTP_HEADER.SIZE + encrypted.encryptedAudio.length + 4, // +4 for nonce
       );
 
       let offset = 0;
 
-      // Copy RTP header
-      packet.set(header, offset);
-      offset += header.length;
+      // 1. RTP Header (unencrypted)
+      finalPacket.set(rtpHeader, offset);
+      offset += RTP_HEADER.SIZE;
 
-      // Copy encrypted audio
-      packet.set(encrypted.encryptedAudio, offset);
+      // 2. Encrypted audio data (includes auth tag)
+      finalPacket.set(encrypted.encryptedAudio, offset);
       offset += encrypted.encryptedAudio.length;
 
-      // Append nonce for incremental modes
-      const nonceView = new DataView(packet.buffer, offset);
-      nonceView.setUint32(0, encrypted.nonce, false);
+      // 3. 4-byte nonce appended to payload (Discord requirement)
+      finalPacket.set(nonceBytes, offset);
 
-      return packet;
+      return finalPacket;
     } catch (error) {
       throw new Error(
         `Failed to encrypt voice packet: ${(error as Error).message}`,
@@ -770,18 +911,22 @@ export class UdpManager {
    */
   async #sendUdpPacket(packet: Uint8Array): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!(this.#socket && this.#connectionInfo)) {
-        reject(new Error("Socket or connection info not available"));
+      if (!this.#socket) {
+        reject(new Error("Socket not available"));
         return;
       }
 
-      this.#socket.send(packet, (error) => {
+      // Use simple send() method for connected socket
+      const callback = (error?: Error | null) => {
         if (error) {
-          reject(new Error(`UDP send failed: ${error.message}`));
+          reject(new Error(`Failed to send UDP packet: ${error.message}`));
         } else {
           resolve();
         }
-      });
+      };
+
+      // Use simple method for connected socket
+      this.#socket.send(packet, callback);
     });
   }
 

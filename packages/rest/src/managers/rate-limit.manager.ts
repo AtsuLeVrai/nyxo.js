@@ -68,17 +68,7 @@ export const RATE_LIMIT_CONSTANTS = {
  *
  * @remarks All timing values are in milliseconds for consistency
  */
-export const RateLimitOptions = StoreOptions.extend({
-  /**
-   * Cleanup interval in milliseconds for removing expired buckets.
-   * Controls how often expired rate limit buckets are removed from memory.
-   * Lower values use more CPU but free memory faster.
-   *
-   * @default 60000 (1 minute)
-   * @remarks Should be balanced with typical bucket reset times
-   */
-  cleanupInterval: z.number().int().positive().default(60000),
-
+export const RateLimitOptions = z.object({
   /**
    * Safety margin in milliseconds when approaching bucket reset.
    * Adds buffer time to prevent accidental rate limit violations due to
@@ -108,6 +98,36 @@ export const RateLimitOptions = StoreOptions.extend({
    * @remarks This is separate from per-route rate limits
    */
   maxGlobalRequestsPerSecond: z.number().int().positive().default(50),
+
+  /**
+   * Storage configuration for rate limit buckets.
+   * Manages the caching and persistence of Discord API rate limit buckets,
+   * which group endpoints sharing the same rate limit quotas.
+   *
+   * @remarks Buckets are identified by unique hash values provided by Discord headers
+   * @see {@link https://discord.com/developers/docs/topics/rate-limits#rate-limit-header-examples}
+   */
+  bucket: StoreOptions.prefault({}),
+
+  /**
+   * Storage configuration for route-specific rate limit data.
+   * Stores rate limit information per API route pattern, including
+   * remaining requests, reset times, and bucket associations.
+   *
+   * @remarks Routes are normalized patterns like '/channels/:id/messages'
+   * @example '/guilds/123/members' becomes '/guilds/:id/members'
+   */
+  route: StoreOptions.prefault({}),
+
+  /**
+   * Storage configuration for general API response caching.
+   * Manages temporary storage of API responses to reduce redundant requests
+   * and improve performance while respecting Discord's rate limits.
+   *
+   * @remarks Cache TTL should align with data freshness requirements
+   * @see TTL configuration in StoreOptions for cache expiration settings
+   */
+  cache: StoreOptions.prefault({}),
 });
 
 /**
@@ -354,19 +374,15 @@ export class RateLimitManager {
     this.#options = options;
 
     // Initialize bucket storage with TTL support for automatic cleanup
-    this.buckets = new Store<string, RateLimitBucket>(this.#options);
+    this.buckets = new Store<string, RateLimitBucket>(this.#options.bucket);
 
     // Initialize route mapping with larger capacity since routes may outnumber buckets
-    this.routeBuckets = new Store<string, string>({
-      ...this.#options,
-      maxSize: this.#options.maxSize * 2, // Routes may outnumber buckets significantly
-    });
+    this.routeBuckets = new Store<string, string>(this.#options.route);
 
     // Initialize decision cache with moderate size for performance optimization
-    this.#rateLimitCache = new Store<string, RateLimitResult>({
-      ...this.#options,
-      maxSize: 1000, // Balance memory usage with cache hit rate
-    });
+    this.#rateLimitCache = new Store<string, RateLimitResult>(
+      this.#options.cache,
+    );
   }
 
   /**
@@ -1166,8 +1182,8 @@ export class RateLimitManager {
     params: Omit<RateLimitHitEvent, "timestamp">,
     now: number,
   ): void {
-    // Create complete event object with timestamp
-    const event: RateLimitHitEvent = {
+    // Emit event for external monitoring and logging systems
+    this.#rest.emit("rateLimitHit", {
       timestamp: new Date(now).toISOString(),
       requestId: params.requestId,
       bucketId: params.bucketId,
@@ -1175,9 +1191,6 @@ export class RateLimitManager {
       global: params.global,
       method: params.method,
       route: params.route,
-    };
-
-    // Emit event for external monitoring and logging systems
-    this.#rest.emit("rateLimitHit", event);
+    });
   }
 }

@@ -209,74 +209,6 @@ export interface ProcessedFile {
 }
 
 /**
- * Validation schema for file processing operations with security constraints.
- *
- * Provides optional but strongly-typed validation rules that can be applied
- * per operation without requiring complex configuration inheritance.
- *
- * @remarks Uses Zod for runtime validation to ensure type safety and
- * clear error messages when validation fails.
- */
-export const ProcessOptions = z.object({
-  /**
-   * Maximum allowed file size in bytes for this specific operation.
-   *
-   * When specified, overrides the global MAX_BUFFER_SIZE limit with a more
-   * restrictive value. Useful for implementing different limits based on
-   * user permissions, endpoint requirements, or resource constraints.
-   *
-   * @default undefined (uses global MAX_BUFFER_SIZE limit)
-   *
-   * @example
-   * ```typescript
-   * // Restrict avatar uploads to 5MB
-   * const avatarOptions = { maxSize: 5 * 1024 * 1024 };
-   *
-   * // Allow larger attachments for premium users
-   * const premiumOptions = { maxSize: 50 * 1024 * 1024 };
-   * ```
-   *
-   * @remarks Should not exceed Discord's 25MB limit even if set higher.
-   * Server-side validation should enforce API-specific constraints.
-   */
-  maxSize: z.number().int().positive().optional(),
-
-  /**
-   * Array of allowed MIME types for content validation and security.
-   *
-   * When specified, only files with matching MIME types will be accepted.
-   * Provides a security layer against malicious uploads and ensures
-   * API compatibility for specific endpoints.
-   *
-   * @default undefined (all MIME types allowed)
-   *
-   * @example
-   * ```typescript
-   * // Only allow images for avatar uploads
-   * const imageOptions = {
-   *   allowedTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
-   * };
-   *
-   * // Only allow audio files for soundboard
-   * const audioOptions = {
-   *   allowedTypes: ['audio/mpeg', 'audio/wav', 'audio/ogg']
-   * };
-   *
-   * // Mixed content for general attachments
-   * const attachmentOptions = {
-   *   allowedTypes: ['image/*', 'text/plain', 'application/pdf']
-   * };
-   * ```
-   *
-   * @remarks MIME type detection is based on file extensions using the
-   * mime-types library. Consider additional content validation for security.
-   */
-  allowedTypes: z.array(z.string()).optional(),
-});
-
-export type ProcessOptions = z.infer<typeof ProcessOptions>;
-
-/**
  * Configuration schema for FileHandler instance behavior and performance tuning.
  *
  * Controls global behavior for the handler instance, affecting all operations
@@ -642,7 +574,6 @@ export class FileHandler {
    * for Discord API uploads and application logging.
    *
    * @param input - File input to process and validate
-   * @param options - Processing constraints and validation rules
    * @returns Promise resolving to ProcessedFile with complete metadata
    *
    * @throws {Error} If input validation fails
@@ -655,10 +586,7 @@ export class FileHandler {
    * const handler = new FileHandler({ sanitizeFilenames: true });
    *
    * // Process avatar upload with size and type restrictions
-   * const avatar = await handler.processFile('./user-avatar.png', {
-   *   maxSize: 5 * 1024 * 1024,  // 5MB limit
-   *   allowedTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
-   * });
+   * const avatar = await handler.processFile('./user-avatar.png');
    *
    * console.log(avatar.filename);      // "user-avatar.png" (sanitized)
    * console.log(avatar.contentType);   // "image/png"
@@ -667,22 +595,14 @@ export class FileHandler {
    * console.log(avatar.dataUri);       // Data URI for preview
    *
    * // Process attachment with loose restrictions
-   * const attachment = await handler.processFile(streamInput, {
-   *   maxSize: 25 * 1024 * 1024  // Discord's limit
-   * });
+   * const attachment = await handler.processFile(streamInput);
    * ```
    *
    * @remarks This method provides the most comprehensive file processing
    * and should be used for user uploads, attachments, and any content
    * requiring validation or metadata extraction.
    */
-  async processFile(
-    input: FileInput,
-    options: ProcessOptions = {},
-  ): Promise<ProcessedFile> {
-    // Validate processing options schema for type safety
-    const validatedOptions = ProcessOptions.parse(options);
-
+  async processFile(input: FileInput): Promise<ProcessedFile> {
     // Validate input type and format
     this.#validateInputType(input);
 
@@ -692,23 +612,8 @@ export class FileHandler {
     // Convert to buffer with all security validations
     const buffer = await this.toBuffer(input);
 
-    // Validate file size against operation-specific limits
-    if (validatedOptions.maxSize && buffer.length > validatedOptions.maxSize) {
-      throw new Error(
-        `File size exceeds maximum: ${buffer.length} bytes (max: ${validatedOptions.maxSize})`,
-      );
-    }
-
     // Detect content type from filename extension
     const contentType = this.#detectContentType(originalFilename);
-
-    // Validate content type against allowed types list
-    if (
-      validatedOptions.allowedTypes &&
-      !validatedOptions.allowedTypes.includes(contentType)
-    ) {
-      throw new Error(`Content type not allowed: ${contentType}`);
-    }
 
     // Generate sanitized filename for safe usage
     const filename = this.#generateSafeFilename(originalFilename);
@@ -733,7 +638,6 @@ export class FileHandler {
    *
    * @param files - Single file or array of files to include in the form
    * @param body - Optional JSON payload to include alongside files
-   * @param options - Processing options applied to all files
    * @returns Promise resolving to FormData ready for HTTP upload
    *
    * @throws {Error} If file processing fails for any file
@@ -759,10 +663,6 @@ export class FileHandler {
    *       description: 'Check out these images!'
    *     }]
    *   },
-   *   {
-   *     maxSize: 10 * 1024 * 1024,  // 10MB per file
-   *     allowedTypes: ['image/*']
-   *   }
    * );
    *
    * // Files only (no JSON payload)
@@ -787,7 +687,6 @@ export class FileHandler {
   async createFormData(
     files: FileInput | FileInput[],
     body?: HttpRequestOptions["body"],
-    options: ProcessOptions = {},
   ): Promise<FormData> {
     // Normalize input to array for consistent processing
     const filesArray = Array.isArray(files) ? files : [files];
@@ -795,7 +694,7 @@ export class FileHandler {
     // Process all files concurrently for optimal performance
     // Each file is validated and processed independently
     const processedFiles = await Promise.all(
-      filesArray.map((file) => this.processFile(file, options)),
+      filesArray.map((file) => this.processFile(file)),
     );
 
     // Create new FormData instance for multipart encoding
