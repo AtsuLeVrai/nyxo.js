@@ -8,6 +8,3 @@
 [submodule "libs/zstd"]
 	path = libs/zstd
 	url = https://github.com/facebook/zstd
-[submodule "libs/opus"]
-	path = libs/opus
-	url = https://github.com/xiph/opus.git

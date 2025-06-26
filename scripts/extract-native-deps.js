@@ -25,22 +25,6 @@ const LIBRARY_CONFIGS = {
     additionalPatterns: ["libs/zlib/**/*.h", "libs/zlib/**/*.hpp"],
     outputPrefix: "zlib",
   },
-
-  opus: {
-    name: "Opus",
-    pathMapping: {
-      "deps/opus/": "libs/opus/",
-    },
-    additionalPatterns: [
-      "libs/opus/include/**/*.h",
-      "libs/opus/src/**/*.h",
-      "libs/opus/celt/**/*.h",
-      "libs/opus/silk/**/*.h",
-      "libs/opus/**/*.hpp",
-    ],
-    outputPrefix: "opus",
-    autoDetectIncludes: true,
-  },
 };
 
 /**
@@ -153,7 +137,7 @@ ${Object.entries(LIBRARY_CONFIGS)
 
 EXAMPLES:
   node extract-native-deps.js --library zstd
-  node extract-native-deps.js --lib opus --clean
+  node extract-native-deps.js --lib zstd --clean
   node extract-native-deps.js -l zlib -v
 `);
 }
