@@ -86,6 +86,7 @@ lib-cov/
 .dynamodb/
 .serverless/
 .sass-cache/
+.claude/
 
 ### TypeScript specific ###
 *.tsbuildinfo

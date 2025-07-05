@@ -291,7 +291,7 @@ export const PoolOptions = z.object({
    * Allows use of HTTP/2 protocol for improved multiplexing and performance.
    * Discord API supports HTTP/2 for enhanced efficiency.
    *
-   * @default false (HTTP/1.1 only)
+   * @default true (HTTP/2 enabled)
    *
    * @remarks HTTP/2 considerations:
    * - **Performance**: Better multiplexing for concurrent requests
@@ -299,7 +299,7 @@ export const PoolOptions = z.object({
    * - **Complexity**: More sophisticated error handling requirements
    * - **Testing**: Additional protocol complexity in development
    */
-  allowH2: z.boolean().default(false),
+  allowH2: z.boolean().default(true),
 });
 
 /**

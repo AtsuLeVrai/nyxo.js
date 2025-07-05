@@ -171,17 +171,20 @@ export class BitField<T> {
     }
 
     if (typeof value === "string") {
+      let bigintValue: bigint;
       try {
-        const bigintValue = BigInt(value);
-        if (bigintValue < 0n || bigintValue > MAX_BIT_VALUE) {
-          throw new Error("BitField value must be within 64-bit range");
-        }
-        return bigintValue;
+        bigintValue = BigInt(value);
       } catch {
         throw new Error(
           "BitField string must be convertible to a valid bigint",
         );
       }
+
+      if (bigintValue < 0n || bigintValue > MAX_BIT_VALUE) {
+        throw new Error("BitField value must be within 64-bit range");
+      }
+
+      return bigintValue;
     }
 
     throw new Error("Value must be a bigint, number, or string");

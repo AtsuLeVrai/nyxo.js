@@ -4,7 +4,8 @@
   "globalDependencies": [".env", "tsconfig.json", "biome.json"],
   "tasks": {
     "//#biome:check": {
-      "outputs": []
+      "outputs": [],
+      "cache": true
     },
     "clean": {
       "dependsOn": ["^clean"],

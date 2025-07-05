@@ -449,7 +449,6 @@ describe("Integration Tests", () => {
 
     try {
       const initialBytesRead = stream.bytesRead;
-      const _initialBytesWritten = stream.bytesWritten;
 
       try {
         stream.push(TEST_DATA);

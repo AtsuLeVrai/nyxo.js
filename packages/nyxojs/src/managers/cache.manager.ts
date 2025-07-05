@@ -1,30 +1,35 @@
-import type { Snowflake } from "@nyxojs/core";
-import type { PresenceEntity } from "@nyxojs/gateway";
+import type {
+  AnyChannelEntity,
+  ApplicationEntity,
+  AutoModerationRuleEntity,
+  BanEntity,
+  EmojiEntity,
+  EntitlementEntity,
+  GuildMemberEntity,
+  GuildScheduledEventEntity,
+  IntegrationEntity,
+  InviteWithMetadataEntity,
+  RoleEntity,
+  Snowflake,
+  SoundboardSoundEntity,
+  StageInstanceEntity,
+  StickerEntity,
+  SubscriptionEntity,
+  ThreadMemberEntity,
+  UserEntity,
+  VoiceStateEntity,
+  WebhookEntity,
+} from "@nyxojs/core";
+import type {
+  GuildBanEntity,
+  GuildCreateEntity,
+  InviteCreateEntity,
+  MessageCreateEntity,
+  PresenceEntity,
+} from "@nyxojs/gateway";
 import { Store, StoreOptions } from "@nyxojs/store";
 import { z } from "zod/v4";
-import type {
-  AnyChannel,
-  Application,
-  AutoModeration,
-  Ban,
-  Emoji,
-  Entitlement,
-  Guild,
-  GuildMember,
-  Integration,
-  Invite,
-  Message,
-  Role,
-  ScheduledEvent,
-  SoundboardSound,
-  StageInstance,
-  Sticker,
-  Subscription,
-  ThreadMember,
-  User,
-  VoiceState,
-  Webhook,
-} from "../classes/index.js";
+import type { GuildBased } from "../types/index.js";
 
 /**
  * Configuration options for a cacheable store in the Nyxo.js client.
@@ -211,55 +216,55 @@ export type CacheEntityType =
  * Union type of all cacheable entities
  */
 export type CacheableEntity =
-  | Application
-  | AutoModeration
-  | AnyChannel
-  | Ban
-  | Emoji
-  | Entitlement
-  | Guild
-  | GuildMember
-  | Integration
-  | Invite
-  | Message
+  | ApplicationEntity
+  | AutoModerationRuleEntity
+  | AnyChannelEntity
+  | (BanEntity & GuildBanEntity)
+  | GuildBased<EmojiEntity>
+  | EntitlementEntity
+  | GuildCreateEntity
+  | GuildBased<GuildMemberEntity>
+  | GuildBased<IntegrationEntity>
+  | (InviteWithMetadataEntity & InviteCreateEntity)
+  | MessageCreateEntity
   | PresenceEntity
-  | Role
-  | ScheduledEvent
-  | SoundboardSound
-  | StageInstance
-  | Sticker
-  | Subscription
-  | ThreadMember
-  | User
-  | VoiceState
-  | Webhook;
+  | GuildBased<RoleEntity>
+  | GuildScheduledEventEntity
+  | SoundboardSoundEntity
+  | StageInstanceEntity
+  | StickerEntity
+  | SubscriptionEntity
+  | GuildBased<ThreadMemberEntity>
+  | UserEntity
+  | VoiceStateEntity
+  | WebhookEntity;
 
 /**
  * Mapping of cache entity types to their corresponding cacheable entities.
  */
 export interface CacheEntityMapping {
-  applications: Application;
-  autoModerationRules: AutoModeration;
-  bans: Ban;
-  channels: AnyChannel;
-  emojis: Emoji;
-  entitlements: Entitlement;
-  guilds: Guild;
-  integrations: Integration;
-  invites: Invite;
-  members: GuildMember;
-  messages: Message;
+  applications: ApplicationEntity;
+  autoModerationRules: AutoModerationRuleEntity;
+  bans: BanEntity & GuildBanEntity;
+  channels: AnyChannelEntity;
+  emojis: GuildBased<EmojiEntity>;
+  entitlements: EntitlementEntity;
+  guilds: GuildCreateEntity;
+  integrations: GuildBased<IntegrationEntity>;
+  invites: InviteWithMetadataEntity & InviteCreateEntity;
+  members: GuildBased<GuildMemberEntity>;
+  messages: MessageCreateEntity;
   presences: PresenceEntity;
-  roles: Role;
-  scheduledEvents: ScheduledEvent;
-  soundboards: SoundboardSound;
-  stageInstances: StageInstance;
-  stickers: Sticker;
-  subscriptions: Subscription;
-  threadMembers: ThreadMember;
-  users: User;
-  voiceStates: VoiceState;
-  webhooks: Webhook;
+  roles: GuildBased<RoleEntity>;
+  scheduledEvents: GuildScheduledEventEntity;
+  soundboards: SoundboardSoundEntity;
+  stageInstances: StageInstanceEntity;
+  stickers: StickerEntity;
+  subscriptions: SubscriptionEntity;
+  threadMembers: GuildBased<ThreadMemberEntity>;
+  users: UserEntity;
+  voiceStates: VoiceStateEntity;
+  webhooks: WebhookEntity;
 }
 
 /**
@@ -278,69 +283,75 @@ export interface CacheEntityMapping {
 export class CacheManager {
   /**
    * Access the applications cache store.
-   * Type: Store<Snowflake, Application> if enabled, null if disabled
+   * Type: Store<Snowflake, ApplicationEntity> if enabled, null if disabled
    */
-  readonly applications: Store<Snowflake, Application> | null;
+  readonly applications: Store<Snowflake, ApplicationEntity> | null;
 
   /**
    * Access the auto moderation rules cache store.
-   * Type: Store<Snowflake, AutoModeration> if enabled, null if disabled
+   * Type: Store<Snowflake, AutoModerationRuleEntity> if enabled, null if disabled
    */
-  readonly autoModerationRules: Store<Snowflake, AutoModeration> | null;
+  readonly autoModerationRules: Store<
+    Snowflake,
+    AutoModerationRuleEntity
+  > | null;
 
   /**
    * Access the bans cache store.
-   * Type: Store<Snowflake, Ban> if enabled, null if disabled
+   * Type: Store<Snowflake, BanEntity & GuildBanEntity> if enabled, null if disabled
    */
-  readonly bans: Store<Snowflake, Ban> | null;
+  readonly bans: Store<Snowflake, BanEntity & GuildBanEntity> | null;
 
   /**
    * Access the channels cache store.
-   * Type: Store<Snowflake, AnyChannel> if enabled, null if disabled
+   * Type: Store<Snowflake, AnyChannelEntity> if enabled, null if disabled
    */
-  readonly channels: Store<Snowflake, AnyChannel> | null;
+  readonly channels: Store<Snowflake, AnyChannelEntity> | null;
 
   /**
    * Access the emojis cache store.
-   * Type: Store<Snowflake, Emoji> if enabled, null if disabled
+   * Type: Store<Snowflake, GuildBased<EmojiEntity>> if enabled, null if disabled
    */
-  readonly emojis: Store<Snowflake, Emoji> | null;
+  readonly emojis: Store<Snowflake, GuildBased<EmojiEntity>> | null;
 
   /**
    * Access the entitlements cache store.
-   * Type: Store<Snowflake, Entitlement> if enabled, null if disabled
+   * Type: Store<Snowflake, EntitlementEntity> if enabled, null if disabled
    */
-  readonly entitlements: Store<Snowflake, Entitlement> | null;
+  readonly entitlements: Store<Snowflake, EntitlementEntity> | null;
 
   /**
    * Access the guilds cache store.
-   * Type: Store<Snowflake, Guild> if enabled, null if disabled
+   * Type: Store<Snowflake, GuildCreateEntity> if enabled, null if disabled
    */
-  readonly guilds: Store<Snowflake, Guild> | null;
+  readonly guilds: Store<Snowflake, GuildCreateEntity> | null;
 
   /**
    * Access the integrations cache store.
-   * Type: Store<Snowflake, Integration> if enabled, null if disabled
+   * Type: Store<Snowflake, GuildBased<IntegrationEntity>> if enabled, null if disabled
    */
-  readonly integrations: Store<Snowflake, Integration> | null;
+  readonly integrations: Store<Snowflake, GuildBased<IntegrationEntity>> | null;
 
   /**
    * Access the invites cache store.
-   * Type: Store<Snowflake, Invite> if enabled, null if disabled
+   * Type: Store<Snowflake, InviteWithMetadataEntity & InviteCreateEntity> if enabled, null if disabled
    */
-  readonly invites: Store<Snowflake, Invite> | null;
+  readonly invites: Store<
+    Snowflake,
+    InviteWithMetadataEntity & InviteCreateEntity
+  > | null;
 
   /**
    * Access the members cache store.
-   * Type: Store<Snowflake, GuildMember> if enabled, null if disabled
+   * Type: Store<Snowflake, GuildBased<GuildMemberEntity>> if enabled, null if disabled
    */
-  readonly members: Store<Snowflake, GuildMember> | null;
+  readonly members: Store<Snowflake, GuildBased<GuildMemberEntity>> | null;
 
   /**
    * Access the messages cache store.
-   * Type: Store<Snowflake, Message> if enabled, null if disabled
+   * Type: Store<Snowflake, MessageCreateEntity> if enabled, null if disabled
    */
-  readonly messages: Store<Snowflake, Message> | null;
+  readonly messages: Store<Snowflake, MessageCreateEntity> | null;
 
   /**
    * Access the presences cache store.
@@ -350,63 +361,66 @@ export class CacheManager {
 
   /**
    * Access the roles cache store.
-   * Type: Store<Snowflake, Role> if enabled, null if disabled
+   * Type: Store<Snowflake, GuildBased<RoleEntity>> if enabled, null if disabled
    */
-  readonly roles: Store<Snowflake, Role> | null;
+  readonly roles: Store<Snowflake, GuildBased<RoleEntity>> | null;
 
   /**
    * Access the scheduled events cache store.
-   * Type: Store<Snowflake, ScheduledEvent> if enabled, null if disabled
+   * Type: Store<Snowflake, GuildScheduledEventEntity> if enabled, null if disabled
    */
-  readonly scheduledEvents: Store<Snowflake, ScheduledEvent> | null;
+  readonly scheduledEvents: Store<Snowflake, GuildScheduledEventEntity> | null;
 
   /**
    * Access the soundboards cache store.
-   * Type: Store<Snowflake, SoundboardSound> if enabled, null if disabled
+   * Type: Store<Snowflake, SoundboardSoundEntity> if enabled, null if disabled
    */
-  readonly soundboards: Store<Snowflake, SoundboardSound> | null;
+  readonly soundboards: Store<Snowflake, SoundboardSoundEntity> | null;
 
   /**
    * Access the stage instances cache store.
-   * Type: Store<Snowflake, StageInstance> if enabled, null if disabled
+   * Type: Store<Snowflake, StageInstanceEntity> if enabled, null if disabled
    */
-  readonly stageInstances: Store<Snowflake, StageInstance> | null;
+  readonly stageInstances: Store<Snowflake, StageInstanceEntity> | null;
 
   /**
    * Access the stickers cache store.
-   * Type: Store<Snowflake, Sticker> if enabled, null if disabled
+   * Type: Store<Snowflake, StickerEntity> if enabled, null if disabled
    */
-  readonly stickers: Store<Snowflake, Sticker> | null;
+  readonly stickers: Store<Snowflake, StickerEntity> | null;
 
   /**
    * Access the subscriptions cache store.
-   * Type: Store<Snowflake, Subscription> if enabled, null if disabled
+   * Type: Store<Snowflake, SubscriptionEntity> if enabled, null if disabled
    */
-  readonly subscriptions: Store<Snowflake, Subscription> | null;
+  readonly subscriptions: Store<Snowflake, SubscriptionEntity> | null;
 
   /**
    * Access the thread members cache store.
-   * Type: Store<Snowflake, ThreadMember> if enabled, null if disabled
+   * Type: Store<Snowflake, GuildBased<ThreadMemberEntity>> if enabled, null if disabled
    */
-  readonly threadMembers: Store<Snowflake, ThreadMember> | null;
+  readonly threadMembers: Store<
+    Snowflake,
+    GuildBased<ThreadMemberEntity>
+  > | null;
 
   /**
    * Access the users cache store.
-   * Type: Store<Snowflake, User> if enabled, null if disabled
+   * Type: Store<Snowflake, UserEntity> if enabled, null if disabled
    */
-  readonly users: Store<Snowflake, User> | null;
+  readonly users: Store<Snowflake, UserEntity> | null;
 
   /**
    * Access the voice states cache store.
-   * Type: Store<Snowflake, VoiceState> if enabled, null if disabled
+   * Type: Store<Snowflake, VoiceStateEntity> if enabled, null if disabled
    */
-  readonly voiceStates: Store<Snowflake, VoiceState> | null;
+  readonly voiceStates: Store<Snowflake, VoiceStateEntity> | null;
 
   /**
    * Access the webhooks cache store.
-   * Type: Store<Snowflake, Webhook> if enabled, null if disabled
+   * Type: Store<Snowflake, WebhookEntity> if enabled, null if disabled
    */
-  readonly webhooks: Store<Snowflake, Webhook> | null;
+  readonly webhooks: Store<Snowflake, WebhookEntity> | null;
 
   /**
    * Map of all cache stores indexed by entity type.

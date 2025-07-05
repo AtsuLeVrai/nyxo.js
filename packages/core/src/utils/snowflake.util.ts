@@ -152,7 +152,7 @@ export const SnowflakeUtil = {
    * SnowflakeUtil.isValid('308994132968210433'); // true
    * SnowflakeUtil.isValid('not-a-snowflake'); // false
    */
-  isValid(snowflake: string): boolean {
+  isValid(snowflake: string): snowflake is Snowflake {
     try {
       // Snowflakes are numeric strings of reasonable length
       return /^\d{17,20}$/.test(snowflake);

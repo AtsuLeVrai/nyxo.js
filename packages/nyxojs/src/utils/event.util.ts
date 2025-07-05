@@ -52,6 +52,23 @@ import type { ClientEvents } from "../types/index.js";
 import { channelFactory } from "./channel.util.js";
 import { interactionFactory } from "./interaction.util.js";
 
+// Type for a class constructor that creates an entity
+type ClassConstructor<T extends BaseClass<any>> = new (
+  client: Client,
+  data: any,
+) => T;
+
+// Type for a factory function that creates an entity
+type FactoryFunction<T extends BaseClass<any>> = (
+  client: Client,
+  data: any,
+) => T;
+
+// Type that can be either a class constructor or factory function
+type EntityCreator<T extends BaseClass<any>> =
+  | ClassConstructor<T>
+  | FactoryFunction<T>;
+
 /**
  * Represents a mapping between a Gateway event and a Client event
  */
@@ -90,42 +107,6 @@ function defineEvent<
 }
 
 /**
- * Generic handler for DELETE operations
- * Gets entity from cache and removes it
- */
-function handleDeleteEvent<T>(
-  client: Client,
-  cacheKey: CacheEntityType,
-  entityId: Snowflake,
-): [T | null] {
-  const store = client.cache[cacheKey] as unknown as Store<Snowflake, T>;
-  const cachedEntity = store.get(entityId) ?? null;
-
-  if (cachedEntity) {
-    store.delete(entityId);
-  }
-
-  return [cachedEntity];
-}
-
-// Type for a class constructor that creates an entity
-type ClassConstructor<T extends BaseClass<any>> = new (
-  client: Client,
-  data: any,
-) => T;
-
-// Type for a factory function that creates an entity
-type FactoryFunction<T extends BaseClass<any>> = (
-  client: Client,
-  data: any,
-) => T;
-
-// Type that can be either a class constructor
-type EntityCreator<T extends BaseClass<any>> =
-  | ClassConstructor<T>
-  | FactoryFunction<T>;
-
-/**
  * Checks if the provided creator is a class constructor
  */
 function isClassConstructor<T extends BaseClass<any>>(
@@ -138,35 +119,80 @@ function isClassConstructor<T extends BaseClass<any>>(
       Object.getPrototypeOf(creator.prototype) === BaseClass.prototype)
   );
 }
+
+/**
+ * Generic handler for DELETE operations
+ * Gets entity data from cache, creates instance, and removes data from cache
+ */
+function handleDeleteEvent<T extends BaseClass<any>>(
+  client: Client,
+  cacheKey: CacheEntityType,
+  entityId: Snowflake,
+  EntityCreator: EntityCreator<T>,
+): [T | null] {
+  const store = client.cache[cacheKey] as Store<Snowflake, any> | null;
+
+  if (!store) {
+    return [null];
+  }
+
+  // Retrieve data from cache
+  const cachedData = store.get(entityId);
+
+  // Create instance from data if it exists
+  let cachedEntity: T | null = null;
+  if (cachedData) {
+    cachedEntity = isClassConstructor(EntityCreator)
+      ? new EntityCreator(client, cachedData)
+      : EntityCreator(client, cachedData);
+  }
+
+  // Remove data from cache (not the instance)
+  if (cachedData) {
+    store.delete(entityId);
+  }
+
+  return [cachedEntity];
+}
+
 /**
  * Generic handler for UPDATE operations
- * Creates new entity, retrieves old entity from cache, and updates cache
+ * Creates new entity, retrieves old entity data from cache, and updates cache
  */
 function handleUpdateEvent<T extends BaseClass<any>>(
   client: Client,
   data: object,
   cacheKey: CacheEntityType,
-  EntityFactory: EntityCreator<T>,
+  EntityCreator: EntityCreator<T>,
 ): [T | null, T] {
   // Create new entity using constructor or factory
-  const newEntity = isClassConstructor(EntityFactory)
-    ? new EntityFactory(client, data)
-    : EntityFactory(client, data);
-  const cacheInfo = newEntity.getCacheInfo();
+  const newEntity = isClassConstructor(EntityCreator)
+    ? new EntityCreator(client, data)
+    : EntityCreator(client, data);
+
+  const cacheInfo = newEntity.cacheInfo;
   if (!cacheInfo?.id) {
     return [null, newEntity];
   }
 
-  // Get entity from cache
-  const store = client.cache[cacheKey] as unknown as Store<Snowflake, T>;
-  const oldEntity = store.get(cacheInfo.id) ?? null;
+  // Get entity DATA from cache (not instance)
+  const store = client.cache[cacheKey] as Store<Snowflake, any> | null;
+  const oldData = store?.get(cacheInfo.id) ?? null;
 
+  // Create old entity instance from cached data if it exists
+  const oldEntity = oldData
+    ? isClassConstructor(EntityCreator)
+      ? new EntityCreator(client, oldData)
+      : EntityCreator(client, oldData)
+    : null;
+
+  // New entity cache happens automatically via BaseClass constructor
   return [oldEntity, newEntity];
 }
 
 /**
  * Efficiently handles bulk updates of entities (emojis, stickers)
- * Compares new elements with cached elements and processes the changes
+ * Compares new elements with cached data and processes the changes
  */
 function handleBulkUpdate<T extends BaseClass<any>>(
   client: Client,
@@ -181,14 +207,21 @@ function handleBulkUpdate<T extends BaseClass<any>>(
   },
 ): [any] {
   const guildId = data.guild_id;
-  // @ts-expect-error - The data is not typed correctly
+  // @ts-expect-error - entityField is guaranteed to be emojis or stickers
   const newEntities = data[entityField] as (StickerEntity | EmojiEntity)[];
 
-  // Retrieve cached entities for this guild
-  // @ts-expect-error - The cacheKey is a string, but the client.cache is a Map
-  const cachedEntities = Array.from(client.cache[cacheKey].values()).filter(
-    (entity: any) => entity.guildId === guildId,
-  );
+  // Retrieve cached DATA for this guild (not instances)
+  const store = client.cache[cacheKey] as Store<Snowflake, any> | null;
+  const cachedData: any[] = [];
+
+  if (store) {
+    for (const entityData of store.values()) {
+      // Check if entity belongs to this guild
+      if ((entityData.guild_id || entityData.guildId) === guildId) {
+        cachedData.push(entityData);
+      }
+    }
+  }
 
   // Create maps for efficient lookup
   const newMap = new Map();
@@ -201,10 +234,10 @@ function handleBulkUpdate<T extends BaseClass<any>>(
     }
   }
 
-  // Prepare cached elements
-  for (const entity of cachedEntities) {
-    if (entity.id) {
-      cachedMap.set(entity.id, entity);
+  // Prepare cached elements DATA
+  for (const entityData of cachedData) {
+    if (entityData.id) {
+      cachedMap.set(entityData.id, entityData);
     }
   }
 
@@ -219,21 +252,20 @@ function handleBulkUpdate<T extends BaseClass<any>>(
   // Process updated elements
   for (const [id, entityData] of newMap.entries()) {
     if (cachedMap.has(id)) {
-      const [oldEntity, newEntity] = handleUpdateEvent(
-        client,
-        entityData,
-        cacheKey,
-        EntityClass,
-      );
+      const oldData = cachedMap.get(id);
+      const oldEntity = new EntityClass(client, oldData);
+      const newEntity = new EntityClass(client, entityData);
 
       client.emit(eventNames.update, oldEntity as any, newEntity as any);
     }
   }
 
   // Process deleted elements
-  for (const [id] of cachedMap.entries()) {
+  for (const [id, oldData] of cachedMap.entries()) {
     if (!newMap.has(id)) {
-      const [deletedEntity] = handleDeleteEvent(client, cacheKey, id);
+      const deletedEntity = new EntityClass(client, oldData);
+      // Remove from cache
+      store?.delete(id);
       client.emit(eventNames.delete, deletedEntity as any);
     }
   }
@@ -282,7 +314,12 @@ export const GatewayDispatchEventMap = new Map<
     defineEvent<"AUTO_MODERATION_RULE_DELETE", "autoModerationRuleDelete">(
       "autoModerationRuleDelete",
       (client, data) =>
-        handleDeleteEvent(client, "autoModerationRules", data.id),
+        handleDeleteEvent(
+          client,
+          "autoModerationRules",
+          data.id,
+          AutoModeration,
+        ),
     ),
   ],
   [
@@ -313,7 +350,8 @@ export const GatewayDispatchEventMap = new Map<
     "CHANNEL_DELETE",
     defineEvent<"CHANNEL_DELETE", "channelDelete">(
       "channelDelete",
-      (client, data) => handleDeleteEvent(client, "channels", data.id),
+      (client, data) =>
+        handleDeleteEvent(client, "channels", data.id, channelFactory),
     ),
   ],
   [
@@ -345,7 +383,9 @@ export const GatewayDispatchEventMap = new Map<
     "THREAD_DELETE",
     defineEvent<"THREAD_DELETE", "threadDelete">(
       "threadDelete",
-      (client, data) => handleDeleteEvent(client, "channels", data.id),
+      (client, data) =>
+        // @ts-expect-error - type mismatch due to AnyThreadChannel
+        handleDeleteEvent(client, "channels", data.id, channelFactory),
     ),
   ],
   [
@@ -389,7 +429,8 @@ export const GatewayDispatchEventMap = new Map<
     "ENTITLEMENT_DELETE",
     defineEvent<"ENTITLEMENT_DELETE", "entitlementDelete">(
       "entitlementDelete",
-      (client, data) => handleDeleteEvent(client, "entitlements", data.id),
+      (client, data) =>
+        handleDeleteEvent(client, "entitlements", data.id, Entitlement),
     ),
   ],
   [
@@ -408,7 +449,7 @@ export const GatewayDispatchEventMap = new Map<
   [
     "GUILD_DELETE",
     defineEvent<"GUILD_DELETE", "guildDelete">("guildDelete", (client, data) =>
-      handleDeleteEvent(client, "guilds", data.id),
+      handleDeleteEvent(client, "guilds", data.id, Guild),
     ),
   ],
   [
@@ -491,6 +532,7 @@ export const GatewayDispatchEventMap = new Map<
           client,
           "members",
           `${data.guild_id}:${data.user.id}`,
+          GuildMember,
         ),
     ),
   ],
@@ -533,7 +575,7 @@ export const GatewayDispatchEventMap = new Map<
     "GUILD_ROLE_DELETE",
     defineEvent<"GUILD_ROLE_DELETE", "guildRoleDelete">(
       "guildRoleDelete",
-      (client, data) => handleDeleteEvent(client, "roles", data.role_id),
+      (client, data) => handleDeleteEvent(client, "roles", data.role_id, Role),
     ),
   ],
   [
@@ -555,7 +597,8 @@ export const GatewayDispatchEventMap = new Map<
     "GUILD_SCHEDULED_EVENT_DELETE",
     defineEvent<"GUILD_SCHEDULED_EVENT_DELETE", "guildScheduledEventDelete">(
       "guildScheduledEventDelete",
-      (client, data) => handleDeleteEvent(client, "scheduledEvents", data.id),
+      (client, data) =>
+        handleDeleteEvent(client, "scheduledEvents", data.id, ScheduledEvent),
     ),
   ],
   [
@@ -591,7 +634,13 @@ export const GatewayDispatchEventMap = new Map<
     "GUILD_SOUNDBOARD_SOUND_DELETE",
     defineEvent<"GUILD_SOUNDBOARD_SOUND_DELETE", "guildSoundboardSoundDelete">(
       "guildSoundboardSoundDelete",
-      (client, data) => handleDeleteEvent(client, "soundboards", data.sound_id),
+      (client, data) =>
+        handleDeleteEvent(
+          client,
+          "soundboards",
+          data.sound_id,
+          SoundboardSound,
+        ),
     ),
   ],
   [
@@ -642,7 +691,8 @@ export const GatewayDispatchEventMap = new Map<
     "INTEGRATION_DELETE",
     defineEvent<"INTEGRATION_DELETE", "integrationDelete">(
       "integrationDelete",
-      (client, data) => handleDeleteEvent(client, "integrations", data.id),
+      (client, data) =>
+        handleDeleteEvent(client, "integrations", data.id, Integration),
     ),
   ],
   [
@@ -658,7 +708,7 @@ export const GatewayDispatchEventMap = new Map<
     "INVITE_DELETE",
     defineEvent<"INVITE_DELETE", "inviteDelete">(
       "inviteDelete",
-      (client, data) => handleDeleteEvent(client, "invites", data.code),
+      (client, data) => handleDeleteEvent(client, "invites", data.code, Invite),
     ),
   ],
   [
@@ -679,7 +729,7 @@ export const GatewayDispatchEventMap = new Map<
     "MESSAGE_DELETE",
     defineEvent<"MESSAGE_DELETE", "messageDelete">(
       "messageDelete",
-      (client, data) => handleDeleteEvent(client, "messages", data.id),
+      (client, data) => handleDeleteEvent(client, "messages", data.id, Message),
     ),
   ],
   [
@@ -688,7 +738,7 @@ export const GatewayDispatchEventMap = new Map<
       "messageDeleteBulk",
       (client, data) => [
         data.ids.map((id) => {
-          const [message] = handleDeleteEvent(client, "messages", id);
+          const [message] = handleDeleteEvent(client, "messages", id, Message);
           return message;
         }) as Message[],
       ],
@@ -804,7 +854,8 @@ export const GatewayDispatchEventMap = new Map<
     "STAGE_INSTANCE_DELETE",
     defineEvent<"STAGE_INSTANCE_DELETE", "stageInstanceDelete">(
       "stageInstanceDelete",
-      (client, data) => handleDeleteEvent(client, "stageInstances", data.id),
+      (client, data) =>
+        handleDeleteEvent(client, "stageInstances", data.id, StageInstance),
     ),
   ],
   [
@@ -826,7 +877,8 @@ export const GatewayDispatchEventMap = new Map<
     "SUBSCRIPTION_DELETE",
     defineEvent<"SUBSCRIPTION_DELETE", "subscriptionDelete">(
       "subscriptionDelete",
-      (client, data) => handleDeleteEvent(client, "subscriptions", data.id),
+      (client, data) =>
+        handleDeleteEvent(client, "subscriptions", data.id, Subscription),
     ),
   ],
 ]);
@@ -852,10 +904,7 @@ export const GatewayKeyofEventMappings: (keyof GatewayEvents)[] = [
   "sessionStart",
   "sessionResume",
   "sessionInvalidate",
-  "shardResume",
-  "shardReconnect",
-  "shardReady",
-  "shardDisconnect",
+  "shardStatusChange",
   "wsClose",
   "wsError",
   "dispatch",

@@ -138,7 +138,7 @@ export class Ban
 @Cacheable("integrations")
 export class Integration
   extends BaseClass<GuildBased<IntegrationEntity>>
-  implements Enforce<PropsToCamel<IntegrationEntity>>
+  implements Enforce<PropsToCamel<GuildBased<IntegrationEntity>>>
 {
   /**
    * Gets the integration's unique identifier.
@@ -360,7 +360,7 @@ export class Integration
 )
 export class GuildMember
   extends BaseClass<GuildBased<GuildMemberEntity>>
-  implements Enforce<PropsToCamel<GuildMemberEntity>>
+  implements Enforce<PropsToCamel<GuildBased<GuildMemberEntity>>>
 {
   /**
    * Gets the ID of the guild this member belongs to.

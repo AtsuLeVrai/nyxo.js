@@ -1085,15 +1085,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     for (const shard of this.shard.shards) {
       if (shard.status !== "disconnected") {
         this.shard.setShardStatus(shard.shardId, "disconnected");
-
-        this.emit("shardDisconnect", {
-          timestamp: new Date().toISOString(),
-          shardId: shard.shardId,
-          totalShards: shard.totalShards,
-          closeCode: code,
-          reason: reason || "Connection closed",
-          willReconnect: this.#options.heartbeat.autoReconnect,
-        });
       }
     }
 

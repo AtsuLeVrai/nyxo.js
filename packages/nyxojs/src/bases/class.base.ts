@@ -1,7 +1,11 @@
 import type { Snowflake } from "@nyxojs/core";
 import type { Store } from "@nyxojs/store";
 import type { Client } from "../core/index.js";
-import type { CacheEntityType, CacheManager } from "../managers/index.js";
+import type {
+  CacheEntityMapping,
+  CacheEntityType,
+  CacheManager,
+} from "../managers/index.js";
 
 /**
  * Represents the necessary information for caching an entity in the appropriate store.
@@ -34,10 +38,10 @@ export type KeyExtractor<T extends object> = (data: T) => Snowflake | null;
 /**
  * Decorator that marks a class as cacheable and configures its caching behavior.
  *
- * This decorator enables automatic caching of entity instances in the specified store.
+ * This decorator enables automatic caching of entity data in the specified store.
  * It optionally accepts a custom key extractor function for complex identifiers.
  *
- * @param storeKey - The name of the cache store where instances should be stored
+ * @param storeKey - The name of the cache store where data should be stored
  * @param keyExtractor - Optional function to extract the cache key from entity data
  */
 export function Cacheable<T extends object>(
@@ -63,8 +67,8 @@ export function Cacheable<T extends object>(
  * Base class for all data models in the Nyxo.js framework.
  *
  * The BaseClass provides a foundation for working with Discord API data entities
- * in a structured and type-safe manner. It handles automatic caching through the
- * @Cacheable decorator.
+ * in a structured and type-safe manner. It handles automatic caching of raw data
+ * through the @Cacheable decorator.
  *
  * @template T The type of data this model contains (e.g., UserEntity, ChannelEntity)
  */
@@ -92,62 +96,17 @@ export abstract class BaseClass<T extends object> {
     this.client = client;
     this.rawData = data;
 
-    // Initialize cache for this entity
+    // Initialize cache for this entity's data
     this.#initializeCache();
   }
 
   /**
-   * Converts this modal to a plain object with all properties.
-   * The returned object is frozen to prevent accidental modification.
+   * Checks if this entity's data is currently cached.
    *
-   * @returns An immutable copy of the raw data object
+   * @returns true if the data is in cache, false otherwise
    */
-  toJson(): Readonly<T> {
-    return Object.freeze({ ...this.rawData });
-  }
-
-  /**
-   * Updates the internal data of this modal with new data.
-   * This is useful when you need to update the model with fresh data from the API.
-   * Also updates the entity in cache if it was previously cached.
-   *
-   * @param data - New data to merge with the existing data
-   * @returns This instance for method chaining
-   * @throws Error if data is not provided
-   */
-  patch(data: Partial<T>): this {
-    this.rawData = { ...this.rawData, ...data };
-
-    // Update entity in cache
-    const cacheInfo = this.getCacheInfo();
-    if (cacheInfo) {
-      const { storeKey, id } = cacheInfo;
-      if (id && storeKey) {
-        const cacheStore = this.client.cache[storeKey] as unknown as Store<
-          Snowflake,
-          this
-        >;
-
-        // Only update if this entity is already in the cache
-        if (cacheStore.has(id)) {
-          cacheStore.add(id, this);
-        }
-      }
-    }
-
-    return this;
-  }
-
-  /**
-   * Removes this entity from the cache if it's currently stored.
-   * This method is useful when you want to explicitly remove an entity
-   * from the cache without waiting for automatic eviction.
-   *
-   * @returns true if the entity was removed from the cache, false otherwise
-   */
-  uncache(): boolean {
-    // Get cache information for this entity
-    const cacheInfo = this.getCacheInfo();
+  get isCached(): boolean {
+    const cacheInfo = this.cacheInfo;
     if (!cacheInfo) {
       return false;
     }
@@ -157,48 +116,36 @@ export abstract class BaseClass<T extends object> {
       return false;
     }
 
-    // Get the appropriate cache store
-    const cacheStore = this.client.cache[storeKey] as unknown as Store<
+    const cacheStore = this.client.cache[storeKey] as Store<
       Snowflake,
-      this
-    >;
+      CacheEntityMapping[typeof storeKey]
+    > | null;
 
-    // Check if the entity exists in the cache before deleting it
-    if (cacheStore.has(id)) {
-      return cacheStore.delete(id);
-    }
-
-    return false;
+    return cacheStore?.has(id) ?? false;
   }
 
   /**
-   * Checks if this modal is equal to another modal.
-   * The default implementation compares IDs if available, otherwise compares data.
+   * Retrieves the cached data for this entity.
    *
-   * @param other - The other modal to compare with
-   * @returns Whether the classes represent the same entity
+   * @returns The cached data or null if not cached
    */
-  equals(other: BaseClass<T>): boolean {
-    // If both objects have an id property, compare by ID
-    if ("id" in this.rawData && "id" in other.rawData) {
-      return this.rawData.id === other.rawData.id;
+  get cachedData(): T | null {
+    const cacheInfo = this.cacheInfo;
+    if (!cacheInfo) {
+      return null;
     }
 
-    // If no ID is available, compare all properties
-    const thisKeys = Object.keys(this.rawData).sort();
-    const otherKeys = Object.keys(other.rawData).sort();
-
-    // If the number of properties is different, they are not equal
-    if (thisKeys.length !== otherKeys.length) {
-      return false;
+    const { storeKey, id } = cacheInfo;
+    if (!(id && storeKey)) {
+      return null;
     }
 
-    // Compare each property in the sorted order
-    return thisKeys.every((key) => {
-      const thisValue = (this.rawData as Record<string, unknown>)[key];
-      const otherValue = (other.rawData as Record<string, unknown>)[key];
-      return thisValue === otherValue;
-    });
+    const cacheStore = this.client.cache[storeKey] as Store<
+      Snowflake,
+      CacheEntityMapping[typeof storeKey]
+    > | null;
+
+    return (cacheStore?.get(id) as T) ?? null;
   }
 
   /**
@@ -206,7 +153,7 @@ export abstract class BaseClass<T extends object> {
    *
    * @returns Whether the data object has no properties
    */
-  isEmpty(): boolean {
+  get isEmpty(): boolean {
     return Object.keys(this.rawData).length === 0;
   }
 
@@ -216,7 +163,7 @@ export abstract class BaseClass<T extends object> {
    *
    * @returns Cache information containing the store key and ID, or null if the entity cannot be cached
    */
-  getCacheInfo(): CacheEntityInfo | null {
+  get cacheInfo(): CacheEntityInfo | null {
     const entityConstructor = this.constructor as typeof BaseClass;
 
     // Get the store key from metadata
@@ -254,25 +201,132 @@ export abstract class BaseClass<T extends object> {
   }
 
   /**
-   * Initializes the cache for this entity.
+   * Converts this modal to a plain object with all properties.
+   * The returned object is frozen to prevent accidental modification.
    *
-   * This method is automatically called when the entity is created.
-   * It checks if the entity can be cached based on metadata and adds it to the appropriate cache store if it doesn't already exist.
-   *
-   * This is a private method and should not be called directly.
-   * It is intended to be used internally by the framework to ensure that entities are cached correctly when they are instantiated.
-   *
-   * @private
+   * @returns An immutable copy of the raw data object
    */
-  #initializeCache(): void {
-    // Automatically cache this entity
-    const cacheInfo = this.getCacheInfo();
+  toJson(): Readonly<T> {
+    return Object.freeze({ ...this.rawData });
+  }
+
+  /**
+   * Updates the internal data of this modal with new data.
+   * This is useful when you need to update the model with fresh data from the API.
+   * Also updates the cached data if it was previously cached.
+   *
+   * @param data - New data to merge with the existing data
+   * @returns This instance for method chaining
+   * @throws Error if data is not provided
+   */
+  patch(data: Partial<T>): this {
+    this.rawData = { ...this.rawData, ...data };
+
+    // Update cached data (not the instance)
+    const cacheInfo = this.cacheInfo;
     if (cacheInfo) {
       const { storeKey, id } = cacheInfo;
       if (id && storeKey) {
-        const cacheStore = this.client.cache[storeKey] as unknown as Store<
+        const cacheStore = this.client.cache[storeKey] as Store<
           Snowflake,
-          this
+          CacheEntityMapping[typeof storeKey]
+        > | null;
+
+        // Only update if data is already in the cache
+        if (cacheStore?.has(id)) {
+          // Store the updated raw data, not the instance
+          cacheStore.add(
+            id,
+            this.rawData as CacheEntityMapping[typeof storeKey],
+          );
+        }
+      }
+    }
+
+    return this;
+  }
+
+  /**
+   * Removes this entity's data from the cache if it's currently stored.
+   * This method is useful when you want to explicitly remove cached data
+   * from the cache without waiting for automatic eviction.
+   *
+   * @returns true if the data was removed from the cache, false otherwise
+   */
+  uncache(): boolean {
+    // Get cache information for this entity
+    const cacheInfo = this.cacheInfo;
+    if (!cacheInfo) {
+      return false;
+    }
+
+    const { storeKey, id } = cacheInfo;
+    if (!(id && storeKey)) {
+      return false;
+    }
+
+    // Get the appropriate cache store
+    const cacheStore = this.client.cache[storeKey] as Store<
+      Snowflake,
+      CacheEntityMapping[typeof storeKey]
+    > | null;
+
+    // Check if the data exists in the cache before deleting it
+    if (cacheStore?.has(id)) {
+      return cacheStore.delete(id);
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks if this modal is equal to another modal.
+   * The default implementation compares IDs if available, otherwise compares data.
+   *
+   * @param other - The other modal to compare with
+   * @returns Whether the classes represent the same entity
+   */
+  equals(other: BaseClass<T>): boolean {
+    // If both objects have an id property, compare by ID
+    if ("id" in this.rawData && "id" in other.rawData) {
+      return this.rawData.id === other.rawData.id;
+    }
+
+    // If no ID is available, compare all properties
+    const thisKeys = Object.keys(this.rawData).sort();
+    const otherKeys = Object.keys(other.rawData).sort();
+
+    // If the number of properties is different, they are not equal
+    if (thisKeys.length !== otherKeys.length) {
+      return false;
+    }
+
+    // Compare each property in the sorted order
+    return thisKeys.every((key) => {
+      const thisValue = (this.rawData as Record<string, unknown>)[key];
+      const otherValue = (other.rawData as Record<string, unknown>)[key];
+      return thisValue === otherValue;
+    });
+  }
+
+  /**
+   * Initializes the cache for this entity's data.
+   *
+   * This method is automatically called when the entity is created.
+   * It checks if the entity can be cached based on metadata and stores the raw data
+   * (not the instance) in the appropriate cache store.
+   *
+   * @internal
+   */
+  #initializeCache(): void {
+    // Automatically cache this entity's data
+    const cacheInfo = this.cacheInfo;
+    if (cacheInfo) {
+      const { storeKey, id } = cacheInfo;
+      if (id && storeKey) {
+        const cacheStore = this.client.cache[storeKey] as Store<
+          Snowflake,
+          CacheEntityMapping[typeof storeKey]
         > | null;
 
         // If the cache store is not available, do nothing
@@ -280,14 +334,21 @@ export abstract class BaseClass<T extends object> {
           return;
         }
 
-        // Check if this entity already exists in the cache
-        const existingEntity = cacheStore.get(id);
-        if (existingEntity) {
-          // Update the existing cached entity with new data
-          existingEntity.patch(this.rawData);
+        // Check if data already exists in the cache
+        const existingData = cacheStore.get(id);
+        if (existingData) {
+          // Update the existing cached data with new data
+          cacheStore.add(
+            id,
+            this.rawData as CacheEntityMapping[typeof storeKey],
+          );
         } else {
-          // Entity doesn't exist in cache yet, add it
-          cacheStore.set(id, this);
+          // Data doesn't exist in cache yet, add it
+          // IMPORTANT: Store rawData, not 'this'
+          cacheStore.set(
+            id,
+            this.rawData as CacheEntityMapping[typeof storeKey],
+          );
         }
       }
     }

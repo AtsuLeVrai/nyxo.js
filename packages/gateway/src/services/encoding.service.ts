@@ -96,6 +96,18 @@ export class EncodingService {
   }
 
   /**
+   * Determines if this service uses JSON encoding.
+   *
+   * Useful for conditional logic based on the encoding type
+   * without having to directly compare with string literals.
+   *
+   * @returns `true` if using JSON encoding, `false` if using ETF
+   */
+  get isJson(): boolean {
+    return this.type === "json";
+  }
+
+  /**
    * Determines if this service uses ETF encoding.
    *
    * Useful for conditional logic based on the encoding type
@@ -126,7 +138,7 @@ export class EncodingService {
    */
   async initialize(): Promise<void> {
     // Early return if using JSON encoding or if erlpack is already loaded
-    if (!this.isEtf || this.#erlpack) {
+    if (this.isJson || this.#erlpack) {
       return;
     }
 

@@ -71,10 +71,10 @@
     "@nyxojs/store": "workspace:^",
     "eventemitter3": "^5.0.1",
     "reflect-metadata": "^0.2.2",
-    "zod": "^3.25.67"
+    "zod": "^3.25.74"
   },
   "devDependencies": {
-    "@types/node": "^22.15.33",
+    "@types/node": "^24.0.10",
     "rimraf": "^6.0.1",
     "tsdown": "^0.12.9",
     "typescript": "^5.8.3"

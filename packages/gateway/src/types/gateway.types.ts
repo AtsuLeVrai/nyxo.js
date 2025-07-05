@@ -1,3 +1,4 @@
+import type { ShardStatus } from "../managers/index.js";
 import type { CompressionType, EncodingType } from "../services/index.js";
 import type { GatewayReceiveEvents } from "./index.js";
 
@@ -186,16 +187,17 @@ export interface SessionInvalidateEvent extends BaseGatewayEvent {
 }
 
 /**
- * Event emitted when a shard successfully connects to the Gateway
+ * Event emitted when the WebSocket connection closes
  *
- * Triggered when a shard completes the identification process and
- * is ready to receive events from Discord.
+ * Triggered when the WebSocket connection to Discord is closed,
+ * either due to normal closure, errors, or network issues.
  *
  * @see {@link https://discord.com/developers/docs/topics/gateway#sharding}
  */
-export interface ShardReadyEvent extends BaseGatewayEvent {
+export interface ShardStatusChangeEvent extends BaseGatewayEvent {
   /**
-   * Zero-based index of this shard within the total shard count
+   * Zero-based index of the shard whose status changed
+   * This is the same as the shardId in the sessionStart event
    */
   shardId: number;
 
@@ -206,97 +208,28 @@ export interface ShardReadyEvent extends BaseGatewayEvent {
   totalShards: number;
 
   /**
-   * Number of guilds assigned to this specific shard
-   * Useful for load balancing monitoring
+   * Previous status of the shard before the change
+   * Represents the state before the current status update
    */
-  guildCount: number;
-}
-
-/**
- * Event emitted when a shard disconnects from the Gateway
- *
- * Triggered when a WebSocket connection for a shard closes,
- * either intentionally or due to network/server issues.
- *
- * @see {@link https://discord.com/developers/docs/topics/gateway#sharding}
- */
-export interface ShardDisconnectEvent extends BaseGatewayEvent {
-  /**
-   * Zero-based index of the disconnected shard
-   */
-  shardId: number;
+  oldStatus: ShardStatus;
 
   /**
-   * Total number of shards in the current configuration
+   * New status of the shard after the change
+   * Represents the state after the current status update
    */
-  totalShards: number;
+  newStatus: ShardStatus;
 
   /**
    * WebSocket close code received from Discord
    * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes}
    */
-  closeCode: number;
+  guildCount: number;
 
   /**
-   * Human-readable description of the disconnect reason
+   * Human-readable description of the status change reason
+   * Provides context for why the status changed
    */
-  reason: string;
-
-  /**
-   * Indicates if automatic reconnection will be attempted
-   * Based on the close code and client configuration
-   */
-  willReconnect: boolean;
-}
-
-/**
- * Event emitted when a shard resumes its connection to the Gateway
- *
- * Triggered when a shard successfully reconnects after a disconnect,
- * either through automatic reconnection or manual intervention.
- *
- * @see {@link https://discord.com/developers/docs/topics/gateway#sharding}
- */
-export interface ShardResumeEvent extends BaseGatewayEvent {
-  /**
-   * Zero-based index of the shard that resumed
-   * This is the same as the shardId in the sessionStart event
-   */
-  shardId: number;
-
-  /**
-   * Total number of shards in the current configuration
-   * Used for distributing guilds across multiple connections
-   */
-  totalShards: number;
-
-  /**
-   * Time taken to resume the connection in milliseconds
-   * Measured from the resume request to the first event received
-   */
-  sessionId: string;
-}
-
-/**
- * Event emitted when a shard is scheduled to reconnect
- *
- * Triggered when a shard is instructed to reconnect to the Gateway,
- * either due to network issues or server-side requests.
- *
- * @see {@link https://discord.com/developers/docs/topics/gateway#sharding}
- */
-export interface ShardReconnectEvent extends BaseGatewayEvent {
-  /**
-   * Zero-based index of the shard that is scheduled to reconnect
-   * This is the same as the shardId in the sessionStart event
-   */
-  shardId: number;
-
-  /**
-   * Total number of shards in the current configuration
-   * Used for distributing guilds across multiple connections
-   */
-  totalShards: number;
+  reconnectAttempts: number;
 }
 
 /**
@@ -349,28 +282,10 @@ export interface GatewayEvents {
   sequenceUpdate: [sequence: number];
 
   /**
-   * Emitted when a shard connects and is ready to receive events
-   * @param event Details about the ready shard
+   * Emitted when a shard's status changes
+   * @param event Details about the status change including old and new status
    */
-  shardReady: [event: ShardReadyEvent];
-
-  /**
-   * Emitted when a shard disconnects from the Gateway
-   * @param event Details about the disconnection including close code
-   */
-  shardDisconnect: [event: ShardDisconnectEvent];
-
-  /**
-   * Emitted when a shard disconnects from the Gateway
-   * @param event Details about the disconnection including close code
-   */
-  shardResume: [event: ShardResumeEvent];
-
-  /**
-   * Emitted when a shard disconnects from the Gateway
-   * @param event Details about the disconnection including close code
-   */
-  shardReconnect: [event: ShardReconnectEvent];
+  shardStatusChange: [event: ShardStatusChangeEvent];
 
   /**
    * Emitted when the WebSocket closes the connection
