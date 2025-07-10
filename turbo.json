@@ -27,11 +27,6 @@
       "outputs": ["dist/**"],
       "cache": true
     },
-    "extract:libs": {
-      "dependsOn": ["^extract:libs"],
-      "outputs": ["deps/**"],
-      "cache": false
-    },
     "type-check": {
       "dependsOn": ["//#biome:check"],
       "outputs": [],

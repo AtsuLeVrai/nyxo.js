@@ -71,7 +71,7 @@
     "@nyxojs/rest": "workspace:^",
     "eventemitter3": "^5.0.1",
     "ws": "^8.18.3",
-    "zod": "^3.25.74"
+    "zod": "^3.25.76"
   },
   "optionalDependencies": {
     "@nyxojs/zlib": "workspace:^",
@@ -80,7 +80,7 @@
     "erlpack": "^0.1.4"
   },
   "devDependencies": {
-    "@types/node": "^24.0.10",
+    "@types/node": "^24.0.13",
     "@types/ws": "^8.18.1",
     "rimraf": "^6.0.1",
     "tsdown": "^0.12.9",

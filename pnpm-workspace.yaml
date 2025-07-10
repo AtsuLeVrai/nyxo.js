@@ -1,14 +1,10 @@
 packages:
   - apps/*
   - packages/*
-  - scripts
 onlyBuiltDependencies:
   - '@biomejs/biome'
-  - '@tailwindcss/oxide'
-  - '@vercel/speed-insights'
   - bufferutil
   - erlpack
-  - esbuild
   - sharp
 publicHoistPattern:
   - '@nyxojs/zlib'

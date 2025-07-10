@@ -3,8 +3,8 @@
 	url = https://github.com/discord/discord-api-docs.git
 	branch = main
 [submodule "libs/zlib"]
-	path = libs/zlib
+	path = packages/zlib/deps/zlib
 	url = https://github.com/madler/zlib.git
 [submodule "libs/zstd"]
-	path = libs/zstd
+	path = packages/zstd/deps/zstd
 	url = https://github.com/facebook/zstd
