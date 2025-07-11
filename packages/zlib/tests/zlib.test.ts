@@ -1,25 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_CHUNK_SIZE,
-  InflateStream,
-  InflateStreamOptions,
-  InflateSync,
-  InflateSyncOptions,
-  inflateSync,
-  Z_BUF_ERROR,
-  Z_DATA_ERROR,
-  Z_ERRNO,
-  Z_FINISH,
-  Z_FULL_FLUSH,
-  Z_MEM_ERROR,
-  Z_NEED_DICT,
-  Z_NO_FLUSH,
-  Z_OK,
-  Z_PARTIAL_FLUSH,
-  Z_STREAM_END,
-  Z_STREAM_ERROR,
-  Z_SYNC_FLUSH,
   ZLIB_SUFFIX,
+  ZlibStream,
+  ZlibStreamOptions,
 } from "../src/index.js";
 
 // Test data - using simple buffers for basic functionality testing
@@ -36,110 +20,84 @@ const DATA_WITH_SUFFIX = Buffer.concat([
   Buffer.from([0x00, 0x00, 0xff, 0xff]),
 ]);
 
-describe("InflateStreamOptions", () => {
+describe("ZlibStreamOptions", () => {
   it("should parse valid options correctly", () => {
     const options = {
       windowBits: 15,
       chunkSize: 65536,
     };
 
-    const result = InflateStreamOptions.parse(options);
+    const result = ZlibStreamOptions.parse(options);
     expect(result.windowBits).toBe(15);
     expect(result.chunkSize).toBe(65536);
   });
 
   it("should use default values when no options provided", () => {
-    const result = InflateStreamOptions.parse({});
+    const result = ZlibStreamOptions.parse({});
     expect(result.windowBits).toBe(15);
     expect(result.chunkSize).toBe(128 * 1024);
   });
 
   it("should reject invalid windowBits values", () => {
     expect(() => {
-      InflateStreamOptions.parse({ windowBits: -20 }); // Below minimum
+      ZlibStreamOptions.parse({ windowBits: -20 }); // Below minimum
     }).toThrow();
 
     expect(() => {
-      InflateStreamOptions.parse({ windowBits: 50 }); // Above maximum
+      ZlibStreamOptions.parse({ windowBits: 50 }); // Above maximum
     }).toThrow();
 
     expect(() => {
-      InflateStreamOptions.parse({ windowBits: 1.5 }); // Non-integer
+      ZlibStreamOptions.parse({ windowBits: 1.5 }); // Non-integer
     }).toThrow();
   });
 
   it("should reject invalid chunkSize values", () => {
     expect(() => {
-      InflateStreamOptions.parse({ chunkSize: 512 }); // Below minimum
+      ZlibStreamOptions.parse({ chunkSize: 512 }); // Below minimum
     }).toThrow();
 
     expect(() => {
-      InflateStreamOptions.parse({ chunkSize: 2000000 }); // Above maximum
+      ZlibStreamOptions.parse({ chunkSize: 2000000 }); // Above maximum
     }).toThrow();
 
     expect(() => {
-      InflateStreamOptions.parse({ chunkSize: 1.5 }); // Non-integer
+      ZlibStreamOptions.parse({ chunkSize: 1.5 }); // Non-integer
     }).toThrow();
   });
 
   it("should accept valid windowBits range", () => {
     expect(() => {
-      InflateStreamOptions.parse({ windowBits: -15 });
+      ZlibStreamOptions.parse({ windowBits: -15 });
     }).not.toThrow();
 
     expect(() => {
-      InflateStreamOptions.parse({ windowBits: 31 });
+      ZlibStreamOptions.parse({ windowBits: 31 });
     }).not.toThrow();
 
     expect(() => {
-      InflateStreamOptions.parse({ windowBits: 47 });
+      ZlibStreamOptions.parse({ windowBits: 47 });
     }).not.toThrow();
   });
 });
 
-describe("InflateSyncOptions", () => {
-  it("should parse valid options correctly", () => {
-    const options = {
-      windowBits: 15,
-    };
-
-    const result = InflateSyncOptions.parse(options);
-    expect(result.windowBits).toBe(15);
-  });
-
-  it("should use default values when no options provided", () => {
-    const result = InflateSyncOptions.parse({});
-    expect(result.windowBits).toBe(15);
-  });
-
-  it("should reject invalid windowBits values", () => {
-    expect(() => {
-      InflateSyncOptions.parse({ windowBits: -20 });
-    }).toThrow();
-
-    expect(() => {
-      InflateSyncOptions.parse({ windowBits: 50 });
-    }).toThrow();
-  });
-});
-
-describe("InflateStream", () => {
-  let inflateStream: InflateStream;
+describe("ZlibStream", () => {
+  let zlibStream: ZlibStream;
 
   beforeEach(() => {
-    inflateStream = new InflateStream();
+    zlibStream = new ZlibStream();
   });
 
   afterEach(() => {
-    if (inflateStream && !inflateStream.destroyed) {
-      inflateStream.close();
+    if (zlibStream && !zlibStream.destroyed) {
+      zlibStream.close();
     }
   });
 
   describe("constructor", () => {
     it("should create an instance with default options", () => {
-      const stream = new InflateStream();
-      expect(stream).toBeInstanceOf(InflateStream);
+      const stream = new ZlibStream();
+      expect(stream).toBeInstanceOf(ZlibStream);
       expect(stream.bytesRead).toBe(0);
       expect(stream.bytesWritten).toBe(0);
       expect(stream.destroyed).toBe(false);
@@ -152,92 +110,92 @@ describe("InflateStream", () => {
         windowBits: -15,
         chunkSize: 32768,
       };
-      const stream = new InflateStream(options);
-      expect(stream).toBeInstanceOf(InflateStream);
+      const stream = new ZlibStream(options);
+      expect(stream).toBeInstanceOf(ZlibStream);
       expect(stream.destroyed).toBe(false);
       stream.close();
     });
 
     it("should throw error with invalid options", () => {
       expect(() => {
-        new InflateStream({ windowBits: -20 });
-      }).toThrow(/Invalid InflateStream options/);
+        new ZlibStream({ windowBits: -20 });
+      }).toThrow(/Invalid ZlibStream options/);
     });
   });
 
   describe("properties", () => {
     it("should have initial state properties", () => {
-      expect(inflateStream.bytesRead).toBe(0);
-      expect(inflateStream.bytesWritten).toBe(0);
-      expect(inflateStream.destroyed).toBe(false);
-      expect(inflateStream.messagesProcessed).toBe(0);
-      expect(typeof inflateStream.error).toBe("number");
-      expect(inflateStream.finished).toBe(false);
+      expect(zlibStream.bytesRead).toBe(0);
+      expect(zlibStream.bytesWritten).toBe(0);
+      expect(zlibStream.destroyed).toBe(false);
+      expect(zlibStream.messagesProcessed).toBe(0);
+      expect(typeof zlibStream.error).toBe("number");
+      expect(zlibStream.finished).toBe(false);
     });
 
     it("should return correct values when destroyed", () => {
-      inflateStream.close();
-      expect(inflateStream.destroyed).toBe(true);
-      expect(inflateStream.error).toBe(-1);
-      expect(inflateStream.message).toBe(null);
-      expect(inflateStream.finished).toBe(true);
+      zlibStream.close();
+      expect(zlibStream.destroyed).toBe(true);
+      expect(zlibStream.error).toBe(-1);
+      expect(zlibStream.message).toBe(null);
+      expect(zlibStream.finished).toBe(true);
     });
   });
 
   describe("push method", () => {
     it("should handle empty data gracefully", () => {
-      const result = inflateStream.push(Buffer.alloc(0));
+      const result = zlibStream.push(Buffer.alloc(0));
       expect(result).toBe(false);
-      expect(inflateStream.bytesRead).toBe(0);
+      expect(zlibStream.bytesRead).toBe(0);
     });
 
     it("should throw error when pushing to destroyed stream", () => {
-      inflateStream.close();
+      zlibStream.close();
       expect(() => {
-        inflateStream.push(TEST_DATA);
-      }).toThrow(/Cannot push data to destroyed InflateStream/);
+        zlibStream.push(TEST_DATA);
+      }).toThrow(/Cannot push data to destroyed ZlibStream/);
     });
 
     it("should update bytesRead when processing data", () => {
-      const initialBytes = inflateStream.bytesRead;
+      const initialBytes = zlibStream.bytesRead;
       try {
-        inflateStream.push(TEST_DATA);
-        expect(inflateStream.bytesRead).toBe(initialBytes + TEST_DATA.length);
+        zlibStream.push(TEST_DATA);
+        expect(zlibStream.bytesRead).toBe(initialBytes + TEST_DATA.length);
       } catch (_error) {
         // Expected to fail with invalid data, but bytesRead should still be updated
-        expect(inflateStream.bytesRead).toBe(initialBytes + TEST_DATA.length);
+        expect(zlibStream.bytesRead).toBe(initialBytes + TEST_DATA.length);
       }
     });
 
     it("should handle Uint8Array input", () => {
       const uint8Data = new Uint8Array(TEST_DATA);
       try {
-        const result = inflateStream.push(uint8Data);
+        const result = zlibStream.push(uint8Data);
         expect(typeof result).toBe("boolean");
-        expect(inflateStream.bytesRead).toBe(uint8Data.length);
+        expect(zlibStream.bytesRead).toBe(uint8Data.length);
       } catch (_error) {
         // Expected to fail with invalid data, but should accept Uint8Array
-        expect(inflateStream.bytesRead).toBe(uint8Data.length);
+        expect(zlibStream.bytesRead).toBe(uint8Data.length);
       }
     });
 
     it("should handle data with zlib suffix", () => {
       try {
-        const result = inflateStream.push(DATA_WITH_SUFFIX);
+        const result = zlibStream.push(DATA_WITH_SUFFIX);
         expect(typeof result).toBe("boolean");
-        expect(inflateStream.bytesRead).toBe(DATA_WITH_SUFFIX.length);
+        expect(zlibStream.bytesRead).toBe(DATA_WITH_SUFFIX.length);
       } catch (_error) {
         // Expected to fail with invalid data
-        expect(inflateStream.bytesRead).toBe(DATA_WITH_SUFFIX.length);
+        expect(zlibStream.bytesRead).toBe(DATA_WITH_SUFFIX.length);
       }
     });
 
     it("should handle corrupted data appropriately", () => {
       // The push method may not immediately throw on corrupted data
       // It might return false or process it without immediate error
-      const result = inflateStream.push(MOCK_CORRUPTED_DATA);
+      const result = zlibStream.push(MOCK_CORRUPTED_DATA);
       expect(typeof result).toBe("boolean");
-      expect(inflateStream.bytesRead).toBe(MOCK_CORRUPTED_DATA.length);
+      expect(zlibStream.bytesRead).toBe(MOCK_CORRUPTED_DATA.length);
 
       // The error might surface when trying to get the buffer or during processing
       // This tests that the API handles invalid data gracefully
@@ -246,36 +204,36 @@ describe("InflateStream", () => {
 
   describe("getBuffer method", () => {
     it("should return Buffer instance", () => {
-      const buffer = inflateStream.getBuffer();
+      const buffer = zlibStream.getBuffer();
       expect(buffer).toBeInstanceOf(Buffer);
     });
 
     it("should throw error when called on destroyed stream", () => {
-      inflateStream.close();
+      zlibStream.close();
       expect(() => {
-        inflateStream.getBuffer();
-      }).toThrow(/Cannot retrieve buffer from destroyed InflateStream/);
+        zlibStream.getBuffer();
+      }).toThrow(/Cannot retrieve buffer from destroyed ZlibStream/);
     });
 
     it("should return same data on multiple calls before clearBuffer", () => {
-      const buffer1 = inflateStream.getBuffer();
-      const buffer2 = inflateStream.getBuffer();
+      const buffer1 = zlibStream.getBuffer();
+      const buffer2 = zlibStream.getBuffer();
       expect(buffer1.equals(buffer2)).toBe(true);
     });
   });
 
   describe("clearBuffer method", () => {
     it("should clear internal buffer", () => {
-      const bufferBefore = inflateStream.getBuffer();
-      inflateStream.clearBuffer();
-      const bufferAfter = inflateStream.getBuffer();
+      const bufferBefore = zlibStream.getBuffer();
+      zlibStream.clearBuffer();
+      const bufferAfter = zlibStream.getBuffer();
       expect(bufferAfter.length).toBeLessThanOrEqual(bufferBefore.length);
     });
 
     it("should not throw error when called on destroyed stream", () => {
-      inflateStream.close();
+      zlibStream.close();
       expect(() => {
-        inflateStream.clearBuffer();
+        zlibStream.clearBuffer();
       }).not.toThrow();
     });
   });
@@ -283,14 +241,14 @@ describe("InflateStream", () => {
   describe("flush method", () => {
     it("should not throw error during normal operation", () => {
       expect(() => {
-        inflateStream.flush();
+        zlibStream.flush();
       }).not.toThrow();
     });
 
     it("should not throw error when called on destroyed stream", () => {
-      inflateStream.close();
+      zlibStream.close();
       expect(() => {
-        inflateStream.flush();
+        zlibStream.flush();
       }).not.toThrow();
     });
   });
@@ -298,183 +256,74 @@ describe("InflateStream", () => {
   describe("reset method", () => {
     it("should reset stream state", () => {
       try {
-        inflateStream.push(TEST_DATA);
+        zlibStream.push(TEST_DATA);
       } catch (_error) {
         // Expected to fail but should still update bytesRead
       }
 
-      const bytesReadBefore = inflateStream.bytesRead;
-      inflateStream.reset();
+      const bytesReadBefore = zlibStream.bytesRead;
+      zlibStream.reset();
 
-      expect(inflateStream.bytesRead).toBe(0);
-      expect(inflateStream.bytesWritten).toBe(0);
-      expect(inflateStream.messagesProcessed).toBe(0);
+      expect(zlibStream.bytesRead).toBe(0);
+      expect(zlibStream.bytesWritten).toBe(0);
+      expect(zlibStream.messagesProcessed).toBe(0);
       expect(bytesReadBefore).toBeGreaterThan(0);
     });
 
     it("should not throw error when called on destroyed stream", () => {
-      inflateStream.close();
+      zlibStream.close();
       expect(() => {
-        inflateStream.reset();
+        zlibStream.reset();
       }).not.toThrow();
     });
 
     it("should allow reuse after reset", () => {
       try {
-        inflateStream.push(TEST_DATA);
+        zlibStream.push(TEST_DATA);
       } catch (_error) {
         // Expected
       }
 
-      inflateStream.reset();
+      zlibStream.reset();
 
       try {
-        const result = inflateStream.push(TEST_DATA);
+        const result = zlibStream.push(TEST_DATA);
         expect(typeof result).toBe("boolean");
       } catch (_error) {
         // Expected to fail with invalid data
       }
-      expect(inflateStream.bytesRead).toBeGreaterThan(0);
+      expect(zlibStream.bytesRead).toBeGreaterThan(0);
     });
   });
 
   describe("close method", () => {
     it("should mark stream as destroyed", () => {
-      expect(inflateStream.destroyed).toBe(false);
-      inflateStream.close();
-      expect(inflateStream.destroyed).toBe(true);
+      expect(zlibStream.destroyed).toBe(false);
+      zlibStream.close();
+      expect(zlibStream.destroyed).toBe(true);
     });
 
     it("should reset all counters", () => {
       try {
-        inflateStream.push(TEST_DATA);
+        zlibStream.push(TEST_DATA);
       } catch (_error) {
         // Expected
       }
 
-      inflateStream.close();
+      zlibStream.close();
 
-      expect(inflateStream.bytesRead).toBe(0);
-      expect(inflateStream.bytesWritten).toBe(0);
-      expect(inflateStream.messagesProcessed).toBe(0);
+      expect(zlibStream.bytesRead).toBe(0);
+      expect(zlibStream.bytesWritten).toBe(0);
+      expect(zlibStream.messagesProcessed).toBe(0);
     });
 
     it("should be safe to call multiple times", () => {
-      inflateStream.close();
+      zlibStream.close();
       expect(() => {
-        inflateStream.close();
+        zlibStream.close();
       }).not.toThrow();
-      expect(inflateStream.destroyed).toBe(true);
+      expect(zlibStream.destroyed).toBe(true);
     });
-  });
-});
-
-describe("InflateSync", () => {
-  let inflateSync: InflateSync;
-
-  beforeEach(() => {
-    inflateSync = new InflateSync();
-  });
-
-  describe("constructor", () => {
-    it("should create an instance successfully", () => {
-      const sync = new InflateSync();
-      expect(sync).toBeInstanceOf(InflateSync);
-    });
-  });
-
-  describe("inflate method", () => {
-    it("should throw error with empty data", () => {
-      expect(() => {
-        inflateSync.inflate(Buffer.alloc(0));
-      }).toThrow(/Input data cannot be empty/);
-    });
-
-    it("should throw error with corrupted data", () => {
-      expect(() => {
-        inflateSync.inflate(MOCK_CORRUPTED_DATA);
-      }).toThrow(/Synchronous decompression failed/);
-    });
-
-    it("should throw error with invalid test data", () => {
-      expect(() => {
-        inflateSync.inflate(TEST_DATA);
-      }).toThrow(/Synchronous decompression failed/);
-    });
-
-    it("should handle Uint8Array input type", () => {
-      const uint8Data = new Uint8Array(MOCK_CORRUPTED_DATA);
-      expect(() => {
-        inflateSync.inflate(uint8Data);
-      }).toThrow(/Synchronous decompression failed/);
-    });
-
-    it("should accept custom options", () => {
-      const options = { windowBits: -15 };
-      expect(() => {
-        inflateSync.inflate(MOCK_CORRUPTED_DATA, options);
-      }).toThrow(/Synchronous decompression failed/);
-    });
-
-    it("should throw error with invalid options", () => {
-      const invalidOptions = { windowBits: -20 };
-      expect(() => {
-        inflateSync.inflate(TEST_DATA, invalidOptions);
-      }).toThrow(/Invalid inflation options/);
-    });
-  });
-});
-
-describe("inflateSync function", () => {
-  it("should throw error with empty data", () => {
-    expect(() => {
-      inflateSync(Buffer.alloc(0));
-    }).toThrow(/Input data cannot be empty/);
-  });
-
-  it("should throw error with corrupted data", () => {
-    expect(() => {
-      inflateSync(MOCK_CORRUPTED_DATA);
-    }).toThrow(/Synchronous decompression operation failed/);
-  });
-
-  it("should throw error with invalid test data", () => {
-    expect(() => {
-      inflateSync(TEST_DATA);
-    }).toThrow(/Synchronous decompression operation failed/);
-  });
-
-  it("should handle Uint8Array input type", () => {
-    const uint8Data = new Uint8Array(MOCK_CORRUPTED_DATA);
-    expect(() => {
-      inflateSync(uint8Data);
-    }).toThrow(/Synchronous decompression operation failed/);
-  });
-
-  it("should accept custom options", () => {
-    const options = { windowBits: -15 };
-    expect(() => {
-      inflateSync(MOCK_CORRUPTED_DATA, options);
-    }).toThrow(/Synchronous decompression operation failed/);
-  });
-
-  it("should throw error with invalid options", () => {
-    const invalidOptions = { windowBits: -20 };
-    expect(() => {
-      inflateSync(TEST_DATA, invalidOptions);
-    }).toThrow(/Invalid synchronous inflation options/);
-  });
-
-  it("should produce same error behavior as InflateSync class", () => {
-    const classInstance = new InflateSync();
-
-    expect(() => {
-      inflateSync(MOCK_CORRUPTED_DATA);
-    }).toThrow();
-
-    expect(() => {
-      classInstance.inflate(MOCK_CORRUPTED_DATA);
-    }).toThrow();
   });
 });
 
@@ -492,67 +341,11 @@ describe("Constants", () => {
     expect(typeof DEFAULT_CHUNK_SIZE).toBe("number");
     expect(DEFAULT_CHUNK_SIZE).toBeGreaterThan(0);
   });
-
-  it("should export flush mode constants", () => {
-    expect(typeof Z_NO_FLUSH).toBe("number");
-    expect(typeof Z_PARTIAL_FLUSH).toBe("number");
-    expect(typeof Z_SYNC_FLUSH).toBe("number");
-    expect(typeof Z_FULL_FLUSH).toBe("number");
-    expect(typeof Z_FINISH).toBe("number");
-
-    // These should be different values
-    const flushModes = [
-      Z_NO_FLUSH,
-      Z_PARTIAL_FLUSH,
-      Z_SYNC_FLUSH,
-      Z_FULL_FLUSH,
-      Z_FINISH,
-    ];
-    const uniqueValues = new Set(flushModes);
-    expect(uniqueValues.size).toBe(flushModes.length);
-  });
-
-  it("should export result code constants", () => {
-    expect(typeof Z_OK).toBe("number");
-    expect(typeof Z_STREAM_END).toBe("number");
-    expect(typeof Z_NEED_DICT).toBe("number");
-    expect(typeof Z_ERRNO).toBe("number");
-    expect(typeof Z_STREAM_ERROR).toBe("number");
-    expect(typeof Z_DATA_ERROR).toBe("number");
-    expect(typeof Z_MEM_ERROR).toBe("number");
-    expect(typeof Z_BUF_ERROR).toBe("number");
-
-    // These should be different values
-    const resultCodes = [
-      Z_OK,
-      Z_STREAM_END,
-      Z_NEED_DICT,
-      Z_ERRNO,
-      Z_STREAM_ERROR,
-      Z_DATA_ERROR,
-      Z_MEM_ERROR,
-      Z_BUF_ERROR,
-    ];
-    const uniqueValues = new Set(resultCodes);
-    expect(uniqueValues.size).toBe(resultCodes.length);
-  });
-
-  it("should have expected constant values", () => {
-    // Z_OK should typically be 0
-    expect(Z_OK).toBe(0);
-
-    // Error codes should typically be negative
-    expect(Z_ERRNO).toBeLessThan(0);
-    expect(Z_STREAM_ERROR).toBeLessThan(0);
-    expect(Z_DATA_ERROR).toBeLessThan(0);
-    expect(Z_MEM_ERROR).toBeLessThan(0);
-    expect(Z_BUF_ERROR).toBeLessThan(0);
-  });
 });
 
 describe("Integration Tests", () => {
   it("should handle streaming with multiple chunks", () => {
-    const stream = new InflateStream();
+    const stream = new ZlibStream();
 
     try {
       // Simulate processing multiple chunks - should not crash
@@ -575,7 +368,7 @@ describe("Integration Tests", () => {
   });
 
   it("should maintain consistent state across operations", () => {
-    const stream = new InflateStream();
+    const stream = new ZlibStream();
 
     try {
       const initialBytesRead = stream.bytesRead;
@@ -604,10 +397,10 @@ describe("Integration Tests", () => {
       chunkSize: 16384,
     };
 
-    const stream = new InflateStream(customOptions);
+    const stream = new ZlibStream(customOptions);
 
     try {
-      expect(stream).toBeInstanceOf(InflateStream);
+      expect(stream).toBeInstanceOf(ZlibStream);
       try {
         stream.push(TEST_DATA);
       } catch (_error) {
@@ -621,7 +414,7 @@ describe("Integration Tests", () => {
   });
 
   it("should handle data with Discord zlib suffix", () => {
-    const stream = new InflateStream();
+    const stream = new ZlibStream();
 
     try {
       try {
@@ -641,7 +434,7 @@ describe("Integration Tests", () => {
 
 describe("Memory Management", () => {
   it("should properly clean up resources on close", () => {
-    const stream = new InflateStream();
+    const stream = new ZlibStream();
 
     try {
       stream.push(TEST_DATA);
@@ -658,7 +451,7 @@ describe("Memory Management", () => {
   });
 
   it("should handle multiple reset operations", () => {
-    const stream = new InflateStream();
+    const stream = new ZlibStream();
 
     try {
       // Process some data
@@ -689,7 +482,7 @@ describe("Memory Management", () => {
   });
 
   it("should prevent operations after destruction", () => {
-    const stream = new InflateStream();
+    const stream = new ZlibStream();
     stream.close();
 
     expect(() => stream.push(TEST_DATA)).toThrow();
@@ -717,7 +510,7 @@ describe("Discord Gateway Specific Features", () => {
   });
 
   it("should work with streaming compression context", () => {
-    const stream = new InflateStream();
+    const stream = new ZlibStream();
 
     try {
       // Test that the stream maintains context across multiple operations
@@ -750,74 +543,42 @@ describe("Discord Gateway Specific Features", () => {
 describe("Error Handling", () => {
   it("should provide meaningful error messages", () => {
     expect(() => {
-      new InflateStream({ windowBits: -20 });
-    }).toThrow(/Invalid InflateStream options/);
+      new ZlibStream({ windowBits: -20 });
+    }).toThrow(/Invalid ZlibStream options/);
 
     expect(() => {
-      new InflateStream({ chunkSize: 500 });
-    }).toThrow(/Invalid InflateStream options/);
-
-    const sync = new InflateSync();
-    expect(() => {
-      sync.inflate(Buffer.alloc(0));
-    }).toThrow(/Input data cannot be empty/);
+      new ZlibStream({ chunkSize: 500 });
+    }).toThrow(/Invalid ZlibStream options/);
   });
 
   it("should handle native addon loading errors gracefully", () => {
     // These tests ensure the error handling paths work correctly
     // The actual native addon should be available in the test environment
-    expect(InflateStream).toBeDefined();
-    expect(InflateSync).toBeDefined();
-    expect(inflateSync).toBeDefined();
+    expect(ZlibStream).toBeDefined();
   });
 });
 
 describe("API Surface", () => {
   it("should export all expected classes and functions", () => {
-    expect(InflateStream).toBeDefined();
-    expect(InflateSync).toBeDefined();
-    expect(inflateSync).toBeDefined();
-    expect(InflateStreamOptions).toBeDefined();
-    expect(InflateSyncOptions).toBeDefined();
+    expect(ZlibStream).toBeDefined();
+    expect(ZlibStreamOptions).toBeDefined();
   });
 
   it("should export all expected constants", () => {
     expect(ZLIB_SUFFIX).toBeDefined();
     expect(DEFAULT_CHUNK_SIZE).toBeDefined();
-
-    // Flush modes
-    expect(Z_NO_FLUSH).toBeDefined();
-    expect(Z_PARTIAL_FLUSH).toBeDefined();
-    expect(Z_SYNC_FLUSH).toBeDefined();
-    expect(Z_FULL_FLUSH).toBeDefined();
-    expect(Z_FINISH).toBeDefined();
-
-    // Result codes
-    expect(Z_OK).toBeDefined();
-    expect(Z_STREAM_END).toBeDefined();
-    expect(Z_NEED_DICT).toBeDefined();
-    expect(Z_ERRNO).toBeDefined();
-    expect(Z_STREAM_ERROR).toBeDefined();
-    expect(Z_DATA_ERROR).toBeDefined();
-    expect(Z_MEM_ERROR).toBeDefined();
-    expect(Z_BUF_ERROR).toBeDefined();
   });
 
   it("should have proper type definitions", () => {
-    expect(typeof InflateStream).toBe("function");
-    expect(typeof InflateSync).toBe("function");
-    expect(typeof inflateSync).toBe("function");
-    expect(typeof InflateStreamOptions.parse).toBe("function");
-    expect(typeof InflateSyncOptions.parse).toBe("function");
+    expect(typeof ZlibStream).toBe("function");
+    expect(typeof ZlibStreamOptions.parse).toBe("function");
   });
 
   it("should have consistent API with expected signatures", () => {
     // Test that constructors can be called without throwing type errors
-    const stream = new InflateStream();
-    const sync = new InflateSync();
+    const stream = new ZlibStream();
 
-    expect(stream).toBeInstanceOf(InflateStream);
-    expect(sync).toBeInstanceOf(InflateSync);
+    expect(stream).toBeInstanceOf(ZlibStream);
 
     stream.close();
   });

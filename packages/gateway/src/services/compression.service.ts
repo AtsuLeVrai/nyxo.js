@@ -1,6 +1,6 @@
 import { OptionalDeps } from "@nyxojs/core";
-import type { InflateStream as ZlibInflateStream } from "@nyxojs/zlib";
-import type { InflateStream as ZstdInflateStream } from "@nyxojs/zstd";
+import type { ZlibStream } from "@nyxojs/zlib";
+import type { ZstdStream } from "@nyxojs/zstd";
 import { z } from "zod/v4";
 
 /**
@@ -84,7 +84,7 @@ export class CompressionService {
    *
    * @internal
    */
-  #zstdInflate: ZstdInflateStream | null = null;
+  #zstdInflate: ZstdStream | null = null;
 
   /**
    * The high-performance zlib inflate stream instance if using zlib-stream.
@@ -101,7 +101,7 @@ export class CompressionService {
    *
    * @internal
    */
-  #zlibInflate: ZlibInflateStream | null = null;
+  #zlibInflate: ZlibStream | null = null;
 
   /**
    * Creates a new CompressionService instance.
@@ -354,7 +354,7 @@ export class CompressionService {
   async #initializeZlib(): Promise<void> {
     // Attempt to dynamically import the @nyxojs/zlib module
     const result = await OptionalDeps.safeImport<{
-      InflateStream: typeof ZlibInflateStream;
+      ZlibStream: typeof ZlibStream;
     }>("@nyxojs/zlib");
 
     // Check if the import was successful
@@ -369,7 +369,7 @@ export class CompressionService {
       // Create high-performance InflateStream instance with optimized options
       // - chunkSize: Controls buffer allocation size for optimal memory usage
       // - windowBits: Standard zlib format (15) for Discord Gateway compatibility
-      this.#zlibInflate = new result.data.InflateStream();
+      this.#zlibInflate = new result.data.ZlibStream();
 
       // Validate the inflater was created successfully
       if (!this.#zlibInflate) {
@@ -426,7 +426,7 @@ export class CompressionService {
   async #initializeZstd(): Promise<void> {
     // Attempt to dynamically import the @nyxojs/zstd module
     const result = await OptionalDeps.safeImport<{
-      InflateStream: typeof ZstdInflateStream;
+      ZstdStream: typeof ZstdStream;
     }>("@nyxojs/zstd");
 
     // Check if the import was successful
@@ -439,7 +439,7 @@ export class CompressionService {
 
     try {
       // Create high-performance InflateStream instance with default optimized options
-      this.#zstdInflate = new result.data.InflateStream();
+      this.#zstdInflate = new result.data.ZstdStream();
 
       // Validate the inflater was created successfully
       if (!this.#zstdInflate) {

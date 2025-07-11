@@ -4,26 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Nyxo.js is an enterprise-grade Discord bot framework built with TypeScript. It's designed as a modular ecosystem of packages that can be used together as a complete framework or independently as specialized libraries.
+Nyxo.js is an enterprise-grade Discord bot framework built with TypeScript. It's designed as a modular ecosystem of
+packages that can be used together as a complete framework or independently as specialized libraries.
 
 ## Common Commands
 
 ### Development Setup
+
 ```bash
 # Initial setup (required for first time)
 pnpm run setup
-
-# Install dependencies only
-pnpm install -r
-
-# Extract native library dependencies
-pnpm run extract:libs
-
-# Initialize git submodules
-pnpm run submodules:init
 ```
 
 ### Building
+
 ```bash
 # Development build (faster, includes source maps)
 pnpm run build:dev
@@ -39,6 +33,7 @@ pnpm run clean
 ```
 
 ### Testing
+
 ```bash
 # Run all tests once
 pnpm run test
@@ -57,6 +52,7 @@ pnpm run test:bench
 ```
 
 ### Linting and Type Checking
+
 ```bash
 # Run Biome linter with auto-fix
 pnpm run biome:check
@@ -66,6 +62,7 @@ pnpm run type-check
 ```
 
 ### Running Individual Tests
+
 ```bash
 # Run specific test file
 pnpm vitest packages/core/tests/snowflake.util.test.ts
@@ -80,6 +77,7 @@ pnpm vitest --grep "snowflake"
 ## Architecture Overview
 
 ### Package Structure
+
 The project is organized as a monorepo with specialized packages:
 
 - **`packages/nyxojs`** - Main framework package that aggregates all other packages
@@ -102,6 +100,7 @@ The project is organized as a monorepo with specialized packages:
 ### Core Client Architecture
 
 The main `Client` class orchestrates all components:
+
 - **REST client** for API requests with automatic rate limiting
 - **Gateway client** for WebSocket connections with automatic reconnection
 - **Cache manager** for efficient entity storage and retrieval
@@ -110,6 +109,7 @@ The main `Client` class orchestrates all components:
 ### Native Dependencies
 
 The project includes native Node.js modules for compression:
+
 - `packages/zlib` - Compiled zlib for standard compression
 - `packages/zstd` - Compiled zstd for superior compression performance
 
@@ -118,23 +118,27 @@ These require compilation and are extracted from the `libs/` directory during se
 ## Development Workflow
 
 ### Project Setup Flow
+
 1. Clone repository with submodules: `git clone --recurse-submodules`
 2. Run initial setup: `pnpm run setup`
 3. This automatically runs: submodule init → extract native libs → install deps → dev build
 
 ### Testing Strategy
+
 - Tests are located in `packages/*/tests/` directories
 - Uses Vitest for fast, ESM-compatible testing
 - Coverage reports generated in `./coverage/`
 - Benchmarks available for performance-critical code
 
 ### Build System
+
 - Uses Turbo for fast, parallel builds across packages
 - Development builds include source maps and faster compilation
 - Production builds are optimized with no source maps
 - Native modules built separately with node-gyp
 
 ### Code Quality
+
 - Biome for linting and formatting (configured in `biome.json`)
 - Strict TypeScript configuration
 - Husky pre-commit hooks for code quality
@@ -143,19 +147,27 @@ These require compilation and are extracted from the `libs/` directory during se
 ## Important Notes
 
 ### Memory Management
-The example bot (`apps/bot/`) includes comprehensive memory monitoring and cleanup patterns. This is crucial for long-running Discord bots to prevent memory leaks.
+
+The example bot (`apps/bot/`) includes comprehensive memory monitoring and cleanup patterns. This is crucial for
+long-running Discord bots to prevent memory leaks.
 
 ### Compression Configuration
+
 The framework supports multiple compression types:
+
 - `zlib-stream` - Standard compression
 - `zstd-stream` - Superior compression (recommended)
 - Configure via client options: `compressionType: "zstd-stream"`
 
 ### Intent Management
-Discord intents control what events your bot receives. The framework provides `GatewayIntentsBits` enum for type-safe intent configuration. Only enable intents you actually need to minimize memory usage.
+
+Discord intents control what events your bot receives. The framework provides `GatewayIntentsBits` enum for type-safe
+intent configuration. Only enable intents you actually need to minimize memory usage.
 
 ### Error Handling
+
 The framework includes comprehensive error handling patterns:
+
 - Zod validation with pretty error messages
 - Graceful shutdown handlers
 - Automatic retry mechanisms for network operations

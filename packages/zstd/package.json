@@ -61,12 +61,11 @@
   ],
   "scripts": {
     "install": "node-gyp-build",
-    "prebuild": "pnpm run extract:libs",
     "prepublishOnly": "pnpm run build:prod",
     "clean": "node-gyp clean && rimraf dist",
     "build:dev": "rimraf dist && tsc -p tsconfig.json",
-    "build:prod": "pnpm run extract:libs && pnpm run build:native && tsdown",
     "build:native": "node-gyp rebuild",
+    "build:prod": "pnpm run build:native && tsdown",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
