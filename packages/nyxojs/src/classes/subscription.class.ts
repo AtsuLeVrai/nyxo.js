@@ -21,7 +21,7 @@ import { User } from "./user.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/subscription}
  */
-@Cacheable("subscriptions")
+@Cacheable<SubscriptionEntity>("subscriptions", (data) => data.id)
 export class Subscription
   extends BaseClass<SubscriptionEntity>
   implements Enforce<PropsToCamel<SubscriptionEntity>>

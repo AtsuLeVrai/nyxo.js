@@ -22,7 +22,7 @@ import type { Enforce, PropsToCamel } from "../types/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/entitlement}
  */
-@Cacheable("entitlements")
+@Cacheable<EntitlementEntity>("entitlements", (data) => data.id)
 export class Entitlement
   extends BaseClass<EntitlementEntity>
   implements Enforce<PropsToCamel<EntitlementEntity>>

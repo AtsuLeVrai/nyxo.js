@@ -278,7 +278,7 @@ export class ThreadMember
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object}
  */
-@Cacheable("channels")
+@Cacheable<ChannelEntity>("channels", (entity) => entity.id)
 export class Channel
   extends BaseClass<ChannelEntity>
   implements Enforce<PropsToCamel<ChannelEntity>>

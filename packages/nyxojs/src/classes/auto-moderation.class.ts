@@ -263,7 +263,7 @@ export class AutoModerationActionExecution
  *
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation}
  */
-@Cacheable("autoModerationRules")
+@Cacheable<AutoModerationRuleEntity>("autoModerationRules", (data) => data.id)
 export class AutoModeration
   extends BaseClass<AutoModerationRuleEntity>
   implements Enforce<PropsToCamel<AutoModerationRuleEntity>>

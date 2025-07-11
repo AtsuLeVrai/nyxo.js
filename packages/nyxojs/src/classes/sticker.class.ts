@@ -33,7 +33,7 @@ import { User } from "./user.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker}
  */
-@Cacheable("stickers")
+@Cacheable<StickerEntity>("stickers", (sticker) => sticker.id)
 export class Sticker
   extends BaseClass<StickerEntity>
   implements Enforce<PropsToCamel<StickerEntity>>

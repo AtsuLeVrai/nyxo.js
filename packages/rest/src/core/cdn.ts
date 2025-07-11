@@ -455,19 +455,13 @@ export type StickerFormat = z.infer<typeof StickerFormat>;
  * Base schema for all image URL generation options.
  * Validates common parameters that apply to all CDN requests.
  */
-export const BaseImageOptions = z.object({
+const BaseImageOptions = z.object({
   /**
    * Size in pixels (must be a power of 2 between 16 and 4096).
    * Controls the dimensions of the returned image.
    */
   size: ImageSize.optional(),
 });
-
-/**
- * Base options for all image URL generation.
- * Common parameters that apply to all CDN requests.
- */
-export type BaseImageOptions = z.infer<typeof BaseImageOptions>;
 
 /**
  * Schema for standard image options.

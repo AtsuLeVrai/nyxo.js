@@ -46,7 +46,7 @@ import type { Message } from "./message.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/user}
  */
-@Cacheable("users")
+@Cacheable<UserEntity>("users", (data) => data.id)
 export class User
   extends BaseClass<UserEntity>
   implements Enforce<PropsToCamel<UserEntity>>

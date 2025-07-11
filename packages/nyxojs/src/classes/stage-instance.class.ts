@@ -19,7 +19,7 @@ import type { Enforce, PropsToCamel } from "../types/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance}
  */
-@Cacheable("stageInstances")
+@Cacheable<StageInstanceEntity>("stageInstances", (stage) => stage.id)
 export class StageInstance
   extends BaseClass<StageInstanceEntity>
   implements Enforce<PropsToCamel<StageInstanceEntity>>

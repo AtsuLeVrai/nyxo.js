@@ -65,7 +65,7 @@ import { VoiceState } from "./voice.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#ban-object}
  */
-@Cacheable<BanEntity | GuildBanEntity>("bans", (data) => data.user.id)
+@Cacheable<BanEntity & GuildBanEntity>("bans", (data) => data.user.id)
 export class Ban
   extends BaseClass<BanEntity | GuildBanEntity>
   implements Enforce<PropsToCamel<BanEntity & GuildBanEntity>>
@@ -135,7 +135,7 @@ export class Ban
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object}
  */
-@Cacheable("integrations")
+@Cacheable<GuildBased<IntegrationEntity>>("integrations", (data) => data.id)
 export class Integration
   extends BaseClass<GuildBased<IntegrationEntity>>
   implements Enforce<PropsToCamel<GuildBased<IntegrationEntity>>>
@@ -793,7 +793,7 @@ export class GuildMember
  *
  * @see {@link https://discord.com/developers/docs/resources/guild}
  */
-@Cacheable("guilds")
+@Cacheable<GuildEntity & GuildCreateEntity>("guilds", (data) => data.id)
 export class Guild
   extends BaseClass<GuildEntity | GuildCreateEntity>
   implements Enforce<PropsToCamel<GuildEntity & GuildCreateEntity>>

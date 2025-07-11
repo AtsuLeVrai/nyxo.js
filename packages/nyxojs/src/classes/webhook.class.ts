@@ -40,7 +40,7 @@ import { User } from "./user.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook}
  */
-@Cacheable("webhooks")
+@Cacheable<WebhookEntity>("webhooks", (data) => data.id)
 export class Webhook
   extends BaseClass<WebhookEntity>
   implements Enforce<PropsToCamel<WebhookEntity>>

@@ -40,7 +40,7 @@ import { User } from "./user.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/application}
  */
-@Cacheable("applications")
+@Cacheable<ApplicationEntity>("applications", (data) => data.id)
 export class Application
   extends BaseClass<ApplicationEntity>
   implements Enforce<PropsToCamel<ApplicationEntity>>

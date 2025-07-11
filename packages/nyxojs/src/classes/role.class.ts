@@ -34,7 +34,7 @@ import { GuildMember } from "./guild.class.js";
  *
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object}
  */
-@Cacheable("roles")
+@Cacheable<GuildBased<RoleEntity>>("roles", (data) => data.id)
 export class Role
   extends BaseClass<GuildBased<RoleEntity>>
   implements Enforce<PropsToCamel<GuildBased<RoleEntity>>>

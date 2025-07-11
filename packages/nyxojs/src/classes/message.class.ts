@@ -418,7 +418,7 @@ export class MessageReactionRemoveEmoji
  *
  * @see {@link https://discord.com/developers/docs/resources/message}
  */
-@Cacheable("messages")
+@Cacheable<MessageEntity & MessageCreateEntity>("messages", (data) => data.id)
 export class Message
   extends BaseClass<MessageEntity | MessageCreateEntity>
   implements Enforce<PropsToCamel<MessageCreateEntity>>

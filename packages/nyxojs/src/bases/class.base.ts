@@ -46,20 +46,18 @@ export type KeyExtractor<T extends object> = (data: T) => Snowflake | null;
  */
 export function Cacheable<T extends object>(
   storeKey: keyof CacheManager,
-  keyExtractor?: KeyExtractor<T>,
+  keyExtractor: KeyExtractor<T>,
 ) {
   return (target: object): void => {
     // Store cache store key in metadata
     Reflect.defineMetadata(METADATA_KEYS.CACHE_STORE_KEY, storeKey, target);
 
     // Store key extractor function if provided
-    if (keyExtractor) {
-      Reflect.defineMetadata(
-        METADATA_KEYS.CACHE_KEY_EXTRACTOR,
-        keyExtractor,
-        target,
-      );
-    }
+    Reflect.defineMetadata(
+      METADATA_KEYS.CACHE_KEY_EXTRACTOR,
+      keyExtractor,
+      target,
+    );
   };
 }
 
@@ -181,22 +179,11 @@ export abstract class BaseClass<T extends object> {
     const keyExtractor = Reflect.getMetadata(
       METADATA_KEYS.CACHE_KEY_EXTRACTOR,
       entityConstructor,
-    ) as KeyExtractor<T> | undefined;
+    ) as KeyExtractor<T>;
 
     // Extract the ID using the custom extractor or fallback to default behavior
-    let id: Snowflake | null = null;
-
-    if (keyExtractor) {
-      // Use the custom key extractor
-      id = keyExtractor(this.rawData);
-    } else if ("id" in this.rawData) {
-      // Default behavior: use the id property if available
-      id =
-        typeof this.rawData.id === "string"
-          ? this.rawData.id
-          : String(this.rawData.id);
-    }
-
+    // Use the custom key extractor
+    const id = keyExtractor(this.rawData);
     return id ? { storeKey, id } : null;
   }
 

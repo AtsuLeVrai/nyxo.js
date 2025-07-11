@@ -21,7 +21,7 @@ import { User } from "./user.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard}
  */
-@Cacheable("soundboards")
+@Cacheable<SoundboardSoundEntity>("soundboards", (data) => data.sound_id)
 export class SoundboardSound
   extends BaseClass<SoundboardSoundEntity>
   implements Enforce<PropsToCamel<SoundboardSoundEntity>>

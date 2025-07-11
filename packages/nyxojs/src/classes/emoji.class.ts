@@ -38,7 +38,10 @@ import { User } from "./user.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji}
  */
-@Cacheable("emojis")
+@Cacheable<GuildBased<EmojiEntity>>(
+  "emojis",
+  (data) => data.id ?? `${data.guild_id}:${data.name}`,
+)
 export class Emoji
   extends BaseClass<GuildBased<EmojiEntity>>
   implements Enforce<PropsToCamel<GuildBased<EmojiEntity>>>

@@ -23,7 +23,7 @@ import { User } from "./user.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event}
  */
-@Cacheable("scheduledEvents")
+@Cacheable<GuildScheduledEventEntity>("scheduledEvents", (data) => data.id)
 export class ScheduledEvent
   extends BaseClass<GuildScheduledEventEntity>
   implements Enforce<PropsToCamel<GuildScheduledEventEntity>>
