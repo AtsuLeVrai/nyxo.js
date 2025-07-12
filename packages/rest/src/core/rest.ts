@@ -1942,7 +1942,7 @@ export class Rest extends EventEmitter<RestEvents> {
       }
 
       // Parse JSON response body
-      const result = JSON.parse(responseBody.toString());
+      const result: T = JSON.parse(responseBody.toString());
 
       // Extract error details for failed API responses
       let reason: string | undefined;
