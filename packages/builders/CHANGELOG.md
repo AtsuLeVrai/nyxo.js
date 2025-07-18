@@ -1,5 +1,17 @@
 # @nyxojs/builders
 
+## 0.3.0
+
+### Minor Changes
+
+- update pinned messages handling; add pagination support and enhance role color configurations
+
+### Patch Changes
+
+- Updated dependencies
+  - @nyxojs/core@0.3.0
+  - @nyxojs/rest@0.3.0
+
 ## 0.2.5
 
 ### Patch Changes

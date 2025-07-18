@@ -382,6 +382,37 @@ export interface AvatarDecorationDataEntity {
 }
 
 /**
+ * Represents a user's primary guild for guild tags.
+ * Guild tags allow users to display a small badge next to their display name.
+ * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-primary-guild}
+ */
+export interface UserPrimaryGuildEntity {
+  /**
+   * The ID of the user's primary guild.
+   * If null, the user has no primary guild set.
+   */
+  identity_guild_id?: Snowflake | null;
+
+  /**
+   * Whether the user is displaying the primary guild's server tag.
+   * Can be null if the system clears the identity (e.g., because the server no longer supports tags).
+   */
+  identity_enabled?: boolean | null;
+
+  /**
+   * The text of the user's server tag.
+   * Limited to 4 characters. If null, no tag is displayed.
+   */
+  tag?: string | null;
+
+  /**
+   * The server tag badge hash.
+   * Used to construct the URL for the guild tag badge image.
+   */
+  badge?: string | null;
+}
+
+/**
  * Represents a Discord user account.
  * Users are the base entity in Discord and can exist in multiple guilds,
  * participate in text and voice chat, and more.
@@ -506,4 +537,11 @@ export interface UserEntity {
    * Requires the 'identify' OAuth2 scope
    */
   avatar_decoration_data?: AvatarDecorationDataEntity | null;
+
+  /**
+   * The user's primary guild for guild tags
+   * Contains information about the user's guild tag and badge
+   * Requires the 'identify' OAuth2 scope
+   */
+  primary_guild?: UserPrimaryGuildEntity | null;
 }

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/builders",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "Type-Safe Discord Component Builders with Fluent API",
   "keywords": [
     "discord",
@@ -68,7 +68,7 @@
     "@nyxojs/rest": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^24.0.13",
+    "@types/node": "^24.0.14",
     "rimraf": "^6.0.1",
     "tsdown": "^0.12.9",
     "typescript": "^5.8.3"

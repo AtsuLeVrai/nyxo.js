@@ -223,6 +223,16 @@ export class User
   readonly avatarDecorationData = this.rawData.avatar_decoration_data;
 
   /**
+   * Gets the user's primary guild information for guild tags.
+   *
+   * Guild tags allow users to display a small badge next to their display name.
+   * This includes the tag text and badge image.
+   *
+   * @returns The primary guild data, or null if not set
+   */
+  readonly primaryGuild = this.rawData.primary_guild;
+
+  /**
    * Gets the user's tag, which is a combination of username and discriminator.
    *
    * The tag is in the format `username#discriminator` and provides a unique
@@ -672,6 +682,56 @@ export class User
    */
   hasAvatarDecoration(): boolean {
     return this.avatarDecorationData !== null;
+  }
+
+  /**
+   * Checks if this user has a guild tag configured.
+   *
+   * @returns True if the user has a primary guild set, false otherwise
+   */
+  hasGuildTag(): boolean {
+    return this.primaryGuild !== null && this.primaryGuild !== undefined;
+  }
+
+  /**
+   * Checks if this user is currently displaying their guild tag.
+   *
+   * @returns True if the user has a guild tag and it's enabled, false otherwise
+   */
+  isGuildTagDisplayed(): boolean {
+    return this.hasGuildTag() && this.primaryGuild?.identity_enabled === true;
+  }
+
+  /**
+   * Gets the user's guild tag text.
+   *
+   * @returns The guild tag text (up to 4 characters), or null if not set
+   */
+  getGuildTagText(): string | null {
+    return this.primaryGuild?.tag ?? null;
+  }
+
+  /**
+   * Gets the URL for the user's guild tag badge.
+   *
+   * @returns The URL for the guild tag badge, or null if not set
+   */
+  getGuildTagBadgeUrl(): string | null {
+    return this.primaryGuild?.badge && this.primaryGuild.identity_guild_id
+      ? Cdn.guildIcon(
+          this.primaryGuild.identity_guild_id,
+          this.primaryGuild.badge,
+        )
+      : null;
+  }
+
+  /**
+   * Gets the ID of the guild that this user's tag represents.
+   *
+   * @returns The guild ID, or null if not set
+   */
+  getGuildTagGuildId(): string | null {
+    return this.primaryGuild?.identity_guild_id ?? null;
   }
 
   /**

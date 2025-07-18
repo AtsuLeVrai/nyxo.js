@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/rest",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "Type-Safe Discord REST API Client with Advanced Rate Limiting",
   "keywords": [
     "discord",
@@ -68,14 +68,14 @@
   "dependencies": {
     "@nyxojs/core": "workspace:^",
     "eventemitter3": "^5.0.1",
-    "form-data": "^4.0.3",
+    "form-data": "^4.0.4",
     "mime-types": "^3.0.1",
     "undici": "^7.11.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.4",
-    "@types/node": "^24.0.13",
+    "@types/node": "^24.0.14",
     "rimraf": "^6.0.1",
     "tsdown": "^0.12.9",
     "typescript": "^5.8.3"

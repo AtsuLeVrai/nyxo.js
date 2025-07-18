@@ -31,6 +31,7 @@ import type {
   GroupDmCreateOptions,
   GuildChannelUpdateOptions,
   MessagesFetchParams,
+  PinnedMessagesFetchParams,
   ThreadCreateOptions,
   ThreadFromMessageCreateOptions,
   ThreadUpdateOptions,
@@ -1071,11 +1072,14 @@ export class Channel
   }
 
   /**
-   * Fetches all pinned messages in the channel.
+   * Fetches pinned messages in the channel with pagination support.
    *
+   * @param params - Query parameters for pagination
    * @returns A promise resolving to an array of Message instances
    */
-  async fetchPinnedMessages(): Promise<Message[]> {
+  async fetchPinnedMessages(
+    params?: PinnedMessagesFetchParams,
+  ): Promise<Message[]> {
     if (!this.isTextBased) {
       throw new Error("Cannot fetch pinned messages in a non-text channel");
     }
@@ -1083,6 +1087,7 @@ export class Channel
     try {
       const messages = await this.client.rest.channels.fetchPinnedMessages(
         this.id,
+        params,
       );
       return messages.map((message) => new Message(this.client, message));
     } catch (error) {

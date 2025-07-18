@@ -14,6 +14,34 @@ export enum RoleFlags {
 }
 
 /**
+ * Interface for role colors.
+ * Represents the color configuration for a role, supporting both single colors and gradients.
+ * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-colors-object}
+ */
+export interface RoleColorsEntity {
+  /**
+   * The primary color for the role.
+   * This is the main color and will be used as the single color for non-gradient roles.
+   */
+  primary_color: number;
+
+  /**
+   * The secondary color for the role.
+   * When set, this will make the role a gradient between the primary and secondary colors.
+   * Can only be set if the guild has the ENHANCED_ROLE_COLORS feature.
+   */
+  secondary_color?: number | null;
+
+  /**
+   * The tertiary color for the role.
+   * When set, this will turn the gradient into a holographic style.
+   * Can only be set if the guild has the ENHANCED_ROLE_COLORS feature.
+   * When sending tertiary_color, the API enforces specific values for a holographic style.
+   */
+  tertiary_color?: number | null;
+}
+
+/**
  * Interface for role tags.
  * Tags provide additional information about a role's purpose or source.
  * Tags with type `null` represent booleans. They will be present and set to `null` if they are "true",
@@ -81,9 +109,17 @@ export interface RoleEntity {
 
   /**
    * Integer representation of hexadecimal color code.
+   * @deprecated Use the `colors` field instead. This field is still returned for backwards compatibility.
    * Roles without colors (`color == 0`) do not count towards the final computed color in the user list.
    */
   color: number;
+
+  /**
+   * The role's color configuration.
+   * Contains primary, secondary, and tertiary colors for gradient and holographic effects.
+   * Requires the ENHANCED_ROLE_COLORS guild feature for gradient colors.
+   */
+  colors: RoleColorsEntity;
 
   /**
    * Whether the role is pinned in the user listing.

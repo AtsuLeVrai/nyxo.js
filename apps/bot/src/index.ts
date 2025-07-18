@@ -24,10 +24,6 @@ const client = new Client({
   token: parsed.DISCORD_TOKEN,
   compressionType: "zstd-stream",
   encodingType: "etf",
-  shard: {
-    force: true,
-    totalShards: "auto",
-  },
   intents: [
     GatewayIntentsBits.Guilds,
     GatewayIntentsBits.GuildMessages,

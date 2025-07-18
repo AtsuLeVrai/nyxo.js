@@ -1,5 +1,11 @@
 # @nyxojs/core
 
+## 0.3.0
+
+### Minor Changes
+
+- update pinned messages handling; add pagination support and enhance role color configurations
+
 ## 0.2.4
 
 ### Patch Changes

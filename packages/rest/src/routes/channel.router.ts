@@ -485,6 +485,32 @@ export interface ThreadMembersFetchParams {
 }
 
 /**
+ * Interface for query parameters when fetching pinned messages.
+ * Used to retrieve pinned messages with optional pagination.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/message#get-channel-pins-query-string-params}
+ */
+export interface PinnedMessagesFetchParams {
+  /**
+   * Get pins before this ISO8601 timestamp
+   * Used for pagination to fetch pins before a specific time.
+   */
+  before?: string;
+
+  /**
+   * Get pins after this ISO8601 timestamp
+   * Used for pagination to fetch pins after a specific time.
+   */
+  after?: string;
+
+  /**
+   * Max number of pins to return (1-100)
+   * Controls how many pinned messages to return per request.
+   */
+  limit?: number;
+}
+
+/**
  * Router for Discord Channel-related API endpoints.
  * Provides methods for managing channels, threads, permissions, and invites.
  *
@@ -518,11 +544,11 @@ export class ChannelRouter {
       `/channels/${channelId}/invites` as const,
 
     /**
-     * Route for accessing all pinned messages in a channel.
+     * Route for accessing all pinned messages in a channel with pagination support.
      * @param channelId - The ID of the channel
      */
     channelPinsEndpoint: (channelId: Snowflake) =>
-      `/channels/${channelId}/pins` as const,
+      `/channels/${channelId}/messages/pins` as const,
 
     /**
      * Route for managing a specific pinned message in a channel.
@@ -530,6 +556,25 @@ export class ChannelRouter {
      * @param messageId - The ID of the message to pin/unpin
      */
     channelPinnedMessageEndpoint: (
+      channelId: Snowflake,
+      messageId: Snowflake,
+    ) => `/channels/${channelId}/messages/pins/${messageId}` as const,
+
+    /**
+     * Route for accessing all pinned messages in a channel (deprecated).
+     * @param channelId - The ID of the channel
+     * @deprecated Use channelPinsEndpoint instead
+     */
+    channelPinsEndpointDeprecated: (channelId: Snowflake) =>
+      `/channels/${channelId}/pins` as const,
+
+    /**
+     * Route for managing a specific pinned message in a channel (deprecated).
+     * @param channelId - The ID of the channel
+     * @param messageId - The ID of the message to pin/unpin
+     * @deprecated Use channelPinnedMessageEndpoint instead
+     */
+    channelPinnedMessageEndpointDeprecated: (
       channelId: Snowflake,
       messageId: Snowflake,
     ) => `/channels/${channelId}/pins/${messageId}` as const,
@@ -809,16 +854,40 @@ export class ChannelRouter {
   }
 
   /**
-   * Gets all pinned messages in a channel.
+   * Gets pinned messages in a channel with pagination support.
    * Returns messages in chronological order.
    *
    * @param channelId - ID of the channel
+   * @param query - Query parameters for pagination
    * @returns A promise that resolves to an array of message objects
-   * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages}
+   * @see {@link https://discord.com/developers/docs/resources/message#get-channel-pins}
    */
-  fetchPinnedMessages(channelId: Snowflake): Promise<MessageEntity[]> {
+  fetchPinnedMessages(
+    channelId: Snowflake,
+    query?: PinnedMessagesFetchParams,
+  ): Promise<MessageEntity[]> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelPinsEndpoint(channelId),
+      {
+        query,
+      },
+    );
+  }
+
+  /**
+   * Gets all pinned messages in a channel (deprecated).
+   * Returns the first 50 pinned messages in chronological order.
+   *
+   * @param channelId - ID of the channel
+   * @returns A promise that resolves to an array of message objects
+   * @deprecated Use fetchPinnedMessages instead
+   * @see {@link https://discord.com/developers/docs/resources/message#get-pinned-messages-deprecated}
+   */
+  fetchPinnedMessagesDeprecated(
+    channelId: Snowflake,
+  ): Promise<MessageEntity[]> {
+    return this.#rest.get(
+      ChannelRouter.CHANNEL_ROUTES.channelPinsEndpointDeprecated(channelId),
     );
   }
 
@@ -830,7 +899,7 @@ export class ChannelRouter {
    * @param messageId - ID of the message to pin
    * @param reason - Optional audit log reason
    * @returns A promise that resolves to void on success
-   * @see {@link https://discord.com/developers/docs/resources/channel#pin-message}
+   * @see {@link https://discord.com/developers/docs/resources/message#pin-message}
    */
   pinMessage(
     channelId: Snowflake,
@@ -854,7 +923,7 @@ export class ChannelRouter {
    * @param messageId - ID of the message to unpin
    * @param reason - Optional audit log reason
    * @returns A promise that resolves to void on success
-   * @see {@link https://discord.com/developers/docs/resources/channel#unpin-message}
+   * @see {@link https://discord.com/developers/docs/resources/message#unpin-message}
    */
   unpinMessage(
     channelId: Snowflake,
@@ -863,6 +932,56 @@ export class ChannelRouter {
   ): Promise<void> {
     return this.#rest.delete(
       ChannelRouter.CHANNEL_ROUTES.channelPinnedMessageEndpoint(
+        channelId,
+        messageId,
+      ),
+      { reason },
+    );
+  }
+
+  /**
+   * Pins a message in a channel (deprecated).
+   * Adds the message to the channel's pinned messages.
+   *
+   * @param channelId - ID of the channel
+   * @param messageId - ID of the message to pin
+   * @param reason - Optional audit log reason
+   * @returns A promise that resolves to void on success
+   * @deprecated Use pinMessage instead
+   * @see {@link https://discord.com/developers/docs/resources/message#pin-message-deprecated}
+   */
+  pinMessageDeprecated(
+    channelId: Snowflake,
+    messageId: Snowflake,
+    reason?: string,
+  ): Promise<void> {
+    return this.#rest.put(
+      ChannelRouter.CHANNEL_ROUTES.channelPinnedMessageEndpointDeprecated(
+        channelId,
+        messageId,
+      ),
+      { reason },
+    );
+  }
+
+  /**
+   * Unpins a message in a channel (deprecated).
+   * Removes the message from the channel's pinned messages.
+   *
+   * @param channelId - ID of the channel
+   * @param messageId - ID of the message to unpin
+   * @param reason - Optional audit log reason
+   * @returns A promise that resolves to void on success
+   * @deprecated Use unpinMessage instead
+   * @see {@link https://discord.com/developers/docs/resources/message#unpin-message-deprecated}
+   */
+  unpinMessageDeprecated(
+    channelId: Snowflake,
+    messageId: Snowflake,
+    reason?: string,
+  ): Promise<void> {
+    return this.#rest.delete(
+      ChannelRouter.CHANNEL_ROUTES.channelPinnedMessageEndpointDeprecated(
         channelId,
         messageId,
       ),

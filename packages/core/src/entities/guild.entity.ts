@@ -194,6 +194,12 @@ export enum GuildFeature {
   Discoverable = "DISCOVERABLE",
 
   /**
+   * Guild has access to set gradient colors on roles.
+   * Server can use multiple colors for roles to create gradient and holographic effects.
+   */
+  EnhancedRoleColors = "ENHANCED_ROLE_COLORS",
+
+  /**
    * Guild is able to be featured in the directory.
    * Server can be highlighted in Discord's server discovery.
    */

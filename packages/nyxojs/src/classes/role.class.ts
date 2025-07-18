@@ -71,9 +71,20 @@ export class Role
    * The color is stored as an integer representation of a hexadecimal color code.
    * A value of 0 means the role has no color and doesn't affect the member's display color.
    *
+   * @deprecated Use the `colors` property instead for enhanced color support.
    * @returns The color as an integer
    */
   readonly color = this.rawData.color;
+
+  /**
+   * Gets the role's color configuration.
+   *
+   * Contains primary, secondary, and tertiary colors for gradient and holographic effects.
+   * Secondary and tertiary colors are only available if the guild has the ENHANCED_ROLE_COLORS feature.
+   *
+   * @returns The role's color configuration
+   */
+  readonly colors = this.rawData.colors;
 
   /**
    * Indicates whether the role is displayed separately in the member list.
@@ -253,6 +264,7 @@ export class Role
    *
    * @param withHash - Whether to include the # prefix
    * @returns The hex color code, or "#000000" if the role has no color
+   * @deprecated Use `getPrimaryColorHex()` instead
    */
   getColorHex(withHash = true): string {
     if (this.color === 0) {
@@ -261,6 +273,78 @@ export class Role
 
     const hex = this.color.toString(16).padStart(6, "0");
     return withHash ? `#${hex}` : hex;
+  }
+
+  /**
+   * Gets the hex color code representation of the role's primary color.
+   *
+   * @param withHash - Whether to include the # prefix
+   * @returns The hex color code, or "#000000" if the role has no color
+   */
+  getPrimaryColorHex(withHash = true): string {
+    if (this.colors.primary_color === 0) {
+      return withHash ? "#000000" : "000000";
+    }
+
+    const hex = this.colors.primary_color.toString(16).padStart(6, "0");
+    return withHash ? `#${hex}` : hex;
+  }
+
+  /**
+   * Gets the hex color code representation of the role's secondary color.
+   *
+   * @param withHash - Whether to include the # prefix
+   * @returns The hex color code, or null if no secondary color is set
+   */
+  getSecondaryColorHex(withHash = true): string | null {
+    if (
+      this.colors.secondary_color === null ||
+      this.colors.secondary_color === undefined
+    ) {
+      return null;
+    }
+
+    const hex = this.colors.secondary_color.toString(16).padStart(6, "0");
+    return withHash ? `#${hex}` : hex;
+  }
+
+  /**
+   * Gets the hex color code representation of the role's tertiary color.
+   *
+   * @param withHash - Whether to include the # prefix
+   * @returns The hex color code, or null if no tertiary color is set
+   */
+  getTertiaryColorHex(withHash = true): string | null {
+    if (
+      this.colors.tertiary_color === null ||
+      this.colors.tertiary_color === undefined
+    ) {
+      return null;
+    }
+
+    const hex = this.colors.tertiary_color.toString(16).padStart(6, "0");
+    return withHash ? `#${hex}` : hex;
+  }
+
+  /**
+   * Checks if the role has a gradient color (multiple colors).
+   *
+   * @returns True if the role has secondary or tertiary colors
+   */
+  hasGradientColors(): boolean {
+    return (
+      this.colors.secondary_color !== null ||
+      this.colors.tertiary_color !== null
+    );
+  }
+
+  /**
+   * Checks if the role has holographic colors (three colors).
+   *
+   * @returns True if the role has tertiary color set
+   */
+  hasHolographicColors(): boolean {
+    return this.colors.tertiary_color !== null;
   }
 
   /**
