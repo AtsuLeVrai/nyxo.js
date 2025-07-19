@@ -1,7 +1,12 @@
 import type {
+  AnyChannelEntity,
   EmojiEntity,
+  GuildMemberEntity,
+  IntegrationEntity,
   InviteEntity,
+  RoleEntity,
   Snowflake,
+  SoundboardSoundEntity,
   StickerEntity,
   WebhookEntity,
 } from "@nyxojs/core";
@@ -9,13 +14,10 @@ import type {
   GatewayEvents,
   GatewayReceiveEvents,
   GuildCreateEntity,
-  GuildEmojisUpdateEntity,
-  GuildStickersUpdateEntity,
   InviteCreateEntity,
+  MessageCreateEntity,
 } from "@nyxojs/gateway";
 import type { RestEvents } from "@nyxojs/rest";
-import type { Store } from "@nyxojs/store";
-import { BaseClass } from "../bases/index.js";
 import {
   type AnyThreadChannel,
   AutoModeration,
@@ -47,889 +49,972 @@ import {
   Webhook,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
-import type { CacheEntityType } from "../managers/index.js";
-import type { ClientEvents } from "../types/index.js";
-import { channelFactory } from "./channel.util.js";
-import { interactionFactory } from "./interaction.util.js";
-
-// Type for a class constructor that creates an entity
-type ClassConstructor<T extends BaseClass<any>> = new (
-  client: Client,
-  data: any,
-) => T;
-
-// Type for a factory function that creates an entity
-type FactoryFunction<T extends BaseClass<any>> = (
-  client: Client,
-  data: any,
-) => T;
-
-// Type that can be either a class constructor or factory function
-type EntityCreator<T extends BaseClass<any>> =
-  | ClassConstructor<T>
-  | FactoryFunction<T>;
+import type { ClientEvents, GuildBased } from "../types/index.js";
+import { channelFactory, interactionFactory } from "./factory.util.js";
 
 /**
- * Represents a mapping between a Gateway event and a Client event
+ * Represents a mapping configuration between a Gateway event and a Client event.
+ *
+ * This interface defines how raw Gateway events from Discord's WebSocket API
+ * are transformed into strongly-typed client events with proper entity instances.
+ * Each mapping specifies the event names and transformation logic.
+ *
+ * @template T - The Gateway event type (must be a key of GatewayReceiveEvents)
+ * @template U - The Client event type (must be a key of ClientEvents)
+ *
+ * @internal
  */
 interface EventMapping<
   T extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents,
   U extends keyof ClientEvents = keyof ClientEvents,
 > {
   /**
-   * Client event name that this maps to
+   * The name of the client event that will be emitted.
+   *
+   * This corresponds to the event name that application code will listen for
+   * using `client.on(eventName, handler)`. Must be a valid key from ClientEvents.
+   *
+   * @example `"messageCreate"`, `"guildMemberAdd"`, `"channelUpdate"`
    */
   clientEvent: U;
 
   /**
-   * Transform function to convert gateway event data to client event data
+   * The name of the Gateway event received from Discord's WebSocket API.
+   *
+   * This is the raw event name as defined in Discord's Gateway documentation.
+   * Must be a valid key from GatewayReceiveEvents.
+   *
+   * @example `"MESSAGE_CREATE"`, `"GUILD_MEMBER_ADD"`, `"CHANNEL_UPDATE"`
    */
-  transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[U];
+  gatewayEvent: T;
+
+  /**
+   * Transform function that converts raw Gateway event data into client event parameters.
+   *
+   * This function receives the raw payload from Discord's Gateway and transforms it
+   * into properly typed entity instances or processed data. The returned array
+   * contains the arguments that will be passed to client event listeners.
+   *
+   * @param client - The client instance for creating entity objects
+   * @param data - Raw event data from Discord's Gateway API
+   * @returns Array of arguments to pass to client event listeners
+   *
+   * @example
+   * ```typescript
+   * // Simple entity creation
+   * (client, data) => [new Message(client, data)]
+   *
+   * // Update event with old and new entities
+   * (client, data) => [oldEntity, newEntity]
+   *
+   * // Raw data passthrough
+   * (_, data) => [data]
+   * ```
+   */
+  transform: (client: Client, data: unknown) => ClientEvents[U];
 }
 
 /**
- * Creates a strongly-typed mapping between Gateway and Client events
+ * Creates a strongly-typed mapping between a Gateway event and a Client event.
+ *
+ * This function provides type safety and autocompletion when defining event mappings.
+ * It ensures that the transform function signature matches the expected client event
+ * parameters and validates that event names are valid.
+ *
+ * @template T - The Gateway event type (must be a key of GatewayReceiveEvents)
+ * @template U - The Client event type (must be a key of ClientEvents)
+ *
+ * @param clientEvent - The name of the client event to emit
+ * @param gatewayEvent - The name of the Gateway event to handle
+ * @param transform - Function to transform Gateway data into client event arguments
+ * @returns A typed EventMapping configuration object
+ *
+ * @see {@link EventMapping} - For the interface definition
+ * @see {@link GatewayEventMappings} - For the complete list of mappings
+ *
+ * @internal
  */
 function defineEvent<
   T extends keyof GatewayReceiveEvents,
   U extends keyof ClientEvents,
 >(
   clientEvent: U,
+  gatewayEvent: T,
   transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[U],
 ): EventMapping<T, U> {
   return {
     clientEvent,
+    gatewayEvent,
     transform: transform as EventMapping<T, U>["transform"],
   };
 }
 
 /**
- * Checks if the provided creator is a class constructor
+ * Comprehensive array of Gateway event mappings for the Discord client.
+ *
+ * This array contains all the mappings that define how raw Gateway events from
+ * Discord's WebSocket API are transformed into strongly-typed client events.
+ * Each mapping handles entity creation, cache management, TTL cleanup, and
+ * proper event emission.
+ *
+ * The mappings are organized by event type:
+ * - **CREATE events**: Simple entity instantiation and caching
+ * - **UPDATE events**: Cache retrieval, comparison, and entity updates
+ * - **DELETE events**: Cache cleanup with try/finally pattern for guaranteed cleanup
+ * - **BULK events**: Efficient handling of multiple entity updates (emojis, stickers)
+ * - **RAW events**: Direct data passthrough for events that don't need entity processing
+ *
+ * @example
+ * ```typescript
+ * // Usage in event dispatcher
+ * for (const mapping of GatewayEventMappings) {
+ *   if (gatewayEvent === mapping.gatewayEvent) {
+ *     const args = mapping.transform(client, rawData);
+ *     client.emit(mapping.clientEvent, ...args);
+ *     break;
+ *   }
+ * }
+ * ```
+ *
+ * @see {@link defineEvent} - For creating individual event mappings
+ * @see {@link EventMapping} - For the mapping interface definition
+ * @see {@link RestEventNames} - For REST client event forwarding
+ * @see {@link GatewayEventNames} - For Gateway client event forwarding
+ *
+ * @public
  */
-function isClassConstructor<T extends BaseClass<any>>(
-  creator: EntityCreator<T>,
-): creator is ClassConstructor<T> {
-  return (
-    typeof creator === "function" &&
-    creator.prototype?.constructor === creator &&
-    (creator.prototype instanceof BaseClass ||
-      Object.getPrototypeOf(creator.prototype) === BaseClass.prototype)
-  );
-}
+export const GatewayEventMappings: readonly EventMapping[] = [
+  defineEvent(
+    "autoModerationRuleCreate",
+    "AUTO_MODERATION_RULE_CREATE",
+    (client, data) => [new AutoModeration(client, data)],
+  ),
+  defineEvent(
+    "autoModerationRuleDelete",
+    "AUTO_MODERATION_RULE_DELETE",
+    (client, data) => {
+      const store = client.cache.autoModerationRules;
+      const cachedData = store?.get(data.id);
 
-/**
- * Generic handler for DELETE operations
- * Gets entity data from cache, creates instance, and removes data from cache
- */
-function handleDeleteEvent<T extends BaseClass<any>>(
-  client: Client,
-  cacheKey: CacheEntityType,
-  entityId: Snowflake,
-  EntityCreator: EntityCreator<T>,
-): [T | null] {
-  const store = client.cache[cacheKey] as Store<Snowflake, any> | null;
+      try {
+        if (!cachedData) {
+          return [new AutoModeration(client, data)];
+        }
 
-  if (!store) {
-    return [null];
-  }
+        return [new AutoModeration(client, cachedData)];
+      } finally {
+        // Ensure cache cleanup happens after return
+        if (cachedData && store) {
+          store.delete(data.id);
+        }
+      }
+    },
+  ),
+  defineEvent(
+    "autoModerationRuleUpdate",
+    "AUTO_MODERATION_RULE_UPDATE",
+    (client, data) => {
+      const store = client.cache.autoModerationRules;
+      const cachedData = store?.get(data.id);
 
-  // Retrieve data from cache
-  const cachedData = store.get(entityId);
+      if (!cachedData) {
+        return [null, new AutoModeration(client, data)];
+      }
 
-  // Create instance from data if it exists
-  let cachedEntity: T | null = null;
-  if (cachedData) {
-    cachedEntity = isClassConstructor(EntityCreator)
-      ? new EntityCreator(client, cachedData)
-      : EntityCreator(client, cachedData);
-  }
+      return [
+        new AutoModeration(client, cachedData),
+        new AutoModeration(client, data),
+      ];
+    },
+  ),
+  defineEvent(
+    "autoModerationActionExecution",
+    "AUTO_MODERATION_ACTION_EXECUTION",
+    (client, data) => [new AutoModerationActionExecution(client, data)],
+  ),
+  defineEvent("channelCreate", "CHANNEL_CREATE", (client, data) => [
+    channelFactory(client, data),
+  ]),
+  defineEvent("channelDelete", "CHANNEL_DELETE", (client, data) => {
+    const store = client.cache.channels;
+    const cachedData = store?.get(data.id);
+    try {
+      if (!cachedData) {
+        return [channelFactory(client, data)];
+      }
 
-  // Remove data from cache (not the instance)
-  if (cachedData) {
-    store.delete(entityId);
-  }
-
-  return [cachedEntity];
-}
-
-/**
- * Generic handler for UPDATE operations
- * Creates new entity, retrieves old entity data from cache, and updates cache
- */
-function handleUpdateEvent<T extends BaseClass<any>>(
-  client: Client,
-  data: object,
-  cacheKey: CacheEntityType,
-  EntityCreator: EntityCreator<T>,
-): [T | null, T] {
-  // Create new entity using constructor or factory
-  const newEntity = isClassConstructor(EntityCreator)
-    ? new EntityCreator(client, data)
-    : EntityCreator(client, data);
-
-  const cacheInfo = newEntity.cacheInfo;
-  if (!cacheInfo?.id) {
-    return [null, newEntity];
-  }
-
-  // Get entity DATA from cache (not instance)
-  const store = client.cache[cacheKey] as Store<Snowflake, any> | null;
-  const oldData = store?.get(cacheInfo.id) ?? null;
-
-  // Create old entity instance from cached data if it exists
-  const oldEntity = oldData
-    ? isClassConstructor(EntityCreator)
-      ? new EntityCreator(client, oldData)
-      : EntityCreator(client, oldData)
-    : null;
-
-  // New entity cache happens automatically via BaseClass constructor
-  return [oldEntity, newEntity];
-}
-
-/**
- * Efficiently handles bulk updates of entities (emojis, stickers)
- * Compares new elements with cached data and processes the changes
- */
-function handleBulkUpdate<T extends BaseClass<any>>(
-  client: Client,
-  data: GuildEmojisUpdateEntity | GuildStickersUpdateEntity,
-  entityField: "emojis" | "stickers",
-  cacheKey: CacheEntityType,
-  EntityClass: new (client: Client, data: any) => T,
-  eventNames: {
-    create: keyof ClientEvents;
-    update: keyof ClientEvents;
-    delete: keyof ClientEvents;
-  },
-): [any] {
-  const guildId = data.guild_id;
-  // @ts-expect-error - entityField is guaranteed to be emojis or stickers
-  const newEntities = data[entityField] as (StickerEntity | EmojiEntity)[];
-
-  // Retrieve cached DATA for this guild (not instances)
-  const store = client.cache[cacheKey] as Store<Snowflake, any> | null;
-  const cachedData: any[] = [];
-
-  if (store) {
-    for (const entityData of store.values()) {
-      // Check if entity belongs to this guild
-      if ((entityData.guild_id || entityData.guildId) === guildId) {
-        cachedData.push(entityData);
+      return [channelFactory(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.id);
       }
     }
-  }
-
-  // Create maps for efficient lookup
-  const newMap = new Map();
-  const cachedMap = new Map();
-
-  // Prepare new elements
-  for (const entity of newEntities) {
-    if (entity.id) {
-      newMap.set(entity.id, { ...entity, guild_id: guildId });
+  }),
+  defineEvent("channelUpdate", "CHANNEL_UPDATE", (client, data) => {
+    const store = client.cache.channels;
+    const cachedData = store?.get(data.id);
+    if (!cachedData) {
+      return [null, channelFactory(client, data)];
     }
-  }
 
-  // Prepare cached elements DATA
-  for (const entityData of cachedData) {
-    if (entityData.id) {
-      cachedMap.set(entityData.id, entityData);
+    return [channelFactory(client, cachedData), channelFactory(client, data)];
+  }),
+  defineEvent("channelPinsUpdate", "CHANNEL_PINS_UPDATE", (_, data) => [data]),
+  defineEvent("threadCreate", "THREAD_CREATE", (client, data) => [
+    channelFactory(client, data) as AnyThreadChannel,
+  ]),
+  defineEvent("threadDelete", "THREAD_DELETE", (client, data) => {
+    const store = client.cache.channels;
+    const cachedData = store?.get(data.id);
+    try {
+      if (!cachedData) {
+        return [
+          channelFactory(client, data as AnyChannelEntity) as AnyThreadChannel,
+        ];
+      }
+
+      return [channelFactory(client, cachedData) as AnyThreadChannel];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.id);
+      }
     }
-  }
-
-  // Process created elements
-  for (const [id, entityData] of newMap.entries()) {
-    if (!cachedMap.has(id)) {
-      const newEntity = new EntityClass(client, entityData);
-      client.emit(eventNames.create, newEntity as any);
+  }),
+  defineEvent("threadUpdate", "THREAD_UPDATE", (client, data) => {
+    const store = client.cache.channels;
+    const cachedData = store?.get(data.id);
+    if (!cachedData) {
+      return [null, channelFactory(client, data) as AnyThreadChannel];
     }
-  }
 
-  // Process updated elements
-  for (const [id, entityData] of newMap.entries()) {
-    if (cachedMap.has(id)) {
-      const oldData = cachedMap.get(id);
-      const oldEntity = new EntityClass(client, oldData);
-      const newEntity = new EntityClass(client, entityData);
-
-      client.emit(eventNames.update, oldEntity as any, newEntity as any);
+    return [
+      channelFactory(client, cachedData) as AnyThreadChannel,
+      channelFactory(client, data) as AnyThreadChannel,
+    ];
+  }),
+  defineEvent("threadListSync", "THREAD_LIST_SYNC", (_, data) => [data]),
+  defineEvent("threadMemberUpdate", "THREAD_MEMBER_UPDATE", (client, data) => {
+    const store = client.cache.threadMembers;
+    const cachedData = store?.get(
+      data.id || `${data.user_id}:${data.guild_id}`,
+    );
+    if (!cachedData) {
+      return [null, new ThreadMember(client, data)];
     }
-  }
 
-  // Process deleted elements
-  for (const [id, oldData] of cachedMap.entries()) {
-    if (!newMap.has(id)) {
-      const deletedEntity = new EntityClass(client, oldData);
-      // Remove from cache
-      store?.delete(id);
-      client.emit(eventNames.delete, deletedEntity as any);
+    return [
+      new ThreadMember(client, cachedData),
+      new ThreadMember(client, data),
+    ];
+  }),
+  defineEvent("threadMembersUpdate", "THREAD_MEMBERS_UPDATE", (_, data) => [
+    data,
+  ]),
+  defineEvent("entitlementCreate", "ENTITLEMENT_CREATE", (client, data) => [
+    new Entitlement(client, data),
+  ]),
+  defineEvent("entitlementDelete", "ENTITLEMENT_DELETE", (client, data) => {
+    const store = client.cache.entitlements;
+    const cachedData = store?.get(data.id);
+    try {
+      if (!cachedData) {
+        return [new Entitlement(client, data)];
+      }
+
+      return [new Entitlement(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.id);
+      }
     }
-  }
+  }),
+  defineEvent("entitlementUpdate", "ENTITLEMENT_UPDATE", (client, data) => {
+    const store = client.cache.entitlements;
+    const cachedData = store?.get(data.id);
+    if (!cachedData) {
+      return [null, new Entitlement(client, data)];
+    }
 
-  return [data];
-}
+    return [new Entitlement(client, cachedData), new Entitlement(client, data)];
+  }),
+  defineEvent("guildCreate", "GUILD_CREATE", (client, data) => [
+    new Guild(client, data as GuildCreateEntity),
+  ]),
+  defineEvent("guildDelete", "GUILD_DELETE", (client, data) => {
+    const store = client.cache.guilds;
+    const cachedData = store?.get(data.id);
+    try {
+      if (!cachedData) {
+        return [new Guild(client, data as GuildCreateEntity)];
+      }
 
-/**
- * Maps of Gateway events to client events.
- * Each mapping defines how raw Gateway events are transformed into client events.
- */
-export const GatewayDispatchEventMap = new Map<
-  keyof GatewayReceiveEvents,
-  EventMapping
->(
-  // @ts-expect-error - TypeScript doesn't support mapping types directly
-  [
-    [
-      "READY",
-      defineEvent<"READY", "ready">("ready", (client, data) => [
-        new Ready(client, data),
-      ]),
-    ],
-    [
-      "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
-      defineEvent<
-        "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
-        "applicationCommandPermissionsUpdate"
-      >("applicationCommandPermissionsUpdate", (_, data) => [data]),
-    ],
-    [
-      "AUTO_MODERATION_RULE_CREATE",
-      defineEvent<"AUTO_MODERATION_RULE_CREATE", "autoModerationRuleCreate">(
-        "autoModerationRuleCreate",
-        (client, data) => [new AutoModeration(client, data)],
-      ),
-    ],
-    [
-      "AUTO_MODERATION_RULE_UPDATE",
-      defineEvent<"AUTO_MODERATION_RULE_UPDATE", "autoModerationRuleUpdate">(
-        "autoModerationRuleUpdate",
-        (client, data) =>
-          handleUpdateEvent(
-            client,
-            data,
-            "autoModerationRules",
-            AutoModeration,
-          ),
-      ),
-    ],
-    [
-      "AUTO_MODERATION_RULE_DELETE",
-      defineEvent<"AUTO_MODERATION_RULE_DELETE", "autoModerationRuleDelete">(
-        "autoModerationRuleDelete",
-        (client, data) =>
-          handleDeleteEvent(
-            client,
-            "autoModerationRules",
-            data.id,
-            AutoModeration,
-          ),
-      ),
-    ],
-    [
-      "AUTO_MODERATION_ACTION_EXECUTION",
-      defineEvent<
-        "AUTO_MODERATION_ACTION_EXECUTION",
-        "autoModerationActionExecution"
-      >("autoModerationActionExecution", (client, data) => [
-        new AutoModerationActionExecution(client, data),
-      ]),
-    ],
-    [
-      "CHANNEL_CREATE",
-      defineEvent<"CHANNEL_CREATE", "channelCreate">(
-        "channelCreate",
-        (client, data) => [channelFactory(client, data)],
-      ),
-    ],
-    [
-      "CHANNEL_UPDATE",
-      defineEvent<"CHANNEL_UPDATE", "channelUpdate">(
-        "channelUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "channels", channelFactory),
-      ),
-    ],
-    [
-      "CHANNEL_DELETE",
-      defineEvent<"CHANNEL_DELETE", "channelDelete">(
-        "channelDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "channels", data.id, channelFactory),
-      ),
-    ],
-    [
-      "CHANNEL_PINS_UPDATE",
-      defineEvent<"CHANNEL_PINS_UPDATE", "channelPinsUpdate">(
-        "channelPinsUpdate",
-        (_, data) => [data],
-      ),
-    ],
-    [
-      "THREAD_CREATE",
-      defineEvent<"THREAD_CREATE", "threadCreate">(
-        "threadCreate",
-        (client, data) => [channelFactory(client, data) as AnyThreadChannel],
-      ),
-    ],
-    [
-      "THREAD_UPDATE",
-      defineEvent<"THREAD_UPDATE", "threadUpdate">(
-        "threadUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "channels", channelFactory) as [
-            AnyThreadChannel | null,
-            AnyThreadChannel,
-          ],
-      ),
-    ],
-    [
-      "THREAD_DELETE",
-      defineEvent<"THREAD_DELETE", "threadDelete">(
-        "threadDelete",
-        (client, data) =>
-          // @ts-expect-error - type mismatch due to AnyThreadChannel
-          handleDeleteEvent(client, "channels", data.id, channelFactory),
-      ),
-    ],
-    [
-      "THREAD_LIST_SYNC",
-      defineEvent<"THREAD_LIST_SYNC", "threadListSync">(
-        "threadListSync",
-        (_, data) => [data],
-      ),
-    ],
-    [
-      "THREAD_MEMBER_UPDATE",
-      defineEvent<"THREAD_MEMBER_UPDATE", "threadMemberUpdate">(
-        "threadMemberUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "threadMembers", ThreadMember),
-      ),
-    ],
-    [
-      "THREAD_MEMBERS_UPDATE",
-      defineEvent<"THREAD_MEMBERS_UPDATE", "threadMembersUpdate">(
-        "threadMembersUpdate",
-        (_, data) => [data],
-      ),
-    ],
-    [
-      "ENTITLEMENT_CREATE",
-      defineEvent<"ENTITLEMENT_CREATE", "entitlementCreate">(
-        "entitlementCreate",
-        (client, data) => [new Entitlement(client, data)],
-      ),
-    ],
-    [
-      "ENTITLEMENT_UPDATE",
-      defineEvent<"ENTITLEMENT_UPDATE", "entitlementUpdate">(
-        "entitlementUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "entitlements", Entitlement),
-      ),
-    ],
-    [
-      "ENTITLEMENT_DELETE",
-      defineEvent<"ENTITLEMENT_DELETE", "entitlementDelete">(
-        "entitlementDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "entitlements", data.id, Entitlement),
-      ),
-    ],
-    [
-      "GUILD_CREATE",
-      defineEvent<"GUILD_CREATE", "guildCreate">(
-        "guildCreate",
-        (client, data) => [new Guild(client, data as GuildCreateEntity)],
-      ),
-    ],
-    [
-      "GUILD_UPDATE",
-      defineEvent<"GUILD_UPDATE", "guildUpdate">(
-        "guildUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data as GuildCreateEntity, "guilds", Guild),
-      ),
-    ],
-    [
-      "GUILD_DELETE",
-      defineEvent<"GUILD_DELETE", "guildDelete">(
-        "guildDelete",
-        (client, data) => handleDeleteEvent(client, "guilds", data.id, Guild),
-      ),
-    ],
-    [
-      "GUILD_AUDIT_LOG_ENTRY_CREATE",
-      defineEvent<"GUILD_AUDIT_LOG_ENTRY_CREATE", "guildAuditLogEntryCreate">(
-        "guildAuditLogEntryCreate",
-        (client, data) => [new GuildAuditLogEntry(client, data)],
-      ),
-    ],
-    [
-      "GUILD_BAN_ADD",
-      defineEvent<"GUILD_BAN_ADD", "guildBanAdd">(
-        "guildBanAdd",
-        (client, data) => [
-          new Ban(client, {
+      return [new Guild(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.id);
+      }
+    }
+  }),
+  defineEvent("guildUpdate", "GUILD_UPDATE", (client, data) => {
+    const store = client.cache.guilds;
+    const cachedData = store?.get(data.id);
+    if (!cachedData) {
+      return [null, new Guild(client, data as GuildCreateEntity)];
+    }
+
+    return [
+      new Guild(client, cachedData),
+      new Guild(client, data as GuildCreateEntity),
+    ];
+  }),
+  defineEvent(
+    "guildAuditLogEntryCreate",
+    "GUILD_AUDIT_LOG_ENTRY_CREATE",
+    (client, data) => [new GuildAuditLogEntry(client, data)],
+  ),
+  defineEvent("guildBanAdd", "GUILD_BAN_ADD", (client, data) => [
+    new Ban(client, {
+      guild_id: data.guild_id,
+      user: data.user,
+      reason: null,
+    }),
+  ]),
+  defineEvent("guildBanRemove", "GUILD_BAN_REMOVE", (client, data) => [
+    new Ban(client, {
+      guild_id: data.guild_id,
+      user: data.user,
+      reason: null,
+    }),
+  ]),
+  defineEvent("guildEmojisUpdate", "GUILD_EMOJIS_UPDATE", (client, data) => {
+    const guildId = data.guild_id;
+    const newEmojis = data.emojis; // Complete list of current emojis
+    const store = client.cache.emojis;
+
+    // 1. Retrieve all cached emojis for this guild
+    const cachedEmojis = new Map<Snowflake, GuildBased<EmojiEntity>>();
+    if (store) {
+      for (const [id, emojiData] of store.entries()) {
+        if (emojiData.guild_id === guildId) {
+          cachedEmojis.set(id, emojiData);
+        }
+      }
+    }
+
+    // 2. Create map of new emojis with guild_id added
+    const newEmojisMap = new Map<Snowflake, GuildBased<EmojiEntity>>();
+    for (const emoji of newEmojis) {
+      if (emoji.id) {
+        newEmojisMap.set(emoji.id, {
+          ...emoji,
+          guild_id: guildId,
+        });
+      }
+    }
+
+    // 3. Process CREATE and UPDATE events
+    for (const [emojiId, newEmojiData] of newEmojisMap.entries()) {
+      const cachedEmojiData = cachedEmojis.get(emojiId);
+
+      if (!cachedEmojiData) {
+        // CREATE: Emoji didn't exist in cache
+        const newEmoji = new Emoji(client, newEmojiData);
+        client.emit("emojiCreate", newEmoji);
+      } else {
+        // UPDATE: Emoji existed, check if it changed
+        if (JSON.stringify(cachedEmojiData) !== JSON.stringify(newEmojiData)) {
+          const oldEmoji = new Emoji(client, cachedEmojiData);
+          const newEmoji = new Emoji(client, newEmojiData);
+          client.emit("emojiUpdate", oldEmoji, newEmoji);
+        }
+      }
+    }
+
+    // 4. Process DELETE events
+    for (const [emojiId, cachedEmojiData] of cachedEmojis.entries()) {
+      if (!newEmojisMap.has(emojiId)) {
+        // DELETE: Emoji was cached but no longer in new list
+        const deletedEmoji = new Emoji(client, cachedEmojiData);
+
+        // Remove from cache
+        if (store) {
+          store.delete(emojiId);
+        }
+
+        client.emit("emojiDelete", deletedEmoji);
+      }
+    }
+
+    return [data];
+  }),
+  defineEvent(
+    "guildStickersUpdate",
+    "GUILD_STICKERS_UPDATE",
+    (client, data) => {
+      const guildId = data.guild_id;
+      const newStickers = data.stickers; // Complete list of current stickers
+      const store = client.cache.stickers;
+
+      // 1. Retrieve all cached stickers for this guild
+      const cachedStickers = new Map<Snowflake, StickerEntity>();
+      if (store) {
+        for (const [id, stickerData] of store.entries()) {
+          if (stickerData.guild_id === guildId) {
+            cachedStickers.set(id, stickerData);
+          }
+        }
+      }
+
+      // 2. Create map of new stickers with guild_id added
+      const newStickersMap = new Map<Snowflake, StickerEntity>();
+      for (const sticker of newStickers) {
+        if (sticker.id) {
+          newStickersMap.set(sticker.id, {
+            ...sticker,
+            guild_id: guildId,
+          });
+        }
+      }
+
+      // 3. Process CREATE and UPDATE events
+      for (const [stickerId, newStickerData] of newStickersMap.entries()) {
+        const cachedStickerData = cachedStickers.get(stickerId);
+
+        if (!cachedStickerData) {
+          // CREATE: Sticker didn't exist in cache
+          const newSticker = new Sticker(client, newStickerData);
+          client.emit("stickerCreate", newSticker);
+        } else {
+          // UPDATE: Sticker existed, check if it changed
+          if (
+            JSON.stringify(cachedStickerData) !== JSON.stringify(newStickerData)
+          ) {
+            const oldSticker = new Sticker(client, cachedStickerData);
+            const newSticker = new Sticker(client, newStickerData);
+            client.emit("stickerUpdate", oldSticker, newSticker);
+          }
+        }
+      }
+
+      // 4. Process DELETE events
+      for (const [stickerId, cachedStickerData] of cachedStickers.entries()) {
+        if (!newStickersMap.has(stickerId)) {
+          // DELETE: Sticker was cached but no longer in new list
+          const deletedSticker = new Sticker(client, cachedStickerData);
+
+          // Remove from cache
+          if (store) {
+            store.delete(stickerId);
+          }
+
+          client.emit("stickerDelete", deletedSticker);
+        }
+      }
+
+      return [data];
+    },
+  ),
+  defineEvent("guildMemberAdd", "GUILD_MEMBER_ADD", (client, data) => [
+    new GuildMember(client, data),
+  ]),
+  defineEvent("guildMemberRemove", "GUILD_MEMBER_REMOVE", (client, data) => {
+    const store = client.cache.members;
+    const memberId = `${data.guild_id}:${data.user.id}`;
+    const cachedData = store?.get(memberId);
+
+    try {
+      if (!cachedData) {
+        return [
+          new GuildMember(client, {
+            ...data.user,
             guild_id: data.guild_id,
-            user: data.user,
-            reason: null,
-          }),
-        ],
-      ),
-    ],
-    [
-      "GUILD_BAN_REMOVE",
-      defineEvent<"GUILD_BAN_REMOVE", "guildBanRemove">(
-        "guildBanRemove",
-        (client, data) => [
-          new Ban(client, {
-            guild_id: data.guild_id,
-            user: data.user,
-            reason: null,
-          }),
-        ],
-      ),
-    ],
-    [
-      "GUILD_EMOJIS_UPDATE",
-      defineEvent<"GUILD_EMOJIS_UPDATE", "guildEmojisUpdate">(
-        "guildEmojisUpdate",
-        (client, data) =>
-          handleBulkUpdate(client, data, "emojis", "emojis", Emoji, {
-            create: "emojiCreate",
-            update: "emojiUpdate",
-            delete: "emojiDelete",
-          }),
-      ),
-    ],
-    [
-      "GUILD_STICKERS_UPDATE",
-      defineEvent<"GUILD_STICKERS_UPDATE", "guildStickersUpdate">(
-        "guildStickersUpdate",
-        (client, data) =>
-          handleBulkUpdate(client, data, "stickers", "stickers", Sticker, {
-            create: "stickerCreate",
-            update: "stickerUpdate",
-            delete: "stickerDelete",
-          }),
-      ),
-    ],
-    [
-      "GUILD_MEMBER_ADD",
-      defineEvent<"GUILD_MEMBER_ADD", "guildMemberAdd">(
-        "guildMemberAdd",
-        (client, data) => [new GuildMember(client, data)],
-      ),
-    ],
-    [
-      "GUILD_MEMBER_UPDATE",
-      defineEvent<"GUILD_MEMBER_UPDATE", "guildMemberUpdate">(
-        "guildMemberUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "members", GuildMember),
-      ),
-    ],
-    [
-      "GUILD_MEMBER_REMOVE",
-      defineEvent<"GUILD_MEMBER_REMOVE", "guildMemberRemove">(
-        "guildMemberRemove",
-        (client, data) =>
-          handleDeleteEvent(
-            client,
-            "members",
-            `${data.guild_id}:${data.user.id}`,
-            GuildMember,
-          ),
-      ),
-    ],
-    [
-      "GUILD_MEMBERS_CHUNK",
-      defineEvent<"GUILD_MEMBERS_CHUNK", "guildMembersChunk">(
-        "guildMembersChunk",
-        (_, data) => [data],
-      ),
-    ],
-    [
-      "GUILD_ROLE_CREATE",
-      defineEvent<"GUILD_ROLE_CREATE", "guildRoleCreate">(
-        "guildRoleCreate",
-        (client, data) => [
+          } as unknown as GuildBased<GuildMemberEntity>),
+        ];
+      }
+
+      return [new GuildMember(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(memberId);
+      }
+    }
+  }),
+  defineEvent("guildMemberUpdate", "GUILD_MEMBER_UPDATE", (client, data) => {
+    const store = client.cache.members;
+    const memberId = `${data.guild_id}:${data.user.id}`;
+    const cachedData = store?.get(memberId);
+    if (!cachedData) {
+      return [
+        null,
+        new GuildMember(client, data as GuildBased<GuildMemberEntity>),
+      ];
+    }
+
+    return [
+      new GuildMember(client, cachedData),
+      new GuildMember(client, data as GuildBased<GuildMemberEntity>),
+    ];
+  }),
+  defineEvent("guildMembersChunk", "GUILD_MEMBERS_CHUNK", (_, data) => [data]),
+  defineEvent("guildRoleCreate", "GUILD_ROLE_CREATE", (client, data) => [
+    new Role(client, { guild_id: data.guild_id, ...data.role }),
+  ]),
+  defineEvent("guildRoleDelete", "GUILD_ROLE_DELETE", (client, data) => {
+    const store = client.cache.roles;
+    const cachedData = store?.get(data.role_id);
+    try {
+      if (!cachedData) {
+        return [
           new Role(client, {
             guild_id: data.guild_id,
-            ...data.role,
-          }),
-        ],
-      ),
-    ],
-    [
-      "GUILD_ROLE_UPDATE",
-      defineEvent<"GUILD_ROLE_UPDATE", "guildRoleUpdate">(
-        "guildRoleUpdate",
-        (client, data) =>
-          handleUpdateEvent(
-            client,
-            {
-              guild_id: data.guild_id,
-              ...data.role,
-            },
-            "roles",
-            Role,
-          ),
-      ),
-    ],
-    [
-      "GUILD_ROLE_DELETE",
-      defineEvent<"GUILD_ROLE_DELETE", "guildRoleDelete">(
-        "guildRoleDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "roles", data.role_id, Role),
-      ),
-    ],
-    [
-      "GUILD_SCHEDULED_EVENT_CREATE",
-      defineEvent<"GUILD_SCHEDULED_EVENT_CREATE", "guildScheduledEventCreate">(
-        "guildScheduledEventCreate",
-        (client, data) => [new ScheduledEvent(client, data)],
-      ),
-    ],
-    [
-      "GUILD_SCHEDULED_EVENT_UPDATE",
-      defineEvent<"GUILD_SCHEDULED_EVENT_UPDATE", "guildScheduledEventUpdate">(
-        "guildScheduledEventUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "scheduledEvents", ScheduledEvent),
-      ),
-    ],
-    [
-      "GUILD_SCHEDULED_EVENT_DELETE",
-      defineEvent<"GUILD_SCHEDULED_EVENT_DELETE", "guildScheduledEventDelete">(
-        "guildScheduledEventDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "scheduledEvents", data.id, ScheduledEvent),
-      ),
-    ],
-    [
-      "GUILD_SCHEDULED_EVENT_USER_ADD",
-      defineEvent<
-        "GUILD_SCHEDULED_EVENT_USER_ADD",
-        "guildScheduledEventUserAdd"
-      >("guildScheduledEventUserAdd", (_, data) => [data]),
-    ],
-    [
-      "GUILD_SCHEDULED_EVENT_USER_REMOVE",
-      defineEvent<
-        "GUILD_SCHEDULED_EVENT_USER_REMOVE",
-        "guildScheduledEventUserRemove"
-      >("guildScheduledEventUserRemove", (_, data) => [data]),
-    ],
-    [
-      "GUILD_SOUNDBOARD_SOUND_CREATE",
-      defineEvent<
-        "GUILD_SOUNDBOARD_SOUND_CREATE",
-        "guildSoundboardSoundCreate"
-      >("guildSoundboardSoundCreate", (client, data) => [
-        new SoundboardSound(client, data),
-      ]),
-    ],
-    [
-      "GUILD_SOUNDBOARD_SOUND_UPDATE",
-      defineEvent<
-        "GUILD_SOUNDBOARD_SOUND_UPDATE",
-        "guildSoundboardSoundUpdate"
-      >("guildSoundboardSoundUpdate", (client, data) =>
-        handleUpdateEvent(client, data, "soundboards", SoundboardSound),
-      ),
-    ],
-    [
-      "GUILD_SOUNDBOARD_SOUND_DELETE",
-      defineEvent<
-        "GUILD_SOUNDBOARD_SOUND_DELETE",
-        "guildSoundboardSoundDelete"
-      >("guildSoundboardSoundDelete", (client, data) =>
-        handleDeleteEvent(
-          client,
-          "soundboards",
-          data.sound_id,
-          SoundboardSound,
-        ),
-      ),
-    ],
-    [
-      "GUILD_SOUNDBOARD_SOUNDS_UPDATE",
-      defineEvent<
-        "GUILD_SOUNDBOARD_SOUNDS_UPDATE",
-        "guildSoundboardSoundsUpdate"
-      >("guildSoundboardSoundsUpdate", (client, data) => {
-        const sounds = data.soundboard_sounds.map(
-          (soundData) =>
-            new SoundboardSound(client, {
-              ...soundData,
-              guild_id: data.guild_id,
-            }),
-        );
-        return [sounds];
-      }),
-    ],
-    [
-      "SOUNDBOARD_SOUNDS",
-      defineEvent<"SOUNDBOARD_SOUNDS", "soundboardSounds">(
-        "soundboardSounds",
-        (client, data) => {
-          const soundboardSounds = data.soundboard_sounds.map(
-            (sound) =>
-              new SoundboardSound(client, {
-                ...sound,
-                guild_id: data.guild_id,
-              }),
-          );
-          return [soundboardSounds];
-        },
-      ),
-    ],
-    [
-      "INTEGRATION_CREATE",
-      defineEvent<"INTEGRATION_CREATE", "integrationCreate">(
-        "integrationCreate",
-        (client, data) => [new Integration(client, data)],
-      ),
-    ],
-    [
-      "INTEGRATION_UPDATE",
-      defineEvent<"INTEGRATION_UPDATE", "integrationUpdate">(
-        "integrationUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "integrations", Integration),
-      ),
-    ],
-    [
-      "INTEGRATION_DELETE",
-      defineEvent<"INTEGRATION_DELETE", "integrationDelete">(
-        "integrationDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "integrations", data.id, Integration),
-      ),
-    ],
-    [
-      "INVITE_CREATE",
-      defineEvent<"INVITE_CREATE", "inviteCreate">(
-        "inviteCreate",
-        (client, data) => [
-          new Invite(client, data as InviteEntity & InviteCreateEntity),
-        ],
-      ),
-    ],
-    [
-      "INVITE_DELETE",
-      defineEvent<"INVITE_DELETE", "inviteDelete">(
-        "inviteDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "invites", data.code, Invite),
-      ),
-    ],
-    [
-      "MESSAGE_CREATE",
-      defineEvent<"MESSAGE_CREATE", "messageCreate">(
-        "messageCreate",
-        (client, data) => [new Message(client, data)],
-      ),
-    ],
-    [
-      "MESSAGE_UPDATE",
-      defineEvent<"MESSAGE_UPDATE", "messageUpdate">(
-        "messageUpdate",
-        (client, data) => handleUpdateEvent(client, data, "messages", Message),
-      ),
-    ],
-    [
-      "MESSAGE_DELETE",
-      defineEvent<"MESSAGE_DELETE", "messageDelete">(
-        "messageDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "messages", data.id, Message),
-      ),
-    ],
-    [
-      "MESSAGE_DELETE_BULK",
-      defineEvent<"MESSAGE_DELETE_BULK", "messageDeleteBulk">(
-        "messageDeleteBulk",
-        (client, data) => [
-          data.ids.map((id) => {
-            const [message] = handleDeleteEvent(
-              client,
-              "messages",
-              id,
-              Message,
-            );
-            return message;
-          }) as Message[],
-        ],
-      ),
-    ],
-    [
-      "MESSAGE_REACTION_ADD",
-      defineEvent<"MESSAGE_REACTION_ADD", "messageReactionAdd">(
-        "messageReactionAdd",
-        (client, data) => [new MessageReaction(client, data)],
-      ),
-    ],
-    [
-      "MESSAGE_REACTION_REMOVE",
-      defineEvent<"MESSAGE_REACTION_REMOVE", "messageReactionRemove">(
-        "messageReactionRemove",
-        (client, data) => [new MessageReaction(client, data)],
-      ),
-    ],
-    [
-      "MESSAGE_REACTION_REMOVE_ALL",
-      defineEvent<"MESSAGE_REACTION_REMOVE_ALL", "messageReactionRemoveAll">(
-        "messageReactionRemoveAll",
-        (client, data) => [new MessageReactionRemoveAll(client, data)],
-      ),
-    ],
-    [
-      "MESSAGE_REACTION_REMOVE_EMOJI",
-      defineEvent<
-        "MESSAGE_REACTION_REMOVE_EMOJI",
-        "messageReactionRemoveEmoji"
-      >("messageReactionRemoveEmoji", (client, data) => [
-        new MessageReactionRemoveEmoji(client, data),
-      ]),
-    ],
-    [
-      "MESSAGE_POLL_VOTE_ADD",
-      defineEvent<"MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd">(
-        "messagePollVoteAdd",
-        (client, data) => [new MessagePollVote(client, data)],
-      ),
-    ],
-    [
-      "MESSAGE_POLL_VOTE_REMOVE",
-      defineEvent<"MESSAGE_POLL_VOTE_REMOVE", "messagePollVoteRemove">(
-        "messagePollVoteRemove",
-        (client, data) => [new MessagePollVote(client, data)],
-      ),
-    ],
-    [
-      "TYPING_START",
-      defineEvent<"TYPING_START", "typingStart">("typingStart", (_, data) => [
-        data,
-      ]),
-    ],
-    [
-      "USER_UPDATE",
-      defineEvent<"USER_UPDATE", "userUpdate">("userUpdate", (client, data) =>
-        handleUpdateEvent(client, data, "users", User),
-      ),
-    ],
-    [
-      "VOICE_CHANNEL_EFFECT_SEND",
-      defineEvent<"VOICE_CHANNEL_EFFECT_SEND", "voiceChannelEffectSend">(
-        "voiceChannelEffectSend",
-        (client, data) => [new VoiceChannelEffect(client, data)],
-      ),
-    ],
-    [
-      "VOICE_STATE_UPDATE",
-      defineEvent<"VOICE_STATE_UPDATE", "voiceStateUpdate">(
-        "voiceStateUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "voiceStates", VoiceState),
-      ),
-    ],
-    [
-      "VOICE_SERVER_UPDATE",
-      defineEvent<"VOICE_SERVER_UPDATE", "voiceServerUpdate">(
-        "voiceServerUpdate",
-        (_, data) => [data],
-      ),
-    ],
-    [
-      "WEBHOOKS_UPDATE",
-      defineEvent<"WEBHOOKS_UPDATE", "webhooksUpdate">(
-        "webhooksUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data as WebhookEntity, "webhooks", Webhook),
-      ),
-    ],
-    [
-      "INTERACTION_CREATE",
-      defineEvent<"INTERACTION_CREATE", "interactionCreate">(
-        "interactionCreate",
-        (client, data) => [interactionFactory(client, data)],
-      ),
-    ],
-    [
-      "STAGE_INSTANCE_CREATE",
-      defineEvent<"STAGE_INSTANCE_CREATE", "stageInstanceCreate">(
-        "stageInstanceCreate",
-        (client, data) => [new StageInstance(client, data)],
-      ),
-    ],
-    [
-      "STAGE_INSTANCE_UPDATE",
-      defineEvent<"STAGE_INSTANCE_UPDATE", "stageInstanceUpdate">(
-        "stageInstanceUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "stageInstances", StageInstance),
-      ),
-    ],
-    [
-      "STAGE_INSTANCE_DELETE",
-      defineEvent<"STAGE_INSTANCE_DELETE", "stageInstanceDelete">(
-        "stageInstanceDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "stageInstances", data.id, StageInstance),
-      ),
-    ],
-    [
-      "SUBSCRIPTION_CREATE",
-      defineEvent<"SUBSCRIPTION_CREATE", "subscriptionCreate">(
-        "subscriptionCreate",
-        (client, data) => [new Subscription(client, data)],
-      ),
-    ],
-    [
-      "SUBSCRIPTION_UPDATE",
-      defineEvent<"SUBSCRIPTION_UPDATE", "subscriptionUpdate">(
-        "subscriptionUpdate",
-        (client, data) =>
-          handleUpdateEvent(client, data, "subscriptions", Subscription),
-      ),
-    ],
-    [
-      "SUBSCRIPTION_DELETE",
-      defineEvent<"SUBSCRIPTION_DELETE", "subscriptionDelete">(
-        "subscriptionDelete",
-        (client, data) =>
-          handleDeleteEvent(client, "subscriptions", data.id, Subscription),
-      ),
-    ],
-  ],
-);
+            id: data.role_id,
+          } as GuildBased<RoleEntity>),
+        ];
+      }
 
-function exhaustiveKeys<T>() {
-  return <K extends readonly (keyof T)[]>(
-    keys: K & (keyof T extends K[number] ? K : never),
-  ): K => keys;
-}
+      return [new Role(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.role_id);
+      }
+    }
+  }),
+  defineEvent("guildRoleUpdate", "GUILD_ROLE_UPDATE", (client, data) => {
+    const store = client.cache.roles;
+    const cachedData = store?.get(data.role.id);
+    if (!cachedData) {
+      return [
+        null,
+        new Role(client, { guild_id: data.guild_id, ...data.role }),
+      ];
+    }
+
+    return [
+      new Role(client, cachedData),
+      new Role(client, { guild_id: data.guild_id, ...data.role }),
+    ];
+  }),
+  defineEvent(
+    "guildScheduledEventCreate",
+    "GUILD_SCHEDULED_EVENT_CREATE",
+    (client, data) => [new ScheduledEvent(client, data)],
+  ),
+  defineEvent(
+    "guildScheduledEventDelete",
+    "GUILD_SCHEDULED_EVENT_DELETE",
+    (client, data) => {
+      const store = client.cache.scheduledEvents;
+      const cachedData = store?.get(data.id);
+      try {
+        if (!cachedData) {
+          return [new ScheduledEvent(client, data)];
+        }
+
+        return [new ScheduledEvent(client, cachedData)];
+      } finally {
+        // Ensure cache cleanup happens after return
+        if (cachedData && store) {
+          store.delete(data.id);
+        }
+      }
+    },
+  ),
+  defineEvent(
+    "guildScheduledEventUpdate",
+    "GUILD_SCHEDULED_EVENT_UPDATE",
+    (client, data) => {
+      const store = client.cache.scheduledEvents;
+      const cachedData = store?.get(data.id);
+      if (!cachedData) {
+        return [null, new ScheduledEvent(client, data)];
+      }
+
+      return [
+        new ScheduledEvent(client, cachedData),
+        new ScheduledEvent(client, data),
+      ];
+    },
+  ),
+  defineEvent(
+    "guildScheduledEventUserAdd",
+    "GUILD_SCHEDULED_EVENT_USER_ADD",
+    (_, data) => [data],
+  ),
+  defineEvent(
+    "guildScheduledEventUserRemove",
+    "GUILD_SCHEDULED_EVENT_USER_REMOVE",
+    (_, data) => [data],
+  ),
+  defineEvent(
+    "guildSoundboardSoundCreate",
+    "GUILD_SOUNDBOARD_SOUND_CREATE",
+    (client, data) => [new SoundboardSound(client, data)],
+  ),
+  defineEvent(
+    "guildSoundboardSoundDelete",
+    "GUILD_SOUNDBOARD_SOUND_DELETE",
+    (client, data) => {
+      const store = client.cache.soundboards;
+      const cachedData = store?.get(data.sound_id);
+      try {
+        if (!cachedData) {
+          return [new SoundboardSound(client, data as SoundboardSoundEntity)];
+        }
+
+        return [new SoundboardSound(client, cachedData)];
+      } finally {
+        // Ensure cache cleanup happens after return
+        if (cachedData && store) {
+          store.delete(data.sound_id);
+        }
+      }
+    },
+  ),
+  defineEvent(
+    "guildSoundboardSoundUpdate",
+    "GUILD_SOUNDBOARD_SOUND_UPDATE",
+    (client, data) => {
+      const store = client.cache.soundboards;
+      const cachedData = store?.get(data.sound_id);
+      if (!cachedData) {
+        return [null, new SoundboardSound(client, data)];
+      }
+
+      return [
+        new SoundboardSound(client, cachedData),
+        new SoundboardSound(client, data),
+      ];
+    },
+  ),
+  defineEvent(
+    "guildSoundboardSoundsUpdate",
+    "GUILD_SOUNDBOARD_SOUNDS_UPDATE",
+    (client, data) => {
+      const sounds = data.soundboard_sounds.map(
+        (soundData) =>
+          new SoundboardSound(client, {
+            ...soundData,
+            guild_id: data.guild_id,
+          }),
+      );
+      return [sounds];
+    },
+  ),
+  defineEvent("soundboardSounds", "SOUNDBOARD_SOUNDS", (client, data) => {
+    const soundboardSounds = data.soundboard_sounds.map(
+      (sound) =>
+        new SoundboardSound(client, {
+          ...sound,
+          guild_id: data.guild_id,
+        }),
+    );
+    return [soundboardSounds];
+  }),
+  defineEvent("integrationCreate", "INTEGRATION_CREATE", (client, data) => [
+    new Integration(client, data),
+  ]),
+  defineEvent("integrationDelete", "INTEGRATION_DELETE", (client, data) => {
+    const store = client.cache.integrations;
+    const cachedData = store?.get(data.id);
+    try {
+      if (!cachedData) {
+        return [new Integration(client, data as GuildBased<IntegrationEntity>)];
+      }
+
+      return [new Integration(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.id);
+      }
+    }
+  }),
+  defineEvent("integrationUpdate", "INTEGRATION_UPDATE", (client, data) => {
+    const store = client.cache.integrations;
+    const cachedData = store?.get(data.id);
+    if (!cachedData) {
+      return [null, new Integration(client, data)];
+    }
+
+    return [new Integration(client, cachedData), new Integration(client, data)];
+  }),
+  defineEvent("inviteCreate", "INVITE_CREATE", (client, data) => [
+    new Invite(client, data as InviteEntity & InviteCreateEntity),
+  ]),
+  defineEvent("inviteDelete", "INVITE_DELETE", (client, data) => {
+    const store = client.cache.invites;
+    const cachedData = store?.get(data.code);
+    try {
+      if (!cachedData) {
+        return [new Invite(client, data as InviteEntity & InviteCreateEntity)];
+      }
+
+      return [new Invite(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.code);
+      }
+    }
+  }),
+  defineEvent("messageCreate", "MESSAGE_CREATE", (client, data) => [
+    new Message(client, data),
+  ]),
+  defineEvent("messageDelete", "MESSAGE_DELETE", (client, data) => {
+    const store = client.cache.messages;
+    const cachedData = store?.get(data.id);
+    try {
+      if (!cachedData) {
+        return [new Message(client, data as MessageCreateEntity)];
+      }
+
+      return [new Message(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.id);
+      }
+    }
+  }),
+  defineEvent("messageUpdate", "MESSAGE_UPDATE", (client, data) => {
+    const store = client.cache.messages;
+    const cachedData = store?.get(data.id);
+    if (!cachedData) {
+      return [null, new Message(client, data)];
+    }
+
+    return [new Message(client, cachedData), new Message(client, data)];
+  }),
+  defineEvent("messageDeleteBulk", "MESSAGE_DELETE_BULK", (client, data) => [
+    data.ids.map((id) => {
+      const store = client.cache.messages;
+      const cachedData = store?.get(id);
+      try {
+        if (!cachedData) {
+          return new Message(client, {
+            id,
+            channel_id: data.channel_id,
+            guild_id: data.guild_id,
+          } as MessageCreateEntity);
+        }
+        return new Message(client, cachedData);
+      } finally {
+        // Ensure cache cleanup happens after return
+        if (cachedData && store) {
+          store.delete(id);
+        }
+      }
+    }) as Message[],
+  ]),
+  defineEvent("messageReactionAdd", "MESSAGE_REACTION_ADD", (client, data) => [
+    new MessageReaction(client, data),
+  ]),
+  defineEvent(
+    "messageReactionRemove",
+    "MESSAGE_REACTION_REMOVE",
+    (client, data) => [new MessageReaction(client, data)],
+  ),
+  defineEvent(
+    "messageReactionRemoveAll",
+    "MESSAGE_REACTION_REMOVE_ALL",
+    (client, data) => [new MessageReactionRemoveAll(client, data)],
+  ),
+  defineEvent(
+    "messageReactionRemoveEmoji",
+    "MESSAGE_REACTION_REMOVE_EMOJI",
+    (client, data) => [new MessageReactionRemoveEmoji(client, data)],
+  ),
+  defineEvent("messagePollVoteAdd", "MESSAGE_POLL_VOTE_ADD", (client, data) => [
+    new MessagePollVote(client, data),
+  ]),
+  defineEvent(
+    "messagePollVoteRemove",
+    "MESSAGE_POLL_VOTE_REMOVE",
+    (client, data) => [new MessagePollVote(client, data)],
+  ),
+  defineEvent(
+    "stageInstanceCreate",
+    "STAGE_INSTANCE_CREATE",
+    (client, data) => [new StageInstance(client, data)],
+  ),
+  defineEvent(
+    "stageInstanceDelete",
+    "STAGE_INSTANCE_DELETE",
+    (client, data) => {
+      const store = client.cache.stageInstances;
+      const cachedData = store?.get(data.id);
+      try {
+        if (!cachedData) {
+          return [new StageInstance(client, data)];
+        }
+
+        return [new StageInstance(client, cachedData)];
+      } finally {
+        // Ensure cache cleanup happens after return
+        if (cachedData && store) {
+          store.delete(data.id);
+        }
+      }
+    },
+  ),
+  defineEvent(
+    "stageInstanceUpdate",
+    "STAGE_INSTANCE_UPDATE",
+    (client, data) => {
+      const store = client.cache.stageInstances;
+      const cachedData = store?.get(data.id);
+      if (!cachedData) {
+        return [null, new StageInstance(client, data)];
+      }
+
+      return [
+        new StageInstance(client, cachedData),
+        new StageInstance(client, data),
+      ];
+    },
+  ),
+  defineEvent("subscriptionCreate", "SUBSCRIPTION_CREATE", (client, data) => [
+    new Subscription(client, data),
+  ]),
+  defineEvent("subscriptionDelete", "SUBSCRIPTION_DELETE", (client, data) => {
+    const store = client.cache.subscriptions;
+    const cachedData = store?.get(data.id);
+    try {
+      if (!cachedData) {
+        return [new Subscription(client, data)];
+      }
+
+      return [new Subscription(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(data.id);
+      }
+    }
+  }),
+  defineEvent("subscriptionUpdate", "SUBSCRIPTION_UPDATE", (client, data) => {
+    const store = client.cache.subscriptions;
+    const cachedData = store?.get(data.id);
+    if (!cachedData) {
+      return [null, new Subscription(client, data)];
+    }
+
+    return [
+      new Subscription(client, cachedData),
+      new Subscription(client, data),
+    ];
+  }),
+  defineEvent("userUpdate", "USER_UPDATE", (client, data) => {
+    const store = client.cache.users;
+    const cachedData = store?.get(data.id);
+    if (!cachedData) {
+      return [null, new User(client, data)];
+    }
+
+    return [new User(client, cachedData), new User(client, data)];
+  }),
+  defineEvent(
+    "voiceChannelEffectSend",
+    "VOICE_CHANNEL_EFFECT_SEND",
+    (client, data) => [new VoiceChannelEffect(client, data)],
+  ),
+  defineEvent("voiceStateUpdate", "VOICE_STATE_UPDATE", (client, data) => {
+    const store = client.cache.voiceStates;
+    const voiceStateId = data.user_id;
+    const cachedData = store?.get(voiceStateId);
+    if (!cachedData) {
+      return [null, new VoiceState(client, data)];
+    }
+
+    return [new VoiceState(client, cachedData), new VoiceState(client, data)];
+  }),
+  defineEvent("voiceServerUpdate", "VOICE_SERVER_UPDATE", (_, data) => [data]),
+  defineEvent("webhooksUpdate", "WEBHOOKS_UPDATE", (client, data) => {
+    const store = client.cache.webhooks;
+    const cachedData = store?.find(
+      (wh) =>
+        wh.guild_id === data.guild_id && wh.channel_id === data.channel_id,
+    );
+    if (!cachedData) {
+      return [null, new Webhook(client, data as WebhookEntity)];
+    }
+
+    return [
+      new Webhook(client, cachedData),
+      new Webhook(client, data as WebhookEntity),
+    ];
+  }),
+  defineEvent("ready", "READY", (client, data) => [new Ready(client, data)]),
+  defineEvent("interactionCreate", "INTERACTION_CREATE", (client, data) => [
+    interactionFactory(client, data),
+  ]),
+  defineEvent(
+    "applicationCommandPermissionsUpdate",
+    "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
+    (_, data) => [data],
+  ),
+  defineEvent("typingStart", "TYPING_START", (_, data) => [data]),
+] as const;
 
 /**
- * Events to forward directly from REST client to main client
+ * List of REST client event names to forward directly to the main client.
+ *
+ * These events are related to HTTP request management, rate limiting, and
+ * retry logic. They are forwarded without transformation as they contain
+ * low-level networking information that applications may want to monitor.
+ *
+ * @example
+ * ```typescript
+ * // Forward REST events to main client
+ * for (const eventName of RestEventNames) {
+ *   restClient.on(eventName, (...args) => {
+ *     mainClient.emit(eventName, ...args);
+ *   });
+ * }
+ * ```
+ *
+ * @see {@link RestEvents} - For the complete type definition of REST events
+ * @see {@link GatewayEventNames} - For Gateway client events to forward
+ *
+ * @public
  */
-export const RestKeyofEventMappings = exhaustiveKeys<RestEvents>()([
+export const RestEventNames = [
   "request",
   "rateLimitHit",
   "rateLimitUpdate",
   "rateLimitExpire",
   "retry",
-]);
+] as const satisfies readonly (keyof RestEvents)[];
 
 /**
- * Events to forward directly from Gateway client to main client
+ * List of Gateway client event names to forward directly to the main client.
+ *
+ * These events are related to WebSocket connection management, heartbeats,
+ * session handling, and low-level Gateway operations. They are forwarded
+ * without transformation for applications that need to monitor connection health.
+ *
+ * @example
+ * ```typescript
+ * // Forward Gateway events to main client
+ * for (const eventName of GatewayEventNames) {
+ *   gatewayClient.on(eventName, (...args) => {
+ *     mainClient.emit(eventName, ...args);
+ *   });
+ * }
+ * ```
+ *
+ * @see {@link GatewayEvents} - For the complete type definition of Gateway events
+ * @see {@link RestEventNames} - For REST client events to forward
+ *
+ * @public
  */
-export const GatewayKeyofEventMappings = exhaustiveKeys<GatewayEvents>()([
+export const GatewayEventNames = [
   "heartbeatSent",
   "heartbeatAcknowledge",
   "heartbeatTimeout",
@@ -944,4 +1029,4 @@ export const GatewayKeyofEventMappings = exhaustiveKeys<GatewayEvents>()([
   "wsMessage",
   "stateChange",
   "dispatch",
-]);
+] as const satisfies readonly (keyof GatewayEvents)[];

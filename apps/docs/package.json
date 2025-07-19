@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxojs/docs",
+  "private": true,
+  "description": "Documentation for Nyxo.js framework using Astro and Starlight.",
+  "readme": "README.md",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AtsuLeVrai/nyxo.js",
+    "directory": "apps/docs"
+  },
+  "bugs": {
+    "url": "https://github.com/AtsuLeVrai/nyxo.js/issues"
+  },
+  "author": {
+    "name": "AtsuLeVrai",
+    "url": "https://github.com/AtsuLeVrai"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.1",
+    "@astrojs/node": "^9.3.0",
+    "@astrojs/sitemap": "^3.4.1",
+    "@astrojs/starlight": "^0.35.1",
+    "@tailwindcss/vite": "^4.1.11",
+    "astro": "^5.12.0",
+    "astro-icon": "^1.1.5",
+    "sharp": "^0.34.3",
+    "tailwindcss": "^4.1.11"
+  }
+}

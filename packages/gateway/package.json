@@ -80,7 +80,7 @@
     "erlpack": "^0.1.4"
   },
   "devDependencies": {
-    "@types/node": "^24.0.14",
+    "@types/node": "^24.0.15",
     "@types/ws": "^8.18.1",
     "rimraf": "^6.0.1",
     "tsdown": "^0.12.9",

@@ -1,3 +1,3 @@
-export * from "./channel.util.js";
+export * from "./class.util.js";
 export * from "./event.util.js";
-export * from "./interaction.util.js";
+export * from "./factory.util.js";

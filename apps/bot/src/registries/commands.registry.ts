@@ -3,16 +3,15 @@ import pingCommand from "../commands/utility/ping.js";
 import { parsed } from "../index.js";
 import type { SlashCommand } from "../types/index.js";
 
-/**
- * Centralized command registry using Map for optimal performance.
+/*
+ * Centralized command registry for Discord slash commands.
  *
- * This registry leverages a Map data structure to provide O(1) lookup performance
- * when resolving commands during interaction handling. All commands are statically
- * imported and registered to ensure better tree-shaking, type safety, and compile-time
- * validation.
+ * This registry stores all available slash commands in a readonly array to ensure
+ * immutability and type safety. Commands are statically imported and registered
+ * to provide better tree-shaking, compile-time validation, and performance.
  *
  * **Performance benefits:**
- * - **O(1) Lookup**: Map provides constant-time command resolution
+ * - **Static Analysis**: All commands are known at compile time
  * - **Memory Efficient**: Static imports prevent duplicate instances
  * - **Type Safe**: Full TypeScript validation at compile time
  * - **Tree Shakable**: Unused commands can be eliminated during bundling
@@ -22,69 +21,8 @@ import type { SlashCommand } from "../types/index.js";
  * - Easy command discovery and maintenance
  * - Consistent command structure validation
  * - Simplified debugging and logging
- *
- * @example
- * ```ts
- * // Adding a new command to the registry
- * import newCommand from "../commands/utility/newCommand.js";
- *
- * export const commandRegistry = new Map<string, SlashCommand>([
- *   [pingCommand.data.name, pingCommand],
- *   [newCommand.data.name, newCommand], // Add new command here
- * ]);
- * ```
  */
-export const commandRegistry = new Map<string, SlashCommand>([
-  [pingCommand.data.name, pingCommand],
-]);
-
-/**
- * Retrieves all registered commands as an array.
- *
- * This utility function converts the Map values to an array format,
- * which is useful for bulk operations like registering all commands
- * with the Discord API or performing batch validations.
- *
- * @returns An array containing all registered SlashCommand instances
- *
- * @example
- * ```ts
- * const allCommands = getAllCommands();
- * console.log(`Bot has ${allCommands.length} commands registered`);
- *
- * // Validate all commands
- * allCommands.forEach(cmd => {
- *   if (!cmd.data.name) throw new Error("Invalid command structure");
- * });
- * ```
- */
-export function getAllCommands(): SlashCommand[] {
-  return Array.from(commandRegistry.values());
-}
-
-/**
- * Extracts command data suitable for Discord API registration.
- *
- * Transforms the internal command structure into the format required
- * by Discord's REST API for slash command registration. This separation
- * allows for internal command metadata while providing clean API data.
- *
- * @returns An array of command data objects formatted for Discord API
- *
- * @example
- * ```ts
- * const commandData = getCommandData();
- *
- * // Data is ready for Discord API
- * await client.rest.commands.bulkOverwriteGlobalCommands(
- *   client.user.id,
- *   commandData
- * );
- * ```
- */
-export function getCommandData() {
-  return getAllCommands().map((cmd) => cmd.data);
-}
+export const commandRegistry: readonly SlashCommand[] = [pingCommand] as const;
 
 /**
  * Registers all commands with the Discord API.
@@ -131,7 +69,7 @@ export function getCommandData() {
  */
 export async function registerCommands(client: Client): Promise<void> {
   // Convert commands to Discord API format
-  const commandsArray = getCommandData();
+  const commandsArray = commandRegistry.map((cmd) => cmd.data);
 
   try {
     console.log(

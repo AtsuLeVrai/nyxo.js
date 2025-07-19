@@ -4,16 +4,6 @@ import { z } from "zod/v4";
 import { LruTracker } from "../utils/index.js";
 
 /**
- * Valid key types for the store operations.
- *
- * Supports JavaScript's primitive key types that can be used in Map operations.
- * These types ensure proper serialization and comparison behavior.
- *
- * @public
- */
-export type StoreKey = string | number | symbol;
-
-/**
  * A predicate function for finding or filtering items in the store.
  *
  * Receives both the value and key, allowing filtering based on data content or key patterns.
@@ -40,7 +30,7 @@ export type StoreKey = string | number | symbol;
  *
  * @public
  */
-export type StorePredicate<K extends StoreKey, V> = (
+export type StorePredicate<K extends PropertyKey, V> = (
   value: V,
   key: K,
 ) => boolean;
@@ -159,7 +149,7 @@ export type StoreOptions = z.infer<typeof StoreOptions>;
  *
  * @public
  */
-export class Store<K extends StoreKey, V> extends Map<K, V> {
+export class Store<K extends PropertyKey, V> extends Map<K, V> {
   /**
    * LRU access tracker for intelligent eviction.
    * Only created when using LRU strategy with size limits.

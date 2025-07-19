@@ -6,9 +6,9 @@ import type { User } from "../classes/index.js";
 import { CacheManager, CacheOptions } from "../managers/index.js";
 import type { ClientEvents } from "../types/index.js";
 import {
-  GatewayDispatchEventMap,
-  GatewayKeyofEventMappings,
-  RestKeyofEventMappings,
+  GatewayEventMappings,
+  GatewayEventNames,
+  RestEventNames,
 } from "../utils/index.js";
 
 /**
@@ -96,14 +96,14 @@ export class Client extends EventEmitter<ClientEvents> {
     this.cache = new CacheManager(this.#options.cache);
 
     // Listen for REST events
-    for (const eventName of RestKeyofEventMappings) {
+    for (const eventName of RestEventNames) {
       this.rest.on(eventName, (...args) => {
         this.emit(eventName, ...args);
       });
     }
 
     // Listen for gateway events
-    for (const eventName of GatewayKeyofEventMappings) {
+    for (const eventName of GatewayEventNames) {
       this.gateway.on(eventName, (...args) => {
         this.emit(eventName, ...args);
       });
@@ -111,13 +111,15 @@ export class Client extends EventEmitter<ClientEvents> {
 
     // Listen for gateway events
     this.gateway.on("dispatch", (event, data) => {
-      const mapping = GatewayDispatchEventMap.get(event);
+      const mapping = GatewayEventMappings.find(
+        (m) => m.gatewayEvent === event,
+      );
       if (!mapping) {
         return;
       }
 
       // Transform data and emit the corresponding client event
-      const transformedData = mapping.transform(this, data as never);
+      const transformedData = mapping.transform(this, data);
       this.emit(mapping.clientEvent, ...transformedData);
     });
 

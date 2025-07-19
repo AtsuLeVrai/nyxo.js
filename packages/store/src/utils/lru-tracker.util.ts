@@ -1,4 +1,3 @@
-import type { StoreKey } from "../core/index.js";
 import { LruNode } from "./lru-node.util.js";
 
 /**
@@ -21,7 +20,7 @@ import { LruNode } from "./lru-node.util.js";
  *
  * @public
  */
-export class LruTracker<K extends StoreKey> {
+export class LruTracker<K extends PropertyKey> {
   /**
    * Maximum number of items this tracker can hold before eviction occurs.
    * Immutable after construction for consistency.

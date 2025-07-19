@@ -30,7 +30,9 @@ export default defineEvent({
     }
 
     // Retrieve the command handler from the commands store
-    const command = commandRegistry.get(interaction.commandName);
+    const command = commandRegistry.find(
+      (cmd) => cmd.data.name === interaction.commandName,
+    );
 
     // Handle case where command doesn't exist
     if (!command) {

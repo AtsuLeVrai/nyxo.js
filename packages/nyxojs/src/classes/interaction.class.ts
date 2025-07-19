@@ -10,6 +10,7 @@ import {
   type AttachmentEntity,
   ComponentType,
   type GuildEntity,
+  type GuildMemberEntity,
   type InteractionCallbackAutocompleteEntity,
   type InteractionCallbackMessagesEntity,
   type InteractionCallbackModalEntity,
@@ -23,6 +24,7 @@ import {
   InteractionType,
   type Locale,
   type MessageComponentInteractionDataEntity,
+  type MessageEntity,
   MessageFlags,
   type ModalSubmitInteractionDataEntity,
   type SelectMenuOptionEntity,
@@ -37,7 +39,7 @@ import type {
 import { BaseClass } from "../bases/index.js";
 import type { Enforce, PropsToCamel } from "../types/index.js";
 import { channelFactory } from "../utils/index.js";
-import { type AnyChannel, GuildTextChannel } from "./channel.class.js";
+import type { AnyChannel } from "./channel.class.js";
 import { Entitlement } from "./entitlement.class.js";
 import { Guild, GuildMember } from "./guild.class.js";
 import { Message } from "./message.class.js";
@@ -535,12 +537,9 @@ export class Interaction
       return this.#message;
     }
 
-    try {
-      const channel = await this.fetchChannel();
-      return channel.fetchMessage(this.message.id as Snowflake);
-    } catch (error) {
-      throw new Error(`Failed to fetch message for interaction: ${error}`);
-    }
+    // If we already have the message data, use it directly
+    this.#message = this.message;
+    return this.#message;
   }
 
   /**
@@ -2113,13 +2112,25 @@ export class MessageCommandInteraction extends CommandInteraction {
       throw new Error("Target message not found in resolved data");
     }
 
-    const channel = await this.fetchChannel();
-    if (!(channel instanceof GuildTextChannel)) {
-      throw new Error("Channel must be a text channel to fetch messages");
+    // Use the resolved message data directly if available
+    const resolvedMessage = this.resolved.messages[this.targetId];
+    if (resolvedMessage) {
+      return new Message(this.client, resolvedMessage as MessageEntity);
     }
 
+    // Fallback to fetching from channel if not in resolved data
     try {
-      return await channel.fetchMessage(this.targetId);
+      const channel = await this.fetchChannel();
+
+      // Check if channel has fetchMessage method (most channel types do)
+      if (
+        "fetchMessage" in channel &&
+        typeof channel.fetchMessage === "function"
+      ) {
+        return await channel.fetchMessage(this.targetId);
+      }
+
+      throw new Error("Channel does not support message fetching");
     } catch (error) {
       throw new Error(`Failed to fetch target message: ${error}`);
     }
@@ -2230,9 +2241,9 @@ export class SelectMenuInteraction extends ComponentInteraction {
   /**
    * Gets the selected users from a user select menu.
    *
-   * @returns A promise resolving to an array of User instances
+   * @returns An array of User instances
    */
-  async getSelectedUsers(): Promise<User[]> {
+  getSelectedUsers(): User[] {
     if (
       this.componentType !== ComponentType.UserSelect &&
       this.componentType !== ComponentType.MentionableSelect
@@ -2246,10 +2257,10 @@ export class SelectMenuInteraction extends ComponentInteraction {
 
     const users: User[] = [];
     for (const id of this.values) {
-      try {
-        const user = await this.client.rest.users.fetchUser(id as Snowflake);
-        users.push(new User(this.client, user));
-      } catch {}
+      const userData = this.resolvedEntities.users[id];
+      if (userData) {
+        users.push(new User(this.client, userData));
+      }
     }
 
     return users;
@@ -2258,9 +2269,9 @@ export class SelectMenuInteraction extends ComponentInteraction {
   /**
    * Gets the selected members from a user select menu in a guild.
    *
-   * @returns A promise resolving to an array of GuildMember instances
+   * @returns An array of GuildMember instances
    */
-  async getSelectedMembers(): Promise<GuildMember[]> {
+  getSelectedMembers(): GuildMember[] {
     if (!this.isGuildInteraction()) {
       return [];
     }
@@ -2271,20 +2282,30 @@ export class SelectMenuInteraction extends ComponentInteraction {
       return [];
     }
 
-    if (!(this.resolvedEntities?.members && this.values)) {
+    if (
+      !(
+        this.resolvedEntities?.members &&
+        this.resolvedEntities?.users &&
+        this.values
+      )
+    ) {
       return [];
     }
 
     const members: GuildMember[] = [];
     for (const id of this.values) {
-      try {
-        const userData = await this.client.rest.users.fetchUser(
-          id as Snowflake,
+      const memberData = this.resolvedEntities.members[id];
+      const userData = this.resolvedEntities.users[id];
+
+      if (memberData && userData) {
+        members.push(
+          new GuildMember(this.client, {
+            ...(memberData as GuildMemberEntity),
+            user: userData,
+            guild_id: this.guildId,
+          }),
         );
-        const user = new User(this.client, userData);
-        const member = await user.fetchGuildMember(this.guildId);
-        members.push(member);
-      } catch {}
+      }
     }
 
     return members;

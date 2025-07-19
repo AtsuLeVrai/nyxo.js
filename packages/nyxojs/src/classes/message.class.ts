@@ -943,6 +943,157 @@ export class Message
   }
 
   /**
+   * Gets the message content with user mentions replaced with usernames.
+   *
+   * @returns The content with mentions replaced
+   */
+  get contentWithoutMentions(): string {
+    let content = this.content;
+
+    // Replace user mentions
+    if (this.mentions) {
+      for (const mention of this.mentions) {
+        const user = mention instanceof GuildMember ? mention.user : mention;
+        const mentionRegex = new RegExp(`<@!?${user.id}>`, "g");
+        content = content.replace(
+          mentionRegex,
+          `@${user.username || user.displayName}`,
+        );
+      }
+    }
+
+    // Replace role mentions
+    for (const roleId of this.mentionRoles) {
+      const mentionRegex = new RegExp(`<@&${roleId}>`, "g");
+      content = content.replace(mentionRegex, "@role");
+    }
+
+    // Replace channel mentions
+    if (this.mentionChannels) {
+      for (const channel of this.mentionChannels) {
+        const mentionRegex = new RegExp(`<#${channel.id}>`, "g");
+        content = content.replace(mentionRegex, `#${channel.name}`);
+      }
+    }
+
+    return content;
+  }
+
+  /**
+   * Checks if this message has any attachments.
+   *
+   * @returns True if the message has attachments, false otherwise
+   */
+  get hasAttachments(): boolean {
+    return this.attachments.length > 0;
+  }
+
+  /**
+   * Checks if this message has any embeds.
+   *
+   * @returns True if the message has embeds, false otherwise
+   */
+  get hasEmbeds(): boolean {
+    return this.embeds.length > 0;
+  }
+
+  /**
+   * Checks if this message has any stickers.
+   *
+   * @returns True if the message has sticker items, false otherwise
+   */
+  get hasStickers(): boolean {
+    return Boolean(this.stickerItems && this.stickerItems.length > 0);
+  }
+
+  /**
+   * Checks if this message has any reactions.
+   *
+   * @returns True if the message has reactions, false otherwise
+   */
+  get hasReactions(): boolean {
+    return Boolean(this.reactions && this.reactions.length > 0);
+  }
+
+  /**
+   * Checks if this message has any components (buttons, select menus, etc.).
+   *
+   * @returns True if the message has components, false otherwise
+   */
+  get hasComponents(): boolean {
+    return Boolean(this.components && this.components.length > 0);
+  }
+
+  /**
+   * Gets the first attachment from this message, if any.
+   *
+   * @returns The first attachment, or undefined if none
+   */
+  get firstAttachment() {
+    return this.attachments[0];
+  }
+
+  /**
+   * Gets all image attachments from this message.
+   *
+   * @returns An array of image attachments
+   */
+  get imageAttachments() {
+    return this.attachments.filter((attachment) =>
+      attachment.content_type?.startsWith("image/"),
+    );
+  }
+
+  /**
+   * Checks if this message was edited.
+   *
+   * @returns True if the message was edited, false otherwise
+   */
+  get wasEdited(): boolean {
+    return this.editedTimestamp !== null;
+  }
+
+  /**
+   * Gets the time since this message was created in a human-readable format.
+   *
+   * @returns A string describing how long ago the message was sent
+   */
+  get timeSince(): string {
+    const seconds = Math.floor(this.age / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days} day${days === 1 ? "" : "s"} ago`;
+    if (hours > 0) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+    return `${seconds} second${seconds === 1 ? "" : "s"} ago`;
+  }
+
+  /**
+   * Checks if this message can be deleted by the current user.
+   *
+   * Messages can be deleted if they were sent by the current user,
+   * or if the current user has MANAGE_MESSAGES permission.
+   *
+   * @returns True if the message can be deleted, false otherwise
+   */
+  get isDeletable(): boolean {
+    return this.isAuthor; // Basic check - could be enhanced with permission checking
+  }
+
+  /**
+   * Checks if this message can be edited by the current user.
+   *
+   * Messages can only be edited by their original author.
+   *
+   * @returns True if the message can be edited, false otherwise
+   */
+  get isEditable(): boolean {
+    return this.isAuthor && !this.isSystem;
+  }
+
+  /**
    * Replies to this message.
    *
    * This method creates a new message that references this message as a reply.
@@ -1243,5 +1394,29 @@ export class Message
    */
   createMessageLink(text: string): Link {
     return link(text, this.url);
+  }
+
+  /**
+   * Checks if this message mentions a specific user.
+   *
+   * @param userId - The ID of the user to check for
+   * @returns True if the user is mentioned, false otherwise
+   */
+  mentionsUser(userId: Snowflake): boolean {
+    if (!this.mentions) return false;
+    return this.mentions.some((mention) => {
+      const user = mention instanceof GuildMember ? mention.user : mention;
+      return user.id === userId;
+    });
+  }
+
+  /**
+   * Checks if this message mentions a specific role.
+   *
+   * @param roleId - The ID of the role to check for
+   * @returns True if the role is mentioned, false otherwise
+   */
+  mentionsRole(roleId: Snowflake): boolean {
+    return this.mentionRoles.includes(roleId);
   }
 }

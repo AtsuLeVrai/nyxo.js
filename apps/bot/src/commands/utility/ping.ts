@@ -80,10 +80,10 @@ export default defineSlashCommand({
         },
       )
       .setThumbnail({
-        url: client.user.getAvatarUrl() as string,
+        url: client.user.getDisplayAvatarUrl(),
       })
       .setFooter({
-        icon_url: client.user.getAvatarUrl() as string,
+        icon_url: client.user.getDisplayAvatarUrl(),
         text: `Nyxo.js | Shard ${client.gateway.shard.totalShards}`,
       })
       .setTimestamp()

@@ -2,6 +2,7 @@ import {
   type AnyChannelEntity,
   type BanEntity,
   BitField,
+  ChannelType,
   type FormattedChannel,
   formatChannel,
   type GuildEntity,
@@ -1370,6 +1371,33 @@ export class Guild
   }
 
   /**
+   * Gets the guild's text channels.
+   *
+   * @returns An array of text Channel instances
+   */
+  get textChannels(): AnyChannel[] {
+    return this.getChannelsByType(ChannelType.GuildText);
+  }
+
+  /**
+   * Gets the guild's voice channels.
+   *
+   * @returns An array of voice Channel instances
+   */
+  get voiceChannels(): AnyChannel[] {
+    return this.getChannelsByType(ChannelType.GuildVoice);
+  }
+
+  /**
+   * Gets the guild's forum channels.
+   *
+   * @returns An array of forum Channel instances
+   */
+  get forumChannels(): AnyChannel[] {
+    return this.getChannelsByType(ChannelType.GuildForum);
+  }
+
+  /**
    * Checks if the guild has a specific feature enabled.
    *
    * @param feature - The feature to check
@@ -1548,6 +1576,29 @@ export class Guild
   }
 
   /**
+   * Fetches all active threads in the guild.
+   *
+   * @returns A promise resolving to an object containing arrays of threads and thread members
+   */
+  // async fetchActiveThreads(): Promise<{
+  //   threads: AnyThreadChannel[];
+  //   members: ThreadMember[];
+  // }> {
+  //   const response = await this.client.rest.guilds.fetchActiveGuildThreads(
+  //     this.id,
+  //   );
+  //
+  //   const threads = response[0].threads.map(
+  //     (thread) => new ThreadChannel(this.client, thread),
+  //   );
+  //
+  //   return {
+  //     threads,
+  //     members: response[0].members,
+  //   };
+  // }
+
+  /**
    * Fetches the guild's channels.
    *
    * @returns A promise resolving to an array of Channel instances
@@ -1595,29 +1646,6 @@ export class Guild
       return false;
     }
   }
-
-  /**
-   * Fetches all active threads in the guild.
-   *
-   * @returns A promise resolving to an object containing arrays of threads and thread members
-   */
-  // async fetchActiveThreads(): Promise<{
-  //   threads: AnyThreadChannel[];
-  //   members: ThreadMember[];
-  // }> {
-  //   const response = await this.client.rest.guilds.fetchActiveGuildThreads(
-  //     this.id,
-  //   );
-  //
-  //   const threads = response[0].threads.map(
-  //     (thread) => new ThreadChannel(this.client, thread),
-  //   );
-  //
-  //   return {
-  //     threads,
-  //     members: response[0].members,
-  //   };
-  // }
 
   /**
    * Fetches a list of bans for the guild.
@@ -1891,6 +1919,34 @@ export class Guild
     reason?: string,
   ): Promise<GuildWidgetSettingsEntity> {
     return this.client.rest.guilds.updateGuildWidget(this.id, options, reason);
+  }
+
+  /**
+   * Gets all members with a specific role.
+   *
+   * @param roleId - The ID of the role to filter by
+   * @returns An array of GuildMember instances with the specified role
+   */
+  getMembersWithRole(roleId: Snowflake): GuildMember[] {
+    if (!this.members) {
+      return [];
+    }
+    return this.members.filter((member) => member.roles.includes(roleId));
+  }
+
+  /**
+   * Gets all channels of a specific type.
+   *
+   * @param type - The channel type to filter by
+   * @returns An array of Channel instances of the specified type
+   */
+  getChannelsByType(type: ChannelType): AnyChannel[] {
+    if (!this.channels) {
+      return [];
+    }
+    return this.channels.filter(
+      (channel) => "type" in channel && channel.type === type,
+    );
   }
 
   /**
