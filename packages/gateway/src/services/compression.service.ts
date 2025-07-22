@@ -1,7 +1,7 @@
 import { OptionalDeps } from "@nyxojs/core";
 import type { ZlibStream } from "@nyxojs/zlib";
 import type { ZstdStream } from "@nyxojs/zstd";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 /**
  * Supported Gateway payload compression types.

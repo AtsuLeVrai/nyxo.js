@@ -52,7 +52,7 @@ export function Cacheable<T extends object>(
     // Store cache store key in metadata
     Reflect.defineMetadata(METADATA_KEYS.CACHE_STORE_KEY, storeKey, target);
 
-    // Store key extractor function if provided
+    // Store key extractor function
     Reflect.defineMetadata(
       METADATA_KEYS.CACHE_KEY_EXTRACTOR,
       keyExtractor,

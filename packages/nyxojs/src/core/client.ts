@@ -1,7 +1,7 @@
 import { Gateway, GatewayOptions } from "@nyxojs/gateway";
 import { Rest, RestOptions } from "@nyxojs/rest";
 import { EventEmitter } from "eventemitter3";
-import { z } from "zod/v4";
+import { z } from "zod";
 import type { User } from "../classes/index.js";
 import { CacheManager, CacheOptions } from "../managers/index.js";
 import type { ClientEvents } from "../types/index.js";

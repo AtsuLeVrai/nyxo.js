@@ -381,6 +381,32 @@ export interface MessagesBulkDeleteOptions {
 }
 
 /**
+ * Interface for query parameters when retrieving pinned messages.
+ * Used to control pagination when fetching pinned messages.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages-query-string-params}
+ */
+export interface PinnedMessagesFetchParams {
+  /**
+   * Maximum number of pinned messages to return (1-100)
+   * Default is 50 if not specified.
+   */
+  limit?: number;
+
+  /**
+   * Get messages before this message ID for pagination.
+   * Used for backwards pagination through pinned messages.
+   */
+  before?: Snowflake;
+
+  /**
+   * Get messages after this message ID for pagination.
+   * Used for forwards pagination through pinned messages.
+   */
+  after?: Snowflake;
+}
+
+/**
  * Router for Discord Message-related endpoints.
  * Provides methods to interact with messages, including creation, modification, reactions, and deletion.
  *
@@ -448,6 +474,21 @@ export class MessageRouter {
      */
     bulkDeleteEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/messages/bulk-delete` as const,
+
+    /**
+     * Route for getting pinned messages with pagination.
+     * @param channelId - The ID of the channel
+     */
+    pinnedMessagesEndpoint: (channelId: Snowflake) =>
+      `/channels/${channelId}/messages/pins` as const,
+
+    /**
+     * Route for pinning a message.
+     * @param channelId - The ID of the channel
+     * @param messageId - The ID of the message to pin
+     */
+    pinMessageEndpoint: (channelId: Snowflake, messageId: Snowflake) =>
+      `/channels/${channelId}/messages/pins/${messageId}` as const,
   } as const;
 
   /** The REST client used to make API requests */
@@ -813,6 +854,67 @@ export class MessageRouter {
     return this.#rest.post(
       MessageRouter.MESSAGE_ROUTES.bulkDeleteEndpoint(channelId),
       { body: JSON.stringify(options), reason },
+    );
+  }
+
+  /**
+   * Fetches pinned messages from a channel with pagination support.
+   * Retrieves the messages that have been pinned in a channel.
+   *
+   * @param channelId - The ID of the channel to get pinned messages from
+   * @param query - Query parameters for pagination
+   * @returns A promise resolving to an array of pinned message objects
+   * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages}
+   */
+  fetchPinnedMessages(
+    channelId: Snowflake,
+    query?: PinnedMessagesFetchParams,
+  ): Promise<MessageEntity[]> {
+    return this.#rest.get(
+      MessageRouter.MESSAGE_ROUTES.pinnedMessagesEndpoint(channelId),
+      { query },
+    );
+  }
+
+  /**
+   * Pins a message in a channel.
+   * Adds a message to the channel's list of pinned messages.
+   *
+   * @param channelId - The ID of the channel containing the message
+   * @param messageId - The ID of the message to pin
+   * @param reason - Reason for pinning the message (for audit logs)
+   * @returns A promise that resolves when the message is pinned
+   * @see {@link https://discord.com/developers/docs/resources/channel#pin-message}
+   */
+  pinMessage(
+    channelId: Snowflake,
+    messageId: Snowflake,
+    reason?: string,
+  ): Promise<void> {
+    return this.#rest.put(
+      MessageRouter.MESSAGE_ROUTES.pinMessageEndpoint(channelId, messageId),
+      { reason },
+    );
+  }
+
+  /**
+   * Unpins a message in a channel.
+   * Removes a message from the channel's list of pinned messages.
+   *
+   * @param channelId - The ID of the channel containing the message
+   * @param messageId - The ID of the message to unpin
+   * @param reason - Reason for unpinning the message (for audit logs)
+   * @returns A promise that resolves when the message is unpinned
+   * @see {@link https://discord.com/developers/docs/resources/channel#unpin-message}
+   */
+  unpinMessage(
+    channelId: Snowflake,
+    messageId: Snowflake,
+    reason?: string,
+  ): Promise<void> {
+    return this.#rest.delete(
+      MessageRouter.MESSAGE_ROUTES.pinMessageEndpoint(channelId, messageId),
+      { reason },
     );
   }
 }

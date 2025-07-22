@@ -1,5 +1,5 @@
 import { sleep } from "@nyxojs/core";
-import { z } from "zod/v4";
+import { z } from "zod";
 import type { Rest } from "../core/index.js";
 import type { HttpMethod, RateLimitHitEvent } from "../types/index.js";
 
@@ -801,6 +801,13 @@ export class RateLimitManager {
 
   /**
    * Records an invalid request in the rolling window for Cloudflare protection.
+   *
+   * Tracks 401, 403, and 429 responses within a 10-minute rolling window to prevent
+   * Cloudflare IP bans from excessive invalid requests. Implements a sliding window
+   * counter that resets every 10 minutes.
+   *
+   * @param now - Current timestamp in milliseconds for window calculations
+   *
    * @internal
    */
   #trackInvalidRequest(now: number): void {
@@ -816,6 +823,13 @@ export class RateLimitManager {
 
   /**
    * Updates the global request counter for per-second rate limiting.
+   *
+   * Maintains a rolling count of requests made in the current second to enforce
+   * Discord's global rate limit of 50 requests per second. Resets the counter
+   * when entering a new second-based time window.
+   *
+   * @param now - Current timestamp in milliseconds for window calculations
+   *
    * @internal
    */
   #updateGlobalRequestCount(now: number): void {
@@ -831,6 +845,15 @@ export class RateLimitManager {
 
   /**
    * Checks if the invalid request limit has been exceeded for Cloudflare protection.
+   *
+   * Validates the current count of invalid requests against the configured limit
+   * to prevent Cloudflare IP bans. If the limit is exceeded, calculates the
+   * remaining time until the window expires and requests can resume.
+   *
+   * @param requestId - Unique identifier for request tracking and correlation
+   * @param now - Current timestamp in milliseconds for window calculations
+   * @returns Rate limit result indicating if request can proceed and retry timing
+   *
    * @internal
    */
   #checkInvalidRequestLimit(requestId: string, now: number): RateLimitResult {
@@ -869,6 +892,15 @@ export class RateLimitManager {
 
   /**
    * Checks if the global request rate limit has been exceeded.
+   *
+   * Validates the current request count against Discord's global rate limit
+   * of 50 requests per second. If exceeded, calculates the remaining time
+   * until the current second expires and requests can resume.
+   *
+   * @param requestId - Unique identifier for request tracking and correlation
+   * @param now - Current timestamp in milliseconds for window calculations
+   * @returns Rate limit result indicating if request can proceed and retry timing
+   *
    * @internal
    */
   #checkGlobalRateLimit(requestId: string, now: number): RateLimitResult {
@@ -908,6 +940,18 @@ export class RateLimitManager {
 
   /**
    * Checks if a request would exceed a specific bucket's rate limit.
+   *
+   * Evaluates the current state of a rate limit bucket to determine if a new
+   * request can proceed without violating Discord's per-bucket limits. Applies
+   * safety margins and special handling for emoji routes when necessary.
+   *
+   * @param bucket - Rate limit bucket containing current state and limits
+   * @param path - API path being requested for context and emoji route detection
+   * @param method - HTTP method for the request
+   * @param requestId - Unique identifier for request tracking and correlation
+   * @param now - Current timestamp in milliseconds for limit calculations
+   * @returns Rate limit result indicating if request can proceed and retry timing
+   *
    * @internal
    */
   #checkBucketLimit(
@@ -982,6 +1026,18 @@ export class RateLimitManager {
 
   /**
    * Applies special rate limiting rules for emoji routes.
+   *
+   * Emoji routes require more conservative rate limiting per Discord's documentation.
+   * Uses stricter thresholds (stops at 1 remaining instead of 0) to prevent violations
+   * on these more sensitive endpoints.
+   *
+   * @param bucket - Rate limit bucket for the emoji route
+   * @param path - API path being requested for context
+   * @param method - HTTP method for the request
+   * @param requestId - Unique identifier for request tracking and correlation
+   * @param now - Current timestamp in milliseconds for limit calculations
+   * @returns Rate limit result with conservative emoji route handling
+   *
    * @internal
    */
   #checkEmojiRouteLimit(
@@ -1022,6 +1078,18 @@ export class RateLimitManager {
 
   /**
    * Processes a 429 Too Many Requests response from the Discord API.
+   *
+   * Handles rate limit exceeded responses by extracting retry timing information
+   * from Discord's response headers and determining appropriate retry strategies.
+   * Tracks the violation for invalid request counting and emits monitoring events.
+   *
+   * @param path - API path that received the 429 response
+   * @param method - HTTP method that was rate limited
+   * @param headers - Response headers containing rate limit information
+   * @param requestId - Unique identifier for request tracking and correlation
+   * @param now - Current timestamp in milliseconds for calculations
+   * @returns Rate limit result with retry timing and violation context
+   *
    * @internal
    */
   #handleRateLimitExceeded(
@@ -1070,6 +1138,19 @@ export class RateLimitManager {
 
   /**
    * Updates or creates a rate limit bucket from response headers.
+   *
+   * Processes Discord API response headers to extract rate limit information
+   * and update the corresponding bucket state. Creates new buckets for previously
+   * unknown rate limit hashes and maps API routes to their buckets.
+   *
+   * @param bucketHash - Unique bucket identifier from Discord response headers
+   * @param headers - Response headers containing complete rate limit data
+   * @param routeKey - Internal route key for mapping routes to buckets
+   * @param path - API path for emoji route detection and context
+   * @param requestId - Unique identifier for request tracking and correlation
+   * @param now - Current timestamp in milliseconds for bucket state
+   * @returns Success result with updated bucket information
+   *
    * @internal
    */
   #updateBucket(
@@ -1124,6 +1205,14 @@ export class RateLimitManager {
 
   /**
    * Emits a rate limit hit event for monitoring and observability.
+   *
+   * Publishes comprehensive rate limit hit events through the REST client's
+   * event system for external monitoring, logging, and alerting systems.
+   * Includes complete context about the rate limit violation.
+   *
+   * @param params - Rate limit hit event parameters with violation details
+   * @param now - Current timestamp for consistent event timing
+   *
    * @internal
    */
   #emitRateLimitHit(
@@ -1143,6 +1232,11 @@ export class RateLimitManager {
 
   /**
    * Performs periodic cleanup of expired data.
+   *
+   * Cleans up stale route-to-bucket mappings for buckets that no longer exist.
+   * The BucketStore handles its own automatic cleanup, but route mappings need
+   * manual cleanup to prevent memory leaks from orphaned references.
+   *
    * @internal
    */
   #cleanup(): void {

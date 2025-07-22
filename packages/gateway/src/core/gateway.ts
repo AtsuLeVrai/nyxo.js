@@ -7,7 +7,7 @@ import {
 import type { Rest } from "@nyxojs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
-import { z } from "zod/v4";
+import { z } from "zod";
 import {
   HeartbeatManager,
   HeartbeatOptions,

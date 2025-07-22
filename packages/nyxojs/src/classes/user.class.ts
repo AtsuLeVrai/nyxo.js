@@ -24,7 +24,7 @@ import {
   type UserRoleConnectionUpdateOptions,
   type UserUpdateOptions,
 } from "@nyxojs/rest";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, PropsToCamel } from "../types/index.js";
 import { DmChannel } from "./channel.class.js";
@@ -231,6 +231,16 @@ export class User
    * @returns The primary guild data, or null if not set
    */
   readonly primaryGuild = this.rawData.primary_guild;
+
+  /**
+   * Gets the user's connected third-party accounts.
+   *
+   * This includes services like Twitch, YouTube, and Steam that the user has linked
+   * to their Discord account.
+   *
+   * @returns An array of connection entities in camelCase format
+   */
+  readonly collectibles = this.rawData.collectibles;
 
   /**
    * Gets the user's tag, which is a combination of username and discriminator.

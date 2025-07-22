@@ -1,5 +1,5 @@
 import type { Snowflake } from "@nyxojs/core";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 /**
  * Type representing a complete URL to Discord's primary CDN endpoint.

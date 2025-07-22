@@ -413,6 +413,61 @@ export interface UserPrimaryGuildEntity {
 }
 
 /**
+ * Represents the nameplate data for a user.
+ * Nameplates are visual customizations that appear behind a user's name.
+ * @see {@link https://discord.com/developers/docs/resources/user#nameplate-nameplate-structure}
+ */
+export interface NameplateEntity {
+  /**
+   * ID of the nameplate SKU.
+   * Identifies which product/item the nameplate is from.
+   */
+  sku_id: Snowflake;
+
+  /**
+   * Path to the nameplate asset.
+   * Used to construct the URL for the nameplate image.
+   */
+  asset: string;
+
+  /**
+   * The label of this nameplate.
+   * Currently unused by Discord.
+   */
+  label: string;
+
+  /**
+   * Background color of the nameplate.
+   * One of the predefined color options.
+   */
+  palette:
+    | "crimson"
+    | "berry"
+    | "sky"
+    | "teal"
+    | "forest"
+    | "bubble_gum"
+    | "violet"
+    | "cobalt"
+    | "clover"
+    | "lemon"
+    | "white";
+}
+
+/**
+ * Represents the collectibles a user has.
+ * Collectibles include various cosmetic items excluding Avatar Decorations and Profile Effects.
+ * @see {@link https://discord.com/developers/docs/resources/user#collectibles-collectible-structure}
+ */
+export interface CollectiblesEntity {
+  /**
+   * Object mapping of nameplate data.
+   * Contains information about the user's nameplate customization.
+   */
+  nameplate?: NameplateEntity;
+}
+
+/**
  * Represents a Discord user account.
  * Users are the base entity in Discord and can exist in multiple guilds,
  * participate in text and voice chat, and more.
@@ -544,4 +599,11 @@ export interface UserEntity {
    * Requires the 'identify' OAuth2 scope
    */
   primary_guild?: UserPrimaryGuildEntity | null;
+
+  /**
+   * The collectibles the user has, excluding Avatar Decorations and Profile Effects
+   * Contains cosmetic items like nameplates
+   * Requires the 'identify' OAuth2 scope
+   */
+  collectibles?: CollectiblesEntity | null;
 }

@@ -3,7 +3,7 @@ import { basename } from "node:path";
 import { Readable } from "node:stream";
 import FormData from "form-data";
 import { lookup } from "mime-types";
-import { z } from "zod/v4";
+import { z } from "zod";
 import type { HttpRequestOptions } from "../types/index.js";
 
 /**
@@ -776,9 +776,22 @@ export class FileHandler {
    * the input can be safely processed. Uses TypeScript type assertion to
    * provide compile-time type safety after validation.
    *
+   * String inputs must be either valid filesystem paths (Unix or Windows style)
+   * or RFC 2397 compliant data URIs. All other input types are validated
+   * against supported Buffer and Readable stream interfaces.
+   *
    * @param input - Input value to validate against FileInput union type
-   * @throws {Error} If input type is not supported
+   * @throws {Error} If input type is not supported or is null/undefined
    * @throws {Error} If string input is neither a valid path nor data URI
+   *
+   * @example
+   * ```typescript
+   * // Valid inputs that pass validation
+   * validateInputType('./file.txt');           // Filesystem path
+   * validateInputType('data:text/plain;base64,SGVsbG8='); // Data URI
+   * validateInputType(Buffer.from('data'));    // Buffer
+   * validateInputType(process.stdin);          // Readable stream
+   * ```
    *
    * @internal
    */
@@ -813,9 +826,19 @@ export class FileHandler {
    *
    * Enforces the MAX_BUFFER_SIZE limit to prevent memory exhaustion attacks
    * and ensure consistent resource usage patterns across the application.
+   * Provides detailed error messages with actual and maximum sizes for debugging.
    *
    * @param buffer - Buffer to validate for size constraints
-   * @throws {Error} If buffer exceeds the maximum allowed size
+   * @throws {Error} If buffer exceeds the maximum allowed size with size details
+   *
+   * @example
+   * ```typescript
+   * const smallBuffer = Buffer.from('Hello World');
+   * validateBufferSize(smallBuffer); // Passes validation
+   *
+   * const largeBuffer = Buffer.alloc(200 * 1024 * 1024); // 200MB
+   * validateBufferSize(largeBuffer); // Throws: Buffer too large error
+   * ```
    *
    * @internal
    */
@@ -922,11 +945,21 @@ export class FileHandler {
    * error context for debugging. Includes size validation to prevent
    * memory exhaustion from maliciously large data URIs.
    *
+   * Handles standard base64 padding and validates the decoded result against
+   * memory limits before returning the buffer for further processing.
+   *
    * @param base64Data - Base64 encoded string extracted from data URI
    * @returns Decoded buffer with validated size constraints
    *
    * @throws {Error} If base64 decoding fails with detailed error context
    * @throws {Error} If decoded content exceeds size limits
+   *
+   * @example
+   * ```typescript
+   * // Decode small data URI content
+   * const buffer = decodeDataUri('SGVsbG8gV29ybGQ='); // "Hello World"
+   * console.log(buffer.toString()); // "Hello World"
+   * ```
    *
    * @internal
    */
@@ -980,8 +1013,24 @@ export class FileHandler {
    * appropriately while providing consistent fallback behavior for inputs
    * that don't have natural filename representations.
    *
+   * For filesystem paths, extracts the basename using Node.js path utilities.
+   * For streams, buffers, and data URIs, returns the configured default filename
+   * since these inputs don't have inherent filename information.
+   *
    * @param input - File input to extract filename from
-   * @returns Extracted filename or intelligent default
+   * @returns Extracted filename or intelligent default (FILE_CONSTANTS.DEFAULT_FILENAME)
+   *
+   * @example
+   * ```typescript
+   * // Filesystem path extracts basename
+   * extractFilename('/home/user/document.pdf') // Returns: 'document.pdf'
+   * extractFilename('./images/photo.jpg')      // Returns: 'photo.jpg'
+   *
+   * // Other inputs use default
+   * extractFilename(Buffer.from('data'))       // Returns: 'file'
+   * extractFilename(process.stdin)             // Returns: 'file'
+   * extractFilename('data:text/plain;base64,SGVsbG8=') // Returns: 'file'
+   * ```
    *
    * @internal
    */

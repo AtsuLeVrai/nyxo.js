@@ -15,7 +15,7 @@ import {
   type FileInput,
   type ImageOptions,
 } from "@nyxojs/rest";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, PropsToCamel } from "../types/index.js";
 import { Guild } from "./guild.class.js";

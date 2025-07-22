@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);

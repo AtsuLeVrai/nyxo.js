@@ -47,27 +47,27 @@ import type {
 } from "../classes/index.js";
 
 /**
- * Utilitaire pour convertir une chaîne de caractères snake_case en camelCase.
+ * Utility to convert a snake_case string to camelCase.
  *
- * @typeParam S - Chaîne source en snake_case
+ * @typeParam S - Source string in snake_case
  */
 type CamelCase<S extends string> = S extends `${infer P}_${infer Q}`
   ? `${P}${Capitalize<CamelCase<Q>>}`
   : S;
 
 /**
- * Utilitaire pour mettre en majuscule la première lettre d'une chaîne.
+ * Utility to capitalize the first letter of a string.
  *
- * @typeParam S - Chaîne source
+ * @typeParam S - Source string
  */
 type Capitalize<S extends string> = S extends `${infer P}${infer Q}`
   ? `${Uppercase<P>}${Q}`
   : S;
 
 /**
- * Convertit récursivement les clés snake_case en camelCase tout en préservant les types originaux.
+ * Recursively converts snake_case keys to camelCase while preserving original types.
  *
- * @typeParam T - Type source dont les propriétés seront converties
+ * @typeParam T - Source type whose properties will be converted
  */
 export type PropsToCamel<T> = T extends Array<infer U>
   ? PropsToCamel<U>[]
@@ -102,8 +102,7 @@ export type Enforce<
     ? T[K] extends null | undefined
       ? NonNullable<T[K]>
       : T[K]
-    : // biome-ignore lint/suspicious/noExplicitAny: Explicit any is required to simplify type constraints
-      any;
+    : any;
 };
 
 /**

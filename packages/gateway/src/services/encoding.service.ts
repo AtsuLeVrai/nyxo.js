@@ -1,5 +1,5 @@
 import { OptionalDeps } from "@nyxojs/core";
-import { z } from "zod/v4";
+import { z } from "zod";
 import type { PayloadEntity } from "../types/index.js";
 
 /**

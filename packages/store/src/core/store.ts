@@ -1,6 +1,6 @@
 import { deepmerge } from "deepmerge-ts";
 import { cloneDeep, unset } from "lodash-es";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { LruTracker } from "../utils/index.js";
 
 /**

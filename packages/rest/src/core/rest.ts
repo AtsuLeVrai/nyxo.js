@@ -1,7 +1,7 @@
 import { ApiVersion } from "@nyxojs/core";
 import { EventEmitter } from "eventemitter3";
 import { Pool } from "undici";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { FileHandler, FileHandlerOptions } from "../handlers/index.js";
 import {
   RateLimitManager,
@@ -46,165 +46,112 @@ import type {
 } from "../types/index.js";
 
 /**
- * Regular expression pattern for validating Discord bot user agents.
- * Discord requires a specific format for user agents making API requests
- * to ensure proper identification and tracking of bot applications.
+ * Regular expression for validating Discord bot user agents.
  *
- * **Required Format**: `DiscordBot (URL, Version)`
+ * Validates Discord bot user agent strings according to Discord's official specification.
+ * The pattern ensures proper format compliance for API authentication and identification.
+ * Format: "DiscordBot (url, version)" where url is typically a GitHub repository.
  *
  * @example
  * ```typescript
- * // Valid user agent strings
- * "DiscordBot (https://github.com/example/bot, 1.0.0)"
- * "DiscordBot (https://mybot.example.com, 2.3.1-beta)"
- * "DiscordBot (https://discord.gg/mybotserver, 1.0.0)"
+ * const validAgent = "DiscordBot (https://github.com/mybot, 1.0.0)";
+ * const isValid = DISCORD_USER_AGENT_REGEX.test(validAgent); // true
+ *
+ * const invalidAgent = "MyBot/1.0";
+ * const isInvalid = DISCORD_USER_AGENT_REGEX.test(invalidAgent); // false
  * ```
  *
- * @remarks Discord uses this information for:
- * - **Monitoring**: Tracking bot behavior and usage patterns
- * - **Support**: Identifying bots in support requests
- * - **Analytics**: Understanding API usage by application
- * - **Rate limiting**: Applying appropriate limits per bot
- *
- * @see {@link https://discord.com/developers/docs/reference#user-agent Discord User Agent Documentation}
+ * @see {@link https://discord.com/developers/docs/reference#user-agent}
+ * @public
  */
 export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
 
 /**
  * Configuration schema for the Undici HTTP connection pool.
- * Controls HTTP connection behavior, performance characteristics,
- * and resource management for optimal Discord API communication.
  *
- * @remarks Pool configuration significantly impacts:
- * - **Performance**: Connection reuse reduces latency
- * - **Memory usage**: Too many connections consume resources
- * - **Reliability**: Proper timeouts prevent hanging requests
- * - **Throughput**: Connection limits control concurrency
+ * Defines connection pool behavior for Discord API requests with performance
+ * and reliability optimizations. Controls connection reuse, pipelining, timeouts,
+ * and resource limits to ensure optimal performance for high-traffic Discord bots.
+ *
+ * @example
+ * ```typescript
+ * const poolConfig: z.input<typeof PoolOptions> = {
+ *   connections: 20,      // Higher connection limit for busy bots
+ *   pipelining: 1,        // Disable pipelining for stability
+ *   keepAliveTimeout: 60000,  // 60 second keep-alive
+ *   maxRequestsPerClient: 15, // Limit concurrent requests
+ * };
+ * ```
+ *
+ * @see {@link https://undici.nodejs.org/#/docs/api/Pool} For detailed Undici options
+ * @public
  */
 export const PoolOptions = z.object({
   /**
    * Maximum number of persistent connections per origin.
-   * Controls connection pool size for optimal resource utilization.
-   * Higher values enable more concurrent requests but increase memory usage.
    *
    * @default 10
-   *
-   * @remarks Recommended values by use case:
-   * - **Small bots**: 5-10 connections (sufficient for most operations)
-   * - **Medium bots**: 10-20 connections (handles moderate load)
-   * - **Large bots**: 20-50 connections (high-throughput requirements)
-   * - **Enterprise**: 50+ connections (maximum concurrency)
-   *
-   * @example
-   * ```typescript
-   * // Small bot configuration
-   * const smallBot = { connections: 5 };
-   *
-   * // High-throughput bot configuration
-   * const enterpriseBot = { connections: 50 };
-   * ```
+   * @minimum 1
    */
   connections: z.number().int().positive().default(10),
 
   /**
    * Maximum number of requests to pipeline per connection.
-   * HTTP/1.1 pipelining optimization - set to 1 to disable for compatibility.
-   * Most Discord API endpoints work better without pipelining.
    *
-   * @default 1 (pipelining disabled)
-   *
-   * @remarks Pipelining considerations:
-   * - **Compatibility**: Discord API doesn't require pipelining
-   * - **Debugging**: Easier to trace individual requests when disabled
-   * - **Reliability**: Less complex error handling with single requests
-   * - **Performance**: Minimal benefit for typical Discord bot workflows
+   * @default 1
+   * @minimum 0
    */
   pipelining: z.number().int().min(0).default(1),
 
   /**
-   * Timeout for idle connections in milliseconds.
-   * Controls how long connections remain open without activity.
-   * Balances connection reuse efficiency with resource conservation.
+   * Timeout for idle connections.
    *
-   * @default 30000 (30 seconds)
-   *
-   * @remarks Timeout strategy:
-   * - **Too short**: Excessive connection establishment overhead
-   * - **Too long**: Unnecessary resource consumption
-   * - **Discord pattern**: Most bot activity occurs in bursts
-   * - **Network reliability**: Accounts for connection state tracking
+   * @default 30000
+   * @minimum 1
+   * @unit milliseconds
    */
   keepAliveTimeout: z.number().int().min(1).default(30000),
 
   /**
-   * Maximum timeout ceiling for idle connections in milliseconds.
-   * Upper bound for keep-alive timeout negotiation with the server.
-   * Prevents excessive connection retention beyond reasonable limits.
+   * Maximum timeout ceiling for idle connections.
    *
-   * @default 600000 (10 minutes)
-   *
-   * @remarks This value represents the absolute maximum time a connection
-   * can remain idle before forced closure, regardless of server preferences.
+   * @default 600000
+   * @minimum 1
+   * @unit milliseconds
    */
   keepAliveMaxTimeout: z.number().int().min(1).default(600000),
 
   /**
-   * Maximum size allowed for HTTP response headers in bytes.
-   * Prevents memory exhaustion from malformed or abnormally large headers.
-   * Discord API typically uses standard header sizes well below this limit.
+   * Maximum size allowed for HTTP response headers.
    *
-   * @default 16384 (16KB)
-   *
-   * @remarks Security considerations:
-   * - **Memory protection**: Prevents header-based DoS attacks
-   * - **Discord compliance**: Well above normal Discord header sizes
-   * - **Error detection**: Catches malformed responses early
-   * - **Resource management**: Bounds memory allocation per request
+   * @default 16384
+   * @minimum 1
+   * @unit bytes
    */
   maxHeaderSize: z.number().int().min(1).default(16384),
 
   /**
-   * Maximum number of HTTP redirections to follow automatically.
-   * Discord API typically doesn't use redirects, so this is disabled by default.
-   * Helps prevent redirect loops and maintains predictable request behavior.
+   * Maximum number of HTTP redirections to follow.
    *
-   * @default 0 (redirections disabled)
-   *
-   * @remarks Redirect policy:
-   * - **Discord API**: Direct endpoint access without redirects
-   * - **Security**: Prevents redirect-based attacks
-   * - **Predictability**: Explicit control over request destinations
-   * - **Debugging**: Clearer request tracing without redirect chains
+   * @default 0
+   * @minimum 0
    */
   maxRedirections: z.number().int().min(0).default(0),
 
   /**
-   * Maximum number of concurrent requests per client instance.
-   * Controls overall concurrency to prevent overwhelming Discord's servers
-   * and maintain compliance with API rate limits.
+   * Maximum number of concurrent requests per client.
    *
    * @default 10
-   *
-   * @remarks Concurrency balance:
-   * - **Rate limit compliance**: Stays within Discord's global limits
-   * - **Server courtesy**: Avoids excessive load on Discord infrastructure
-   * - **Error handling**: Manageable number of simultaneous failures
-   * - **Resource efficiency**: Balanced CPU and memory usage
+   * @minimum 1
    */
   maxRequestsPerClient: z.number().int().positive().default(10),
 
   /**
-   * Maximum size allowed for response body content in bytes.
-   * Protects against memory exhaustion from unexpectedly large responses.
-   * Discord API responses are typically small, making this a safety net.
+   * Maximum size allowed for response body content.
    *
-   * @default 52428800 (50MB)
-   *
-   * @remarks Size considerations:
-   * - **File uploads**: Accommodates large file download responses
-   * - **Memory safety**: Prevents unbounded memory allocation
-   * - **Typical usage**: Most Discord responses are under 1MB
-   * - **Edge cases**: Handles large guild member lists or message histories
+   * @default 52428800
+   * @minimum 1
+   * @unit bytes
    */
   maxResponseSize: z
     .number()
@@ -212,194 +159,150 @@ export const PoolOptions = z.object({
     .default(50 * 1024 * 1024),
 
   /**
-   * Connection establishment timeout in milliseconds.
-   * Time limit for initial TCP connection setup to Discord's servers.
-   * Separate from overall request timeout for granular control.
+   * Connection establishment timeout.
    *
-   * @default 30000 (30 seconds)
-   *
-   * @remarks Connection timing:
-   * - **Network conditions**: Accommodates various network speeds
-   * - **Geographic diversity**: Accounts for global Discord infrastructure
-   * - **Reliability**: Detects connection issues early
-   * - **User experience**: Reasonable wait time for users
+   * @default 30000
+   * @minimum 1
+   * @unit milliseconds
    */
   connectTimeout: z.number().int().positive().default(30000),
 
   /**
-   * Response headers arrival timeout in milliseconds.
-   * Time limit for receiving HTTP response headers after request sent.
-   * Helps identify server-side processing delays or network issues.
+   * Response headers arrival timeout.
    *
-   * @default 30000 (30 seconds)
-   *
-   * @remarks Header timing significance:
-   * - **Server health**: Indicates Discord API responsiveness
-   * - **Network quality**: Reflects connection stability
-   * - **Error detection**: Catches stuck requests early
-   * - **Performance monitoring**: Tracks API response patterns
+   * @default 30000
+   * @minimum 1
+   * @unit milliseconds
    */
   headersTimeout: z.number().int().positive().default(30000),
 
   /**
-   * Response body completion timeout in milliseconds.
-   * Time limit for receiving complete response body after headers arrive.
-   * Protects against slow or stalled data transfer.
+   * Response body completion timeout.
    *
-   * @default 30000 (30 seconds)
-   *
-   * @remarks Body transfer considerations:
-   * - **Data size**: Varies significantly with response content
-   * - **Network speed**: Accommodates slower connections
-   * - **Progress detection**: Distinguishes slow vs stalled transfers
-   * - **Resource protection**: Prevents indefinite resource allocation
+   * @default 30000
+   * @minimum 1
+   * @unit milliseconds
    */
   bodyTimeout: z.number().int().positive().default(30000),
 
   /**
-   * Automatic address family selection between IPv4 and IPv6.
-   * Enables adaptive networking for optimal connectivity across different
-   * network environments and Discord's infrastructure.
+   * Automatically select address family (IPv4/IPv6).
    *
-   * @default false (IPv4 only)
-   *
-   * @remarks Address family selection:
-   * - **IPv4**: Universal compatibility across all networks
-   * - **IPv6**: Better performance in modern networks
-   * - **Auto-selection**: Adapts to network capabilities
-   * - **Fallback**: Graceful degradation when one protocol fails
+   * @default false
    */
   autoSelectFamily: z.boolean().default(false),
 
   /**
-   * Strict Content-Length validation enforcement.
-   * Ensures response body size matches declared Content-Length header.
-   * Improves security by detecting truncated or modified responses.
+   * Enforce strict Content-Length validation.
    *
-   * @default true (strict validation enabled)
-   *
-   * @remarks Security implications:
-   * - **Data integrity**: Ensures complete response reception
-   * - **Attack detection**: Identifies potential response manipulation
-   * - **Protocol compliance**: Enforces HTTP specification adherence
-   * - **Error detection**: Catches network-level corruption early
+   * @default true
    */
   strictContentLength: z.boolean().default(true),
 
   /**
-   * HTTP/2 connection support enablement.
-   * Allows use of HTTP/2 protocol for improved multiplexing and performance.
-   * Discord API supports HTTP/2 for enhanced efficiency.
+   * Enable HTTP/2 connection support.
    *
-   * @default true (HTTP/2 enabled)
-   *
-   * @remarks HTTP/2 considerations:
-   * - **Performance**: Better multiplexing for concurrent requests
-   * - **Compatibility**: Requires modern Node.js and network support
-   * - **Complexity**: More sophisticated error handling requirements
-   * - **Testing**: Additional protocol complexity in development
+   * @default true
    */
   allowH2: z.boolean().default(true),
 });
 
 /**
- * Comprehensive configuration schema for the Discord REST client.
- * Defines authentication, API versioning, networking, and behavioral settings
- * with runtime validation to ensure correct client initialization.
+ * Configuration schema for the Discord REST client.
  *
- * @remarks All configuration options are validated through Zod schemas
- * to provide type safety and catch configuration errors at startup rather
- * than during runtime operations.
+ * Defines comprehensive configuration options for the Discord REST API client
+ * including authentication, connection pooling, rate limiting, retry behavior,
+ * and file handling. All settings are validated through Zod schemas to ensure
+ * type safety and proper defaults.
+ *
+ * @example
+ * ```typescript
+ * const restConfig: z.input<typeof RestOptions> = {
+ *   token: process.env.DISCORD_TOKEN!,
+ *   authType: "Bot",
+ *   userAgent: "DiscordBot (https://github.com/mybot, 2.0.0)",
+ *   timeout: 45000,
+ *   pool: {
+ *     connections: 25,
+ *     maxRequestsPerClient: 20
+ *   },
+ *   rateLimit: {
+ *     maxGlobalRequestsPerSecond: 45
+ *   }
+ * };
+ * ```
+ *
+ * @public
  */
 export const RestOptions = z.object({
   /**
-   * Discord Bot token or Bearer token for API authentication.
-   * Required for all Discord API requests to identify and authorize your application.
-   * Token type determines the authentication method used.
+   * Discord Bot or Bearer token for API authentication.
    *
-   * @example
-   * ```typescript
-   * // Bot token (most common)
-   * const botConfig = {
-   *   token: "MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs",
-   *   authType: "Bot"
-   * };
+   * Must be a valid Discord bot token from the Developer Portal or an OAuth2
+   * Bearer token for user-authorized requests. The token is used for all API
+   * authentication and determines available permissions and endpoints.
    *
-   * // OAuth2 Bearer token
-   * const oauthConfig = {
-   *   token: "6qrZcUqja7812RVdnEKjpzOL4CvHBFG",
-   *   authType: "Bearer"
-   * };
-   * ```
+   * @example "Bot MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs"
+   * @example "Bearer BT9.hNtyLePr8X2vdNtZzpCs1hmU6_Li"
    *
-   * @remarks Token security:
-   * - **Never hardcode**: Use environment variables or secure storage
-   * - **Scope appropriately**: Only request necessary permissions
-   * - **Rotate regularly**: Update tokens according to security policy
-   * - **Monitor usage**: Track token usage for security auditing
-   *
-   * @see {@link https://discord.com/developers/docs/topics/oauth2 Discord OAuth2 Documentation}
+   * @see {@link https://discord.com/developers/docs/topics/oauth2}
    */
   token: z.string(),
 
   /**
-   * Authentication type indicating how the token should be presented.
-   * Determines the Authorization header format for API requests.
+   * Authentication type for the Authorization header.
+   *
+   * Determines the prefix used in the Authorization header for API requests.
+   * "Bot" should be used for bot tokens, "Bearer" for OAuth2 access tokens.
+   * This affects which Discord API endpoints are available and permissions.
    *
    * @default "Bot"
    *
-   * @remarks Authentication types:
-   * - **Bot**: For application bot tokens (`Authorization: Bot TOKEN`)
-   * - **Bearer**: For OAuth2 access tokens (`Authorization: Bearer TOKEN`)
+   * @example
+   * ```typescript
+   * // For bot tokens
+   * { authType: "Bot", token: "your_bot_token" }
+   * // Results in: "Authorization: Bot your_bot_token"
    *
-   * Choose the type that matches your token:
-   * - Bot tokens from the Discord Developer Portal → use "Bot"
-   * - OAuth2 tokens from authorization flows → use "Bearer"
+   * // For OAuth2 user tokens
+   * { authType: "Bearer", token: "oauth2_access_token" }
+   * // Results in: "Authorization: Bearer oauth2_access_token"
+   * ```
    */
   authType: z.enum(["Bot", "Bearer"]).default("Bot"),
 
   /**
-   * Discord API version to use for all requests.
-   * Currently constrained to V10 as it's the only supported stable version.
-   * Future versions will be added as Discord releases them.
+   * Discord API version for all requests.
+   *
+   * Specifies which version of Discord's API to use for all requests. This affects
+   * available endpoints, request/response formats, and feature availability.
+   * Currently locked to V10 for stability and consistency.
    *
    * @default ApiVersion.V10
    *
-   * @remarks API version considerations:
-   * - **Stability**: V10 is the current stable, feature-complete version
-   * - **Compatibility**: Ensures consistent behavior across all endpoints
-   * - **Migration**: Version changes require careful testing and migration
-   * - **Deprecation**: Discord provides advance notice for version changes
+   * @remarks API version changes can introduce breaking changes in endpoints,
+   * response structures, and available features. V10 is the recommended stable version.
    *
-   * @see {@link https://discord.com/developers/docs/reference#api-versioning Discord API Versioning}
+   * @see {@link https://discord.com/developers/docs/reference#api-versioning}
    */
   version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
 
   /**
-   * User agent string sent with all requests for identification.
-   * Must follow Discord's required format for proper bot identification.
-   * Used by Discord for monitoring, analytics, and support purposes.
+   * User agent string for identification.
+   *
+   * Must follow Discord's required format: "DiscordBot (url, version)". Used by
+   * Discord to identify your bot and contact you if needed. Should include your
+   * bot's repository URL and version number for proper identification.
    *
    * @default "DiscordBot (https://github.com/AtsuLeVrai/nyxo.js, 1.0.0)"
    *
    * @example
    * ```typescript
-   * // Custom bot user agent
-   * const customConfig = {
-   *   userAgent: "DiscordBot (https://github.com/myuser/mybot, 2.1.0)"
-   * };
-   *
-   * // Organization bot user agent
-   * const orgConfig = {
-   *   userAgent: "DiscordBot (https://company.com/bots/helpdesk, 1.5.2)"
-   * };
+   * userAgent: "DiscordBot (https://github.com/mybot/discord-bot, 2.1.0)"
+   * userAgent: "DiscordBot (https://mywebsite.com/bot, 1.5.2)"
    * ```
    *
-   * @remarks User agent importance:
-   * - **Identification**: Helps Discord identify your bot in logs
-   * - **Support**: Essential for troubleshooting API issues
-   * - **Compliance**: Required by Discord's Terms of Service
-   * - **Analytics**: Enables Discord to provide better API insights
+   * @see {@link https://discord.com/developers/docs/reference#user-agent}
    */
   userAgent: z
     .string()
@@ -408,179 +311,111 @@ export const RestOptions = z.object({
 
   /**
    * Base URL for Discord API requests.
-   * Typically the standard Discord API endpoint, but can be customized
-   * for proxy setups, testing environments, or alternative gateways.
+   *
+   * The root URL for all Discord API requests. Normally should be Discord's
+   * official API URL unless using a proxy or custom Discord instance.
+   * Must include protocol (https://) and domain without trailing slash.
    *
    * @default "https://discord.com"
    *
    * @example
    * ```typescript
-   * // Standard configuration
-   * const standard = { baseUrl: "https://discord.com" };
-   *
-   * // Proxy configuration
-   * const proxied = { baseUrl: "https://api-proxy.mycompany.com" };
-   *
-   * // Testing environment
-   * const testing = { baseUrl: "https://staging-api.discord.test" };
+   * baseUrl: "https://discord.com"           // Official Discord API
+   * baseUrl: "https://proxy.example.com"     // Custom proxy
    * ```
-   *
-   * @remarks Base URL considerations:
-   * - **Production**: Always use official Discord endpoints
-   * - **Testing**: May use alternative endpoints for development
-   * - **Proxies**: Corporate environments may require proxy configuration
-   * - **Compliance**: Ensure alternative endpoints maintain API compatibility
    */
   baseUrl: z.url().default("https://discord.com"),
 
   /**
-   * Global timeout for all API requests in milliseconds.
-   * Requests exceeding this duration will be automatically aborted.
-   * Applies to the entire request lifecycle from start to completion.
+   * Global timeout for all API requests.
+   *
+   * Maximum time to wait for any single API request before aborting.
+   * Applies to connection establishment, request sending, and response reception.
+   * Higher values improve reliability for slow networks, lower values improve responsiveness.
    *
    * @default 30000 (30 seconds)
+   * @minimum 0
+   * @unit milliseconds
    *
    * @example
    * ```typescript
-   * // Quick timeout for responsive UIs
-   * const responsive = { timeout: 5000 }; // 5 seconds
-   *
-   * // Standard timeout for most bots
-   * const standard = { timeout: 30000 }; // 30 seconds
-   *
-   * // Extended timeout for large operations
-   * const extended = { timeout: 120000 }; // 2 minutes
+   * timeout: 15000,  // 15 seconds for fast user-facing operations
+   * timeout: 60000,  // 60 seconds for batch operations
+   * timeout: 5000,   // 5 seconds for real-time features
    * ```
-   *
-   * @remarks Timeout considerations:
-   * - **User experience**: Shorter timeouts provide faster feedback
-   * - **Reliability**: Longer timeouts handle slow network conditions
-   * - **Resource management**: Prevents indefinite resource allocation
-   * - **Error handling**: Clear distinction between timeouts and other failures
    */
   timeout: z.number().int().min(0).default(30000),
 
   /**
-   * HTTP connection pool configuration for optimal performance.
-   * Controls how HTTP connections are managed, reused, and timed out.
-   * Significant impact on both performance and resource utilization.
+   * HTTP connection pool configuration.
    *
-   * @see {@link PoolOptions} for detailed pool configuration options
+   * Controls connection reuse, pooling behavior, timeouts, and resource limits
+   * for HTTP requests to Discord's API. Optimizing these settings can significantly
+   * improve performance for high-traffic Discord bots.
    *
-   * @example
-   * ```typescript
-   * // High-performance configuration
-   * const highPerf = {
-   *   pool: {
-   *     connections: 20,
-   *     keepAliveTimeout: 60000,
-   *     maxRequestsPerClient: 15
-   *   }
-   * };
-   *
-   * // Resource-conservative configuration
-   * const conservative = {
-   *   pool: {
-   *     connections: 5,
-   *     keepAliveTimeout: 15000,
-   *     maxRequestsPerClient: 5
-   *   }
-   * };
-   * ```
+   * @see {@link PoolOptions} For detailed configuration options and examples
    */
   pool: PoolOptions.prefault({}),
 
   /**
-   * Request retry configuration for transient failure recovery.
-   * Defines how failed requests should be automatically retried
-   * to improve reliability in the face of temporary issues.
+   * Request retry configuration.
    *
-   * @see {@link RetryOptions} for detailed retry configuration options
+   * Defines retry behavior for failed requests including retry counts, delay
+   * algorithms, and status code handling. Provides intelligent error recovery
+   * for transient failures while avoiding excessive retry attempts.
    *
-   * @example
-   * ```typescript
-   * // Aggressive retry for critical operations
-   * const aggressive = {
-   *   retry: {
-   *     maxRetries: 5,
-   *     baseDelay: 500,
-   *     retryStatusCodes: [408, 500, 502, 503, 504]
-   *   }
-   * };
-   *
-   * // Conservative retry for user-facing operations
-   * const conservative = {
-   *   retry: {
-   *     maxRetries: 2,
-   *     baseDelay: 1000,
-   *     retryStatusCodes: [500, 503]
-   *   }
-   * };
-   * ```
+   * @see {@link RetryOptions} For detailed retry configuration and strategies
    */
   retry: RetryOptions.prefault({}),
 
   /**
-   * Rate limit tracking and prevention configuration.
-   * Controls how Discord's rate limits are monitored, respected,
-   * and proactively managed to prevent 429 errors and IP bans.
+   * Rate limit handling configuration.
    *
-   * @see {@link RateLimitOptions} for detailed rate limit configuration options
+   * Controls proactive rate limit management to prevent 429 errors and
+   * Cloudflare IP bans. Includes global limits, bucket tracking, safety margins,
+   * and compliance with Discord's rate limiting policies.
    *
-   * @example
-   * ```typescript
-   * // High-throughput configuration
-   * const highThroughput = {
-   *   rateLimit: {
-   *     maxGlobalRequestsPerSecond: 45,
-   *     safetyMargin: 50,
-   *     maxInvalidRequests: 8000
-   *   }
-   * };
-   *
-   * // Conservative configuration
-   * const conservative = {
-   *   rateLimit: {
-   *     maxGlobalRequestsPerSecond: 30,
-   *     safetyMargin: 200,
-   *     maxInvalidRequests: 5000
-   *   }
-   * };
-   * ```
+   * @see {@link RateLimitOptions} For detailed rate limiting configuration
    */
   rateLimit: RateLimitOptions.prefault({}),
 
   /**
    * File upload processing configuration.
-   * Controls how files are handled during multipart uploads,
-   * including validation, processing, and memory management.
    *
-   * @see {@link FileHandlerOptions} for detailed file configuration options
+   * Controls file handling behavior including timeouts, filename sanitization,
+   * and validation settings for Discord API file uploads. Ensures secure and
+   * efficient processing of user uploads and attachments.
    *
-   * @example
-   * ```typescript
-   * // Large file support configuration
-   * const largeFiles = {
-   *   file: {
-   *     maxFileSize: 100 * 1024 * 1024, // 100MB
-   *     maxFiles: 10,
-   *     allowedTypes: ['image/*', 'video/*', 'audio/*']
-   *   }
-   * };
-   *
-   * // Strict security configuration
-   * const secure = {
-   *   file: {
-   *     maxFileSize: 8 * 1024 * 1024, // 8MB
-   *     maxFiles: 3,
-   *     allowedTypes: ['image/png', 'image/jpeg', 'image/gif']
-   *   }
-   * };
-   * ```
+   * @see {@link FileHandlerOptions} For detailed file handling configuration
    */
   file: FileHandlerOptions.prefault({}),
 });
 
+/**
+ * Type definition for validated REST client configuration options.
+ *
+ * This type represents the parsed and validated configuration after processing
+ * through the Zod schema, with all defaults applied and types resolved.
+ * Contains complete configuration for Discord REST API client behavior.
+ *
+ * @example
+ * ```typescript
+ * const config: RestOptions = {
+ *   token: process.env.DISCORD_TOKEN!,
+ *   authType: "Bot",
+ *   version: ApiVersion.V10,
+ *   userAgent: "DiscordBot (https://github.com/mybot, 1.0.0)",
+ *   baseUrl: "https://discord.com",
+ *   timeout: 30000,
+ *   pool: { connections: 10, pipelining: 1 },
+ *   retry: { maxRetries: 3, baseDelay: 1000 },
+ *   rateLimit: { maxGlobalRequestsPerSecond: 50 },
+ *   file: { streamTimeout: 30000, sanitizeFilenames: true }
+ * };
+ * ```
+ *
+ * @public
+ */
 export type RestOptions = z.infer<typeof RestOptions>;
 
 /**
@@ -1993,10 +1828,14 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /**
    * Validates whether an object follows Discord's API error response structure.
-   * Used to identify and properly handle structured API errors vs generic failures.
    *
-   * @param error - Object to validate for error structure
-   * @returns Type predicate indicating if object is a Discord API error
+   * Performs runtime type checking to determine if an unknown object matches
+   * Discord's standardized API error format with required 'code' and 'message'
+   * properties. Used to differentiate between structured API errors and generic
+   * failures for appropriate error handling strategies.
+   *
+   * @param error - Unknown object to validate against Discord error structure
+   * @returns Type predicate indicating if object is a valid JsonErrorResponse
    *
    * @internal
    */
@@ -2013,11 +1852,14 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /**
    * Constructs HTTP headers for Discord API requests.
-   * Handles authentication, content type detection, and custom header merging
-   * with proper content-length calculation for different body types.
    *
-   * @param options - Request options containing optional headers and body
-   * @returns Complete headers object ready for HTTP request
+   * Builds comprehensive request headers including authentication, content-type
+   * detection, and content-length calculation. Handles various body types (string,
+   * Buffer, stream) and merges custom headers while preserving Discord's required
+   * authentication and rate limit precision headers.
+   *
+   * @param options - Request options containing optional headers and body content
+   * @returns Complete headers object with authentication and content metadata
    *
    * @internal
    */
@@ -2060,11 +1902,16 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /**
    * Prepares multipart/form-data requests for file uploads.
-   * Integrates with FileHandler to create properly formatted multipart requests
-   * with files and JSON payload data.
    *
-   * @param options - Request options containing files to upload
-   * @returns Promise resolving to prepared request with multipart body
+   * Transforms standard HTTP request options into multipart format suitable for
+   * Discord API file uploads. Delegates to FileHandler for processing files and
+   * JSON payload into properly formatted multipart/form-data with correct headers
+   * and boundaries.
+   *
+   * @param options - Request options containing files to upload and optional JSON payload
+   * @returns Promise resolving to request options with multipart body and headers
+   *
+   * @throws {Error} If no files are provided in options that require file upload
    *
    * @internal
    */
@@ -2090,11 +1937,13 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /**
    * Formats boolean query parameters for Discord API compatibility.
-   * Converts JavaScript boolean values to string representations that
-   * Discord's API expects for proper query parameter handling.
    *
-   * @param params - Query parameters object containing mixed types
-   * @returns Formatted parameters with boolean values as strings
+   * Converts JavaScript boolean values to string representations that Discord's
+   * API expects. Handles type coercion for all parameter values while preserving
+   * undefined and null filtering to prevent invalid query parameters.
+   *
+   * @param params - Query parameters object with mixed primitive types
+   * @returns Sanitized parameters object with string values for all valid entries
    *
    * @internal
    */
@@ -2115,11 +1964,15 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /**
    * Formats nested field validation errors into readable error messages.
-   * Recursively processes Discord's nested error structure to create
-   * user-friendly descriptions of validation failures.
    *
-   * @param errors - Nested error object from Discord API response
-   * @returns Formatted error string or undefined if no errors
+   * Recursively traverses Discord's nested error structure to extract and format
+   * field-specific validation errors. Handles Discord's '_errors' array format
+   * and nested object paths to create comprehensive error summaries for debugging
+   * and user feedback. Processes the complete error tree to provide detailed
+   * field-level error information.
+   *
+   * @param errors - Nested error object from Discord API response with '_errors' arrays
+   * @returns Formatted error string with field paths or undefined if no errors found
    *
    * @internal
    */
@@ -2154,11 +2007,14 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /**
    * Extracts resource type information from Discord API paths.
-   * Analyzes URL patterns to identify the type of resource being accessed
-   * for enhanced error messaging and debugging context.
    *
-   * @param path - API path to analyze for resource type
-   * @returns Resource type string or undefined if not identifiable
+   * Analyzes Discord API URL patterns using regex matching to identify the
+   * type of resource being accessed (e.g., 'guilds', 'channels', 'users').
+   * Used for enhanced error messaging and debugging context in failed requests.
+   * Matches common Discord API path patterns to extract resource types.
+   *
+   * @param path - Discord API path to analyze for resource type pattern
+   * @returns Resource type string extracted from path or undefined if unrecognized
    *
    * @internal
    */
@@ -2174,11 +2030,14 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /**
    * Extracts resource ID (Discord snowflake) from API paths.
-   * Identifies the specific entity ID being accessed for error context
-   * and debugging information.
    *
-   * @param path - API path to analyze for resource ID
-   * @returns Resource ID string or undefined if not found
+   * Uses regex matching to identify and extract Discord snowflake IDs from
+   * API paths. Targets the last numeric ID in the path to identify the specific
+   * entity being accessed, providing valuable context for error messages and
+   * debugging information. Handles various Discord API path formats.
+   *
+   * @param path - Discord API path to analyze for snowflake ID patterns
+   * @returns Discord snowflake ID string or undefined if no ID found
    *
    * @internal
    */

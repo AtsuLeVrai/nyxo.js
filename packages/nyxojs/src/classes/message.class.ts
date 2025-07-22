@@ -1182,7 +1182,7 @@ export class Message
       return this;
     }
 
-    await this.client.rest.channels.pinMessage(this.channelId, this.id);
+    await this.client.rest.messages.pinMessage(this.channelId, this.id);
     this.patch({
       pinned: true,
     });
@@ -1200,7 +1200,7 @@ export class Message
       return this;
     }
 
-    await this.client.rest.channels.unpinMessage(this.channelId, this.id);
+    await this.client.rest.messages.unpinMessage(this.channelId, this.id);
     this.patch({
       pinned: false,
     });

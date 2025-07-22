@@ -28,7 +28,7 @@ import type {
   PresenceEntity,
 } from "@nyxojs/gateway";
 import { Store, StoreOptions } from "@nyxojs/store";
-import { z } from "zod/v4";
+import { z } from "zod";
 import type { GuildBased } from "../types/index.js";
 
 /**

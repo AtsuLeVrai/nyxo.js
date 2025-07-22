@@ -71,7 +71,7 @@
     "@nyxojs/rest": "workspace:^",
     "eventemitter3": "^5.0.1",
     "ws": "^8.18.3",
-    "zod": "^3.25.76"
+    "zod": "^4.0.5"
   },
   "optionalDependencies": {
     "@nyxojs/zlib": "workspace:^",
@@ -83,7 +83,7 @@
     "@types/node": "^24.0.15",
     "@types/ws": "^8.18.1",
     "rimraf": "^6.0.1",
-    "tsdown": "^0.12.9",
+    "tsdown": "^0.13.0",
     "typescript": "^5.8.3"
   }
 }

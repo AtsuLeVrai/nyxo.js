@@ -14,7 +14,7 @@ import {
   type ImageOptions,
   type RoleIconUrl,
 } from "@nyxojs/rest";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased, PropsToCamel } from "../types/index.js";
 import { GuildMember } from "./guild.class.js";

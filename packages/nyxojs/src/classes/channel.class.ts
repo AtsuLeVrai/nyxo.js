@@ -31,7 +31,6 @@ import type {
   GroupDmCreateOptions,
   GuildChannelUpdateOptions,
   MessagesFetchParams,
-  PinnedMessagesFetchParams,
   ThreadCreateOptions,
   ThreadFromMessageCreateOptions,
   ThreadUpdateOptions,
@@ -1046,7 +1045,7 @@ export class Channel
     }
 
     try {
-      await this.client.rest.channels.pinMessage(this.id, messageId, reason);
+      await this.client.rest.messages.pinMessage(this.id, messageId, reason);
     } catch (error) {
       throw new Error(`Failed to pin message: ${error}`);
     }
@@ -1065,33 +1064,9 @@ export class Channel
     }
 
     try {
-      await this.client.rest.channels.unpinMessage(this.id, messageId, reason);
+      await this.client.rest.messages.unpinMessage(this.id, messageId, reason);
     } catch (error) {
       throw new Error(`Failed to unpin message: ${error}`);
-    }
-  }
-
-  /**
-   * Fetches pinned messages in the channel with pagination support.
-   *
-   * @param params - Query parameters for pagination
-   * @returns A promise resolving to an array of Message instances
-   */
-  async fetchPinnedMessages(
-    params?: PinnedMessagesFetchParams,
-  ): Promise<Message[]> {
-    if (!this.isTextBased) {
-      throw new Error("Cannot fetch pinned messages in a non-text channel");
-    }
-
-    try {
-      const messages = await this.client.rest.channels.fetchPinnedMessages(
-        this.id,
-        params,
-      );
-      return messages.map((message) => new Message(this.client, message));
-    } catch (error) {
-      throw new Error(`Failed to fetch pinned messages: ${error}`);
     }
   }
 
