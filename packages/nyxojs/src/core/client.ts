@@ -61,7 +61,7 @@ export class Client extends EventEmitter<ClientEvents> {
   /**
    * The current authenticated user (bot user)
    */
-  // @ts-expect-error: The user property is initialized in the constructor
+  // @ts-expect-error: The user property is initialized in the constructor if waitForReady option is true
   user: User;
 
   /**
