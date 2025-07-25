@@ -71,7 +71,7 @@
     "@nyxojs/store": "workspace:^",
     "eventemitter3": "^5.0.1",
     "reflect-metadata": "^0.2.2",
-    "zod": "^4.0.5"
+    "zod": "^4.0.10"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",

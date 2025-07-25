@@ -383,13 +383,30 @@ export const GatewayEventMappings: readonly EventMapping[] = [
       reason: null,
     }),
   ]),
-  defineEvent("guildBanRemove", "GUILD_BAN_REMOVE", (client, data) => [
-    new Ban(client, {
-      guild_id: data.guild_id,
-      user: data.user,
-      reason: null,
-    }),
-  ]),
+  defineEvent("guildBanRemove", "GUILD_BAN_REMOVE", (client, data) => {
+    const store = client.cache.bans;
+    const banId = `${data.guild_id}:${data.user.id}`;
+    const cachedData = store?.get(banId);
+
+    try {
+      if (!cachedData) {
+        return [
+          new Ban(client, {
+            guild_id: data.guild_id,
+            user: data.user,
+            reason: null,
+          }),
+        ];
+      }
+
+      return [new Ban(client, cachedData)];
+    } finally {
+      // Ensure cache cleanup happens after return
+      if (cachedData && store) {
+        store.delete(banId);
+      }
+    }
+  }),
   defineEvent("guildEmojisUpdate", "GUILD_EMOJIS_UPDATE", (client, data) => {
     const guildId = data.guild_id;
     const newEmojis = data.emojis; // Complete list of current emojis
