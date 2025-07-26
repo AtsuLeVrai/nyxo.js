@@ -4,6 +4,10 @@ import { Pool } from "undici";
 import { z } from "zod";
 import { FileHandler, FileHandlerOptions } from "../handlers/index.js";
 import {
+  MetricsManager,
+  MetricsOptions,
+  MiddlewareManager,
+  MiddlewareManagerOptions,
   RateLimitManager,
   RateLimitOptions,
   RetryManager,
@@ -42,6 +46,7 @@ import type {
   HttpResponse,
   JsonErrorField,
   JsonErrorResponse,
+  MiddlewareContext,
   RestEvents,
 } from "../types/index.js";
 
@@ -389,6 +394,26 @@ export const RestOptions = z.object({
    * @see {@link FileHandlerOptions} For detailed file handling configuration
    */
   file: FileHandlerOptions.prefault({}),
+
+  /**
+   * Middleware system configuration.
+   *
+   * Controls middleware execution behavior including error handling and metrics
+   * collection for request/response pipeline customization.
+   *
+   * @see {@link MiddlewareManagerOptions} For detailed middleware configuration
+   */
+  middleware: MiddlewareManagerOptions.prefault({}),
+
+  /**
+   * Comprehensive metrics and observability configuration.
+   *
+   * Controls collection of performance metrics, error rates, and operational
+   * statistics for monitoring and optimization in production environments.
+   *
+   * @see {@link MetricsOptions} For detailed metrics configuration
+   */
+  metrics: MetricsOptions.prefault({}),
 });
 
 /**
@@ -1114,6 +1139,62 @@ export class Rest extends EventEmitter<RestEvents> {
   readonly file: FileHandler;
 
   /**
+   * Middleware manager for request/response pipeline customization.
+   * Provides comprehensive middleware execution with error handling,
+   * metrics collection, and lifecycle hooks for advanced request processing.
+   *
+   * @remarks Supports:
+   * - Before request hooks for request modification
+   * - After response hooks for response processing
+   * - Error hooks for custom error handling
+   * - Execution metrics and performance monitoring
+   * - Configurable error propagation behavior
+   *
+   * @example
+   * ```typescript
+   * // Register custom middleware
+   * rest.middleware.use({
+   *   name: "auth",
+   *   beforeRequest: async (context) => {
+   *     context.request.headers.authorization = await getToken();
+   *     return context;
+   *   }
+   * });
+   * ```
+   */
+  readonly middleware: MiddlewareManager;
+
+  /**
+   * Comprehensive metrics and observability system.
+   * Provides detailed performance monitoring, error tracking, and operational
+   * insights for production Discord bot optimization and SLA compliance.
+   *
+   * @remarks Collects:
+   * - Request latency distributions (P50, P95, P99 percentiles)
+   * - Error rates and status code breakdowns
+   * - Rate limiting compliance and violation tracking
+   * - Retry patterns and success rates
+   * - Middleware execution performance
+   * - Memory and resource utilization
+   *
+   * @example
+   * ```typescript
+   * // Get current metrics
+   * const metrics = rest.getMetrics();
+   * console.log(`P95 latency: ${metrics.requests.latency.p95}ms`);
+   * console.log(`Error rate: ${metrics.requests.errorCount.value / metrics.requests.requestCount.value * 100}%`);
+   *
+   * // Listen for metrics updates
+   * rest.on('metricsUpdate', (event) => {
+   *   if (event.metrics.requests.latency.p95 > 1000) {
+   *     alert('High latency detected!');
+   *   }
+   * });
+   * ```
+   */
+  readonly metrics: MetricsManager;
+
+  /**
    * Validated and immutable configuration options.
    * All options are guaranteed valid through Zod schema validation
    * and remain constant throughout the client's lifecycle.
@@ -1211,6 +1292,12 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Initialize file handling for multipart uploads
     this.file = new FileHandler(this.#options.file);
+
+    // Initialize middleware system for request/response pipeline
+    this.middleware = new MiddlewareManager(this.#options.middleware);
+
+    // Initialize metrics system for comprehensive observability
+    this.metrics = new MetricsManager(this, this.#options.metrics);
   }
 
   /**
@@ -1325,46 +1412,162 @@ export class Rest extends EventEmitter<RestEvents> {
     // Generate a unique request ID for comprehensive tracking and correlation
     const requestId = crypto.randomUUID();
 
-    // Proactively check rate limits before making the request
-    // This prevents 429 errors and respects Discord's API usage policies
-    const rateLimitCheck = await this.rateLimiter.checkAndWaitIfNeeded(
-      options.path,
-      options.method,
+    // Create initial middleware context
+    let context = {
       requestId,
-    );
+      method: options.method,
+      path: options.path,
+      request: { ...options },
+      startTime: Date.now(),
+      metadata: {},
+    } as MiddlewareContext<T>;
 
-    // If rate limit cannot be resolved, fail immediately with clear error
-    if (!rateLimitCheck.canProceed) {
-      throw new Error(
-        `[${options.method} ${options.path}] Rate limit exceeded: ${rateLimitCheck.reason}. Try again in ${rateLimitCheck.retryAfter}ms.`,
+    try {
+      // Record request start for metrics
+      this.metrics.recordRequestStart();
+
+      // Execute beforeRequest middleware hooks
+      const middlewareStart = Date.now();
+      context = await this.middleware.executeBeforeRequest(context);
+      this.metrics.recordMiddleware({
+        name: "beforeRequest",
+        duration: Date.now() - middlewareStart,
+        success: true,
+      });
+
+      // Proactively check rate limits before making the request
+      // This prevents 429 errors and respects Discord's API usage policies
+      const rateLimitCheck = await this.rateLimiter.checkAndWaitIfNeeded(
+        context.path,
+        context.method,
+        requestId,
       );
+
+      // If rate limit cannot be resolved, fail immediately with clear error
+      if (!rateLimitCheck.canProceed) {
+        this.metrics.recordRateLimit({
+          bucketId: rateLimitCheck.bucketHash,
+          waitTime: rateLimitCheck.retryAfter || 0,
+          violated: true,
+        });
+
+        throw new Error(
+          `[${context.method} ${context.path}] Rate limit exceeded: ${rateLimitCheck.reason}. Try again in ${rateLimitCheck.retryAfter}ms.`,
+        );
+      }
+
+      // Execute the HTTP request with intelligent retry handling for non-rate-limit errors
+      const response = await this.retry.processResponse<T>(
+        () => this.#makeHttpRequest<T>(context.request, requestId),
+        requestId,
+        context.method,
+        context.path,
+      );
+
+      // Update rate limit tracking with information from the response
+      // This learning process improves future rate limit predictions
+      await this.rateLimiter.updateRateLimitAndWaitIfNeeded(
+        context.path,
+        context.method,
+        response.headers,
+        response.statusCode,
+        requestId,
+      );
+
+      // Check response status and handle errors with enhanced context
+      if (response.statusCode >= 400) {
+        throw this.#createErrorFromResponse(
+          response,
+          context.request,
+          requestId,
+        );
+      }
+
+      // Record successful request metrics
+      const requestDuration = Date.now() - context.startTime;
+      this.metrics.recordRequest({
+        method: context.method,
+        path: context.path,
+        statusCode: response.statusCode,
+        duration: requestDuration,
+        responseSize:
+          response.data && typeof response.data === "string"
+            ? Buffer.byteLength(response.data, "utf8")
+            : undefined,
+      });
+
+      // Add response to context for afterResponse middleware
+      context.response = response;
+
+      // Execute afterResponse middleware hooks
+      const afterResponseStart = Date.now();
+      context = await this.middleware.executeAfterResponse(context);
+      this.metrics.recordMiddleware({
+        name: "afterResponse",
+        duration: Date.now() - afterResponseStart,
+        success: true,
+      });
+
+      // Return successfully parsed response data (potentially modified by middleware)
+      return context.response?.data as T;
+    } catch (error) {
+      // Record error metrics
+      const requestDuration = Date.now() - context.startTime;
+      const errorInstance =
+        error instanceof Error ? error : new Error(String(error));
+
+      // Record timeout specifically
+      if (
+        errorInstance.message.includes("timed out") ||
+        errorInstance.message.includes("timeout")
+      ) {
+        this.metrics.recordTimeout({
+          method: context.method,
+          path: context.path,
+          duration: requestDuration,
+        });
+      } else {
+        // Record general request failure
+        this.metrics.recordRequest({
+          method: context.method,
+          path: context.path,
+          statusCode: 0, // Unknown status for network errors
+          duration: requestDuration,
+        });
+      }
+
+      // Add error to context for onError middleware
+      context.error = errorInstance;
+
+      // Execute onError middleware hooks
+      try {
+        const onErrorStart = Date.now();
+        context = await this.middleware.executeOnError(context);
+        this.metrics.recordMiddleware({
+          name: "onError",
+          duration: Date.now() - onErrorStart,
+          success: !context.error, // Success if error was resolved
+        });
+
+        // If middleware resolved the error, return the response
+        if (!context.error && context.response) {
+          return context.response.data;
+        }
+      } catch (middlewareError) {
+        // Record middleware failure
+        this.metrics.recordMiddleware({
+          name: "onError",
+          duration: Date.now() - context.startTime,
+          success: false,
+        });
+
+        // If middleware itself failed, use the middleware error
+        throw middlewareError;
+      }
+
+      // Re-throw the original or modified error
+      throw context.error;
     }
-
-    // Execute the HTTP request with intelligent retry handling for non-rate-limit errors
-    const response = await this.retry.processResponse<T>(
-      () => this.#makeHttpRequest<T>(options, requestId),
-      requestId,
-      options.method,
-      options.path,
-    );
-
-    // Update rate limit tracking with information from the response
-    // This learning process improves future rate limit predictions
-    await this.rateLimiter.updateRateLimitAndWaitIfNeeded(
-      options.path,
-      options.method,
-      response.headers,
-      response.statusCode,
-      requestId,
-    );
-
-    // Check response status and handle errors with enhanced context
-    if (response.statusCode >= 400) {
-      throw this.#createErrorFromResponse(response, options, requestId);
-    }
-
-    // Return successfully parsed response data
-    return response.data;
   }
 
   /**
@@ -1571,8 +1774,10 @@ export class Rest extends EventEmitter<RestEvents> {
    * 1. **HTTP Pool Closure**: Closes all persistent connections and clears the pool
    * 2. **Rate Limiter Destruction**: Clears all rate limit tracking and caches
    * 3. **File Handler Cleanup**: Clears temporary files and upload state
-   * 4. **Event Listener Removal**: Removes all event listeners to prevent leaks
-   * 5. **Timer Cancellation**: Cancels any pending timeouts or intervals
+   * 4. **Middleware Cleanup**: Stops middleware execution and clears state
+   * 5. **Metrics Cleanup**: Stops metrics collection and clears data
+   * 6. **Event Listener Removal**: Removes all event listeners to prevent leaks
+   * 7. **Timer Cancellation**: Cancels any pending timeouts or intervals
    *
    * @returns Promise that resolves when all cleanup operations are complete
    *
@@ -1630,6 +1835,12 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Clear file handler to remove temporary files and upload state
     this.file.clear();
+
+    // Clean up middleware system
+    this.middleware.clear();
+
+    // Destroy metrics system and stop collection
+    this.metrics.destroy();
 
     // Remove all event listeners to prevent memory leaks
     this.removeAllListeners();

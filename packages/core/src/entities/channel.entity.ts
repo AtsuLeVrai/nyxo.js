@@ -621,6 +621,15 @@ export interface GuildTextChannelEntity
     | "thread_metadata"
     | "member"
     | "available_tags"
+    | "applied_tags"
+    | "default_reaction_emoji"
+    | "default_thread_rate_limit_per_user"
+    | "default_sort_order"
+    | "default_forum_layout"
+    | "rtc_region"
+    | "video_quality_mode"
+    | "message_count"
+    | "member_count"
   > {
   /**
    * The type of channel - always GuildText (0).

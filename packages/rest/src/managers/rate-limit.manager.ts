@@ -4,42 +4,29 @@ import type { Rest } from "../core/index.js";
 import type { HttpMethod, RateLimitHitEvent } from "../types/index.js";
 
 /**
- * Constants defining rate limit behavior and Discord API patterns.
- * These values are based on Discord's official documentation and observed behavior.
+ * Rate limit constants based on Discord API documentation.
  */
 export const RATE_LIMIT_CONSTANTS = {
   /**
-   * Emoji route pattern for special handling.
-   * Discord documentation confirms only emoji routes have special rate limit handling.
-   * Emoji routes are more restrictive and require conservative rate limiting.
-   *
-   * @example "/guilds/123456789/emojis" matches this pattern
+   * Emoji route pattern requiring special rate limit handling.
+   * More restrictive than standard routes per Discord documentation.
    */
   EMOJI_ROUTE_PATTERN: /^\/guilds\/(\d+)\/emojis/,
 
   /**
-   * Routes not subject to the global rate limit per Discord documentation.
-   * Only interaction endpoints are exempted from global rate limits because
-   * they have their own separate rate limiting system and are time-sensitive.
-   *
-   * @remarks Webhook routes are also exempt as they use different authentication
+   * Routes exempt from global rate limits.
+   * Interactions and webhooks use separate rate limiting systems.
    */
   GLOBAL_EXEMPT_ROUTES: ["/interactions", "/webhooks"],
 
   /**
-   * Status codes that indicate invalid requests for Cloudflare protection.
-   * These codes count towards the invalid request limit that can trigger
-   * Cloudflare IP bans if exceeded within a 10-minute window.
-   *
-   * @remarks 429 is included because repeated rate limit violations
-   * can trigger Cloudflare protection even when handled properly
+   * Status codes counting towards Cloudflare protection limits.
+   * Exceeding limits triggers IP bans within 10-minute windows.
    */
   INVALID_STATUSES: [401, 403, 429],
 
   /**
-   * Header names for rate limit information from Discord API responses.
-   * These headers provide crucial information for rate limit tracking and
-   * prevention of 429 Too Many Requests errors.
+   * Discord API rate limit header names.
    */
   HEADERS: {
     /** Current rate limit for this bucket */
@@ -62,238 +49,215 @@ export const RATE_LIMIT_CONSTANTS = {
 };
 
 /**
- * Configuration schema for the rate limit manager.
- *
- * @remarks All timing values are in milliseconds for consistency
+ * Rate limit manager configuration schema.
+ * All timing values in milliseconds.
  */
 export const RateLimitOptions = z.object({
   /**
-   * Safety margin in milliseconds when approaching bucket reset.
-   * Adds buffer time to prevent accidental rate limit violations due to
-   * network latency, clock drift, or processing delays.
+   * Safety margin when approaching bucket reset.
+   * Prevents violations due to network latency and clock drift.
    *
    * @default 100
-   * @remarks Lower values increase throughput but risk rate limit violations
+   * @unit milliseconds
    */
   safetyMargin: z.number().int().positive().default(100),
 
   /**
-   * Maximum invalid requests allowed in a 10-minute rolling window.
-   * Prevents Cloudflare IP bans from excessive invalid requests.
-   * Based on Discord's documented Cloudflare protection limits.
+   * Maximum invalid requests in 10-minute rolling window.
+   * Prevents Cloudflare IP bans per Discord limits.
    *
-   * @default 10000 (Discord's documented limit)
-   * @remarks Exceeding this triggers a 10-minute cooldown period
+   * @default 10000
+   * @minimum 1
    */
   maxInvalidRequests: z.number().int().positive().max(10000).default(10000),
 
   /**
    * Maximum global requests per second across all endpoints.
-   * Controls overall request rate to Discord API to prevent global rate limits.
-   * Based on Discord's global rate limit of 50 requests per second.
+   * Prevents global rate limits as per Discord's 50 req/sec limit.
    *
-   * @default 50 (Discord's global limit)
-   * @remarks This is separate from per-route rate limits
+   * @default 50
+   * @minimum 1
    */
   maxGlobalRequestsPerSecond: z.number().int().positive().default(50),
 
   /**
-   * Interval in milliseconds for cleaning up expired buckets.
-   * Prevents memory leaks by removing buckets that have expired.
+   * Cleanup interval for expired buckets.
+   * Prevents memory leaks from stale bucket data.
    *
-   * @default 300000 (5 minutes)
-   * @remarks Lower values use more CPU but free memory faster
+   * @default 300000
+   * @unit milliseconds
    */
   cleanupInterval: z.number().int().positive().default(300000),
 });
 
 /**
- * Validated configuration options for the rate limit manager.
+ * Type definition for validated rate limit configuration.
+ *
+ * @public
  */
 export type RateLimitOptions = z.infer<typeof RateLimitOptions>;
 
 /**
- * Rate limit scopes returned by the Discord API.
- * Defines the scope at which the rate limit applies and affects caching strategy.
+ * Rate limit scope types from Discord API.
+ * Determines sharing behavior and caching strategy.
  *
- * @remarks Different scopes have different sharing behaviors:
- * - `user`: Rate limit applies per bot token
- * - `global`: Rate limit applies across all bots globally
- * - `shared`: Rate limit is shared across multiple related endpoints
+ * @public
  */
 export type RateLimitScope = "user" | "global" | "shared";
 
 /**
- * Tracking information for invalid requests within a rolling time window.
- * Used to monitor potentially abusive behavior and prevent Cloudflare IP bans.
+ * Invalid request tracking for Cloudflare protection.
+ * Implements sliding window counter for abuse prevention.
  *
- * @remarks This implements a sliding window counter to track request patterns
- * that could trigger Discord's Cloudflare protection mechanisms.
+ * @internal
  */
 interface InvalidRequestTracking {
   /**
-   * Count of invalid requests in the current window.
-   * Increments with each 401, 403, or 429 response.
+   * Invalid request count in current window.
    */
   count: number;
 
   /**
-   * Unix timestamp when the current tracking window started.
-   * Used to determine when to reset the counter for a new window.
+   * Window start timestamp for counter reset.
    */
   windowStart: number;
 }
 
 /**
- * Global rate tracker for monitoring request rates across all endpoints.
- * Prevents global rate limit violations by tracking requests per second.
+ * Global request rate tracker.
+ * Maintains rolling per-second count for proactive rate limiting.
  *
- * @remarks This tracker resets every second to maintain a rolling count
- * of requests made in the current second, allowing proactive rate limit management.
+ * @internal
  */
 interface GlobalRateTracker {
   /**
-   * Count of requests made in the current second.
-   * Resets every second to track global request rate.
+   * Request count in current second.
    */
   requestCount: number;
 
   /**
-   * Unix timestamp when the current tracking window started.
-   * Used to determine when to reset the request count for a new second.
+   * Current tracking window start time.
    */
   windowStartTime: number;
 }
 
 /**
- * Rate limit bucket representing Discord's rate limiting state for specific endpoints.
- * Each bucket contains rate limit information and state for a group of related API endpoints.
+ * Rate limit bucket for Discord API endpoints.
+ * Contains state for groups of related endpoints.
  *
- * @remarks Buckets are identified by hash values returned in Discord API responses.
- * Multiple endpoints may share the same bucket if they're related.
+ * @public
  */
 export interface RateLimitBucket {
   /**
-   * Request ID that created or last updated this bucket.
-   * Used for debugging and tracing rate limit updates.
+   * Request ID for debugging and tracing.
    */
   requestId: string;
 
   /**
-   * Unique hash identifier for this bucket from Discord.
-   * Multiple API routes may share the same bucket hash.
+   * Unique bucket hash from Discord API.
    */
   hash: string;
 
   /**
-   * Maximum requests allowed in this bucket's time window.
-   * This value rarely changes for a given bucket.
+   * Maximum requests allowed in bucket window.
    */
   limit: number;
 
   /**
-   * Remaining requests in the current time window.
-   * Decrements with each request until the bucket resets.
+   * Remaining requests in current window.
    */
   remaining: number;
 
   /**
-   * Unix timestamp (in milliseconds) when the bucket resets.
-   * After this time, remaining requests returns to the limit.
+   * Bucket reset timestamp in milliseconds.
    */
   reset: number;
 
   /**
-   * Time in milliseconds until the bucket resets.
-   * Provides a countdown alternative to the absolute reset timestamp.
+   * Time until bucket reset in milliseconds.
    */
   resetAfter: number;
 
   /**
-   * Rate limit scope defining how this bucket is shared.
-   * Affects caching and rate limit enforcement strategy.
+   * Rate limit scope for sharing behavior.
    */
   scope: RateLimitScope;
 
   /**
-   * Whether this route is an emoji route requiring special handling.
-   * Emoji routes have more restrictive rate limiting per Discord docs.
+   * Special handling flag for emoji routes.
    */
   isEmojiRoute?: boolean;
 }
 
 /**
- * Result of a rate limit check operation.
- * Provides comprehensive information about whether a request can proceed
- * and what actions should be taken if it cannot.
+ * Rate limit check result.
+ * Indicates if request can proceed and required actions.
+ *
+ * @public
  */
 export interface RateLimitResult {
   /**
-   * Whether the request can proceed without violating rate limits.
-   * False indicates the request should be delayed or aborted.
+   * Whether request can proceed without violation.
    */
   canProceed: boolean;
 
   /**
-   * Time in milliseconds to wait before retrying the request.
-   * Only present when canProceed is false.
+   * Retry delay in milliseconds when blocked.
    */
   retryAfter?: number;
 
   /**
-   * Type of rate limit that was hit, affecting retry strategy.
-   * Different limit types may require different handling approaches.
+   * Type of rate limit hit, affects retry strategy.
    */
   limitType?: "global" | "bucket" | "cloudflare" | "emoji";
 
   /**
-   * Human-readable reason for the rate limit.
-   * Useful for logging and debugging rate limit issues.
+   * Human-readable rate limit reason.
    */
   reason?: string;
 
   /**
-   * Associated bucket hash if the limit is bucket-specific.
-   * Allows correlation with bucket state for debugging.
+   * Bucket hash for correlation and debugging.
    */
   bucketHash?: string;
 
   /**
-   * Rate limit scope if applicable.
-   * Indicates how the rate limit affects other requests.
+   * Rate limit scope affecting other requests.
    */
   scope?: RateLimitScope;
 }
 
 /**
- * Simple bucket store with automatic TTL-based cleanup.
- * Buckets are automatically removed when they expire to prevent memory leaks.
+ * Bucket store with automatic TTL cleanup.
+ * Prevents memory leaks by removing expired buckets.
+ *
+ * @internal
  */
 class BucketStore {
   /**
-   * Internal storage for rate limit buckets.
+   * Internal bucket storage.
    * @internal
    */
   readonly #buckets = new Map<string, RateLimitBucket>();
 
   /**
-   * Timeout IDs for bucket cleanup operations.
+   * Cleanup timeout IDs.
    * @internal
    */
   readonly #cleanupTimeouts = new Map<string, NodeJS.Timeout>();
 
   /**
-   * Returns the number of active buckets.
+   * Number of active buckets.
    */
   get size(): number {
     return this.#buckets.size;
   }
 
   /**
-   * Sets a bucket with automatic cleanup when it expires.
+   * Sets bucket with automatic cleanup on expiration.
    *
-   * @param hash - Unique bucket identifier
-   * @param bucket - Rate limit bucket data
+   * @param hash - Bucket identifier
+   * @param bucket - Bucket data
    */
   set(hash: string, bucket: RateLimitBucket): void {
     // Clear existing cleanup timeout if it exists
@@ -316,10 +280,10 @@ class BucketStore {
   }
 
   /**
-   * Retrieves a bucket if it exists and hasn't expired.
+   * Retrieves bucket if valid and not expired.
    *
-   * @param hash - Bucket identifier to retrieve
-   * @returns The bucket if found and valid, undefined otherwise
+   * @param hash - Bucket identifier
+   * @returns Bucket if valid, undefined otherwise
    */
   get(hash: string): RateLimitBucket | undefined {
     const bucket = this.#buckets.get(hash);
@@ -337,20 +301,20 @@ class BucketStore {
   }
 
   /**
-   * Checks if a bucket exists and is valid.
+   * Checks if bucket exists and is valid.
    *
-   * @param hash - Bucket identifier to check
-   * @returns True if bucket exists and is valid
+   * @param hash - Bucket identifier
+   * @returns True if valid bucket exists
    */
   has(hash: string): boolean {
     return this.get(hash) !== undefined;
   }
 
   /**
-   * Manually deletes a bucket and its cleanup timeout.
+   * Deletes bucket and cleanup timeout.
    *
-   * @param hash - Bucket identifier to delete
-   * @returns True if bucket was deleted
+   * @param hash - Bucket identifier
+   * @returns True if deleted
    */
   delete(hash: string): boolean {
     const timeout = this.#cleanupTimeouts.get(hash);
@@ -362,7 +326,7 @@ class BucketStore {
   }
 
   /**
-   * Clears all buckets and cleanup timeouts.
+   * Clears all buckets and timeouts.
    */
   clear(): void {
     // Clear all timeouts
@@ -375,49 +339,40 @@ class BucketStore {
 }
 
 /**
- * Advanced rate limit manager for Discord API requests.
+ * Discord API rate limit manager.
  *
- * Provides comprehensive rate limit tracking and enforcement to prevent 429 errors
- * and Cloudflare IP bans. Implements sophisticated algorithms for:
- *
- * - **Proactive rate limit prevention**: Checks limits before making requests
- * - **Multi-level rate limiting**: Handles global, bucket, and Cloudflare limits
- * - **Discord-specific optimizations**: Special handling for emoji routes and webhooks
- * - **Memory-efficient storage**: Automatic cleanup of expired buckets
- * - **Comprehensive observability**: Emits detailed events for monitoring
+ * Provides comprehensive rate limiting with proactive prevention,
+ * multi-level tracking, and Discord-specific optimizations.
  *
  * @example
  * ```typescript
  * const rateLimiter = new RateLimitManager(restClient, {
- *   maxGlobalRequestsPerSecond: 45, // Slightly under Discord's limit
- *   safetyMargin: 150, // Extra buffer for network latency
- *   maxInvalidRequests: 5000 // Conservative Cloudflare protection
+ *   maxGlobalRequestsPerSecond: 45,
+ *   safetyMargin: 150,
+ *   maxInvalidRequests: 5000
  * });
  *
- * // Check if request can proceed
- * const result = await rateLimiter.checkAndWaitIfNeeded('/channels/123/messages', 'POST', 'req-123');
+ * const result = await rateLimiter.check('/channels/123/messages', 'POST', 'req-123');
  * if (result.canProceed) {
- *   // Make the request
+ *   // Make request
  * }
  * ```
+ *
+ * @public
  */
 export class RateLimitManager {
   /**
-   * Store for rate limit buckets indexed by bucket hash.
-   * Contains rate limit state for each unique bucket returned by Discord.
-   * Buckets are automatically removed when they expire.
+   * Rate limit bucket store with automatic cleanup.
    */
   readonly buckets = new BucketStore();
 
   /**
-   * Simple map for route-to-bucket mappings indexed by route key.
-   * Maps API routes to their corresponding rate limit bucket hashes.
+   * Route-to-bucket hash mappings.
    */
   readonly routeBuckets = new Map<string, string>();
 
   /**
-   * Tracking state for invalid requests within rolling time windows.
-   * Monitors 401, 403, and 429 responses to prevent Cloudflare IP bans.
+   * Invalid request tracking for Cloudflare protection.
    * @internal
    */
   readonly #invalidRequests: InvalidRequestTracking = {
@@ -426,9 +381,7 @@ export class RateLimitManager {
   };
 
   /**
-   * Global request rate tracking for per-second limits.
-   * Monitors overall request rate across all endpoints to prevent
-   * global rate limit violations (50 requests/second Discord limit).
+   * Global rate tracker for per-second limits.
    * @internal
    */
   readonly #globalRateTracker: GlobalRateTracker = {
@@ -437,25 +390,25 @@ export class RateLimitManager {
   };
 
   /**
-   * Reference to the REST client instance for event emission.
+   * REST client for event emission.
    * @internal
    */
   readonly #rest: Rest;
 
   /**
-   * Validated configuration options for this manager instance.
+   * Manager configuration options.
    * @internal
    */
   readonly #options: RateLimitOptions;
 
   /**
-   * Interval for periodic cleanup of expired data.
+   * Cleanup interval timer.
    * @internal
    */
   #cleanupInterval: NodeJS.Timeout | null = null;
 
   /**
-   * Flag to track if the manager has been destroyed.
+   * Manager destruction state.
    * @internal
    */
   #isDestroyed = false;
