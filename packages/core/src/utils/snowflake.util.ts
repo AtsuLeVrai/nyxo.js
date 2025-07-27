@@ -1,160 +1,93 @@
 /**
- * Represents a validated Discord Snowflake ID.
+ * Validated Discord Snowflake ID.
+ * Unique 64-bit identifier encoded as numeric string.
  *
- * A Snowflake is a unique 64-bit identifier used by Discord,
- * encoded as a string of numeric characters.
- * Structure: `(timestamp_ms - DISCORD_EPOCH) << 22 | worker_id << 17 | process_id << 12 | increment`
- *
- * Validation rules:
- * - Must contain only digits
- * - Must be at least 17 digits long
- * - The extracted timestamp must be valid (after Discord epoch, before now + 1h)
- *
- * @remarks
- * The internal structure allows for extracting information such as creation timestamp,
- * worker ID, process ID, and increment.
- *
- * @example
- * ```typescript
- * // Example of a valid Discord Snowflake
- * const messageId: Snowflake = "175928847299117063";
- * ```
- *
- * @see {@link https://discord.com/developers/docs/reference#snowflakes}
+ * @public
  */
 export type Snowflake = string;
 
 /**
- * Represents a deconstructed Discord Snowflake ID with its component parts.
+ * Deconstructed Discord Snowflake with component parts.
+ * Breaks down the 64-bit structure into readable components.
  *
- * Discord utilizes Twitter's snowflake format for uniquely identifiable descriptors (IDs).
- * Each snowflake is a 64-bit integer, typically represented as a string to prevent
- * integer overflow in some languages. Snowflakes are guaranteed to be unique across
- * all of Discord (except in rare cases where child objects share a parent's ID).
- *
- * @see {@link https://discord.com/developers/docs/reference#snowflakes} Discord Snowflake Documentation
+ * @public
  */
 export interface DeconstructedSnowflake {
   /**
-   * Timestamp in milliseconds since Discord Epoch (2015-01-01T00:00:00.000Z).
-   *
-   * This represents when the snowflake was generated and occupies the first 42 bits
-   * of the snowflake. Can be used to sort and order snowflakes chronologically.
-   *
-   * Formula: `(snowflake >> 22) + 1420070400000`
+   * Timestamp in milliseconds since Discord Epoch.
+   * Occupies first 42 bits of snowflake.
    */
   timestamp: number;
 
   /**
-   * Internal worker ID that generated this snowflake.
-   *
-   * Occupies 5 bits (bits 21-17) of the snowflake, allowing values from 0-31.
-   * Identifies which of Discord's internal workers generated this ID.
-   *
-   * Formula: `(snowflake & 0x3E0000) >> 17`
+   * Internal worker ID that generated snowflake.
+   * Occupies 5 bits, values 0-31.
    */
   workerId: number;
 
   /**
-   * Internal process ID that generated this snowflake.
-   *
-   * Occupies 5 bits (bits 16-12) of the snowflake, allowing values from 0-31.
-   * Identifies which process within the worker generated this ID.
-   *
-   * Formula: `(snowflake & 0x1F000) >> 12`
+   * Internal process ID that generated snowflake.
+   * Occupies 5 bits, values 0-31.
    */
   processId: number;
 
   /**
-   * Auto-incrementing value for IDs generated on the same process.
-   *
-   * Occupies the last 12 bits (bits 11-0) of the snowflake, allowing values from 0-4095.
-   * Acts as a counter to ensure uniqueness even when generated in the same millisecond.
-   *
-   * Formula: `snowflake & 0xFFF`
+   * Auto-incrementing value for same process.
+   * Occupies last 12 bits, values 0-4095.
    */
   increment: number;
 
   /**
-   * JavaScript Date object representing the creation time of the snowflake.
-   *
-   * Derived from the timestamp component and provides a convenient way to
-   * work with the snowflake's creation time using JavaScript's Date API.
-   *
-   * Note: This is equivalent to `new Date(timestamp)`.
+   * JavaScript Date object for creation time.
+   * Derived from timestamp component.
    */
   date: Date;
 }
 
-/**
- * Discord Epoch (2015-01-01T00:00:00.000Z)
- * This is the first second of 2015, used as the baseline for snowflake timestamps
- */
+/** Discord Epoch (2015-01-01T00:00:00.000Z) */
 export const DISCORD_EPOCH = 1420070400000;
 
-/**
- * Number of bits to shift right to extract the timestamp from a snowflake
- * Timestamp occupies bits 63 to 22
- */
+/** Bits to shift right for timestamp extraction */
 export const TIMESTAMP_SHIFT = 22n;
 
-/**
- * Number of bits to shift right to extract the worker ID from a snowflake
- * Worker ID occupies bits 21 to 17
- */
+/** Bits to shift right for worker ID extraction */
 export const WORKER_ID_SHIFT = 17n;
 
-/**
- * Number of bits to shift right to extract the process ID from a snowflake
- * Process ID occupies bits 16 to 12
- */
+/** Bits to shift right for process ID extraction */
 export const PROCESS_ID_SHIFT = 12n;
 
-/**
- * Bitmask to extract the increment from a snowflake
- * Increment occupies bits 11 to 0
- */
+/** Bitmask for increment extraction */
 export const INCREMENT_MASK = 0xfffn;
 
 /**
- * Utility class for handling Discord Snowflake IDs
- *
- * Discord utilizes Twitter's snowflake format for uniquely identifiable descriptors (IDs).
- * These IDs are guaranteed to be unique across all of Discord.
- *
- * Snowflake Format Structure:
- * ```
- * | Field               | Bits     | Description                                                     |
- * |---------------------|----------|-----------------------------------------------------------------|
- * | Timestamp           | 63 to 22 | Milliseconds since Discord Epoch (2015-01-01T00:00:00.000Z)     |
- * | Internal worker ID  | 21 to 17 | Worker ID that generated this snowflake                         |
- * | Internal process ID | 16 to 12 | Process ID that generated this snowflake                        |
- * | Increment           | 11 to 0  | Incremented for every ID generated on that process              |
- * ```
+ * Utility class for handling Discord Snowflake IDs.
+ * Provides validation, parsing, and generation capabilities.
  *
  * @example
- * // Get creation date of a snowflake
+ * ```typescript
  * const creationDate = SnowflakeUtil.timestampFrom('308994132968210433');
- * console.log(creationDate); // 2017-05-02T19:25:04.849Z
- *
- * // Generate a snowflake from a date
  * const snowflake = SnowflakeUtil.generate(new Date('2021-01-01'));
- * console.log(snowflake); // '799775995915116544'
+ * ```
+ *
+ * @public
  */
 export const SnowflakeUtil = {
   /**
-   * Checks if a string is a valid snowflake
+   * Checks if string is valid snowflake.
    *
-   * @param snowflake - The snowflake to validate
-   * @returns `true` if the snowflake is valid, `false` otherwise
+   * @param snowflake - Snowflake to validate
+   * @returns True if snowflake is valid
    *
    * @example
+   * ```typescript
    * SnowflakeUtil.isValid('308994132968210433'); // true
    * SnowflakeUtil.isValid('not-a-snowflake'); // false
+   * ```
+   *
+   * @public
    */
   isValid(snowflake: string): snowflake is Snowflake {
     try {
-      // Snowflakes are numeric strings of reasonable length
       return /^\d{17,20}$/.test(snowflake);
     } catch {
       return false;
@@ -162,21 +95,18 @@ export const SnowflakeUtil = {
   },
 
   /**
-   * Deconstructs a snowflake into its component parts
+   * Deconstructs snowflake into component parts.
    *
    * @param snowflake - Snowflake to deconstruct
-   * @returns An object containing the timestamp, worker ID, process ID, and increment
+   * @returns Object with timestamp, worker ID, process ID, and increment
    *
    * @example
+   * ```typescript
    * const parts = SnowflakeUtil.deconstruct('308994132968210433');
-   * console.log(parts);
-   * // {
-   * //   timestamp: 1493754304849,
-   * //   workerId: 1,
-   * //   processId: 0,
-   * //   increment: 1,
-   * //   date: 2017-05-02T19:25:04.849Z
-   * // }
+   * console.log(parts.timestamp); // 1493754304849
+   * ```
+   *
+   * @public
    */
   deconstruct(snowflake: string): DeconstructedSnowflake {
     const bigintSnowflake = BigInt(snowflake);
@@ -198,14 +128,18 @@ export const SnowflakeUtil = {
   },
 
   /**
-   * Extracts the timestamp from a snowflake
+   * Extracts timestamp from snowflake.
    *
    * @param snowflake - Snowflake to extract timestamp from
-   * @returns The Unix timestamp in milliseconds
+   * @returns Unix timestamp in milliseconds
    *
    * @example
+   * ```typescript
    * const timestamp = SnowflakeUtil.getTimestamp('308994132968210433');
    * console.log(timestamp); // 1493754304849
+   * ```
+   *
+   * @public
    */
   getTimestamp(snowflake: string): number {
     return Number(
@@ -214,34 +148,39 @@ export const SnowflakeUtil = {
   },
 
   /**
-   * Creates a Date object from a snowflake
+   * Creates Date object from snowflake.
    *
    * @param snowflake - Snowflake to extract date from
-   * @returns Date object representing when the snowflake was created
+   * @returns Date representing creation time
    *
    * @example
+   * ```typescript
    * const date = SnowflakeUtil.getDate('308994132968210433');
    * console.log(date); // 2017-05-02T19:25:04.849Z
+   * ```
+   *
+   * @public
    */
   getDate(snowflake: string): Date {
     return new Date(this.getTimestamp(snowflake));
   },
 
   /**
-   * Generates a snowflake from a timestamp
+   * Generates snowflake from timestamp.
    *
-   * @param timestamp - Timestamp or Date to generate a snowflake for
-   * @param increment - Optional increment to use (default: a random number between 0-4095)
-   * @param workerId - Optional worker ID (default: 1)
-   * @param processId - Optional process ID (default: 0)
-   * @returns The generated snowflake as a string
+   * @param timestamp - Timestamp or Date for snowflake
+   * @param increment - Optional increment value
+   * @param workerId - Optional worker ID
+   * @param processId - Optional process ID
+   * @returns Generated snowflake string
    *
    * @example
-   * // Generate a snowflake for the current time
+   * ```typescript
    * const snowflake = SnowflakeUtil.generate();
+   * const specificSnowflake = SnowflakeUtil.generate(new Date('2021-01-01'));
+   * ```
    *
-   * // Generate a snowflake for a specific date
-   * const snowflake = SnowflakeUtil.generate(new Date('2021-01-01'));
+   * @public
    */
   generate(
     timestamp: number | Date = Date.now(),
@@ -252,10 +191,8 @@ export const SnowflakeUtil = {
     const resolvedTimestamp =
       timestamp instanceof Date ? timestamp.getTime() : timestamp;
 
-    // Ensure timestamp is relative to Discord epoch
     const timestampRelative = BigInt(resolvedTimestamp - DISCORD_EPOCH);
 
-    // Construct the snowflake using bitshifting
     const snowflake =
       (timestampRelative << TIMESTAMP_SHIFT) |
       (BigInt(workerId & 0x1f) << WORKER_ID_SHIFT) |
@@ -266,16 +203,18 @@ export const SnowflakeUtil = {
   },
 
   /**
-   * Generates a snowflake ID for a specific time before or after a reference point
-   * Useful for pagination with "before" and "after" parameters in the Discord API
+   * Generates snowflake relative to reference point.
    *
    * @param referenceId - Reference snowflake ID
-   * @param timeOffset - Time offset in milliseconds (positive = after, negative = before)
+   * @param timeOffset - Time offset in milliseconds
    * @returns Generated snowflake string
    *
    * @example
-   * // Get a snowflake 1 hour before a reference ID (for pagination)
+   * ```typescript
    * const beforeId = SnowflakeUtil.generateFromReference('799775995915116544', -3600000);
+   * ```
+   *
+   * @public
    */
   generateFromReference(referenceId: string, timeOffset: number): string {
     const timestamp = this.getTimestamp(referenceId) + timeOffset;
@@ -283,17 +222,19 @@ export const SnowflakeUtil = {
   },
 
   /**
-   * Compares two snowflakes to determine which one was created first
+   * Compares two snowflakes chronologically.
    *
-   * @param snowflake1 - First snowflake to compare
-   * @param snowflake2 - Second snowflake to compare
-   * @returns Negative if snowflake1 is older, positive if snowflake1 is newer, 0 if equal
+   * @param snowflake1 - First snowflake
+   * @param snowflake2 - Second snowflake
+   * @returns Negative if first is older, positive if newer, zero if equal
    *
    * @example
+   * ```typescript
    * const result = SnowflakeUtil.compare('799775995915116544', '799775995915116545');
    * if (result < 0) console.log('First snowflake is older');
-   * else if (result > 0) console.log('First snowflake is newer');
-   * else console.log('Snowflakes were created at the same time');
+   * ```
+   *
+   * @public
    */
   compare(snowflake1: string, snowflake2: string): number {
     const timestamp1 = this.getTimestamp(snowflake1);
@@ -302,15 +243,19 @@ export const SnowflakeUtil = {
   },
 
   /**
-   * Calculates the elapsed time in milliseconds between two snowflakes
+   * Calculates elapsed time between two snowflakes.
    *
    * @param snowflake1 - First snowflake
    * @param snowflake2 - Second snowflake
-   * @returns Time difference in milliseconds between the snowflakes
+   * @returns Time difference in milliseconds
    *
    * @example
+   * ```typescript
    * const timeDiff = SnowflakeUtil.timeBetween('799775995915116544', '799775995915116545');
-   * console.log(`These snowflakes were created ${timeDiff}ms apart`);
+   * console.log(`${timeDiff}ms apart`);
+   * ```
+   *
+   * @public
    */
   timeBetween(snowflake1: string, snowflake2: string): number {
     return Math.abs(
@@ -319,50 +264,57 @@ export const SnowflakeUtil = {
   },
 
   /**
-   * Checks if a snowflake was created before a specific date
+   * Checks if snowflake was created before specific date.
    *
    * @param snowflake - Snowflake to check
    * @param date - Date to compare against
-   * @returns `true` if the snowflake was created before the date, `false` otherwise
+   * @returns True if snowflake is older than date
    *
    * @example
+   * ```typescript
    * const isOld = SnowflakeUtil.isOlderThan('308994132968210433', new Date('2020-01-01'));
-   * console.log(isOld); // true (this snowflake is from 2017)
+   * console.log(isOld); // true
+   * ```
+   *
+   * @public
    */
   isOlderThan(snowflake: string, date: Date): boolean {
     return this.getTimestamp(snowflake) < date.getTime();
   },
 
   /**
-   * Checks if a snowflake was created after a specific date
+   * Checks if snowflake was created after specific date.
    *
    * @param snowflake - Snowflake to check
    * @param date - Date to compare against
-   * @returns `true` if the snowflake was created after the date, `false` otherwise
+   * @returns True if snowflake is newer than date
    *
    * @example
+   * ```typescript
    * const isRecent = SnowflakeUtil.isNewerThan('308994132968210433', new Date('2015-01-01'));
    * console.log(isRecent); // true
+   * ```
+   *
+   * @public
    */
   isNewerThan(snowflake: string, date: Date): boolean {
     return this.getTimestamp(snowflake) > date.getTime();
   },
 
   /**
-   * Formats a snowflake's timestamp into a human-readable string
+   * Formats snowflake timestamp to human-readable string.
    *
    * @param snowflake - Snowflake to format
-   * @param format - Format string:
-   *   - 'short' = MM/DD/YYYY
-   *   - 'long' = Month DD, YYYY
-   *   - 'relative' = X days/months/years ago
-   *   - 'iso' = ISO string
-   *   - Default = locale string
+   * @param format - Format type
    * @returns Formatted date string
    *
    * @example
+   * ```typescript
    * const dateStr = SnowflakeUtil.formatDate('308994132968210433', 'long');
-   * console.log(dateStr); // May 2, 2017
+   * console.log(dateStr); // "May 2, 2017"
+   * ```
+   *
+   * @public
    */
   formatDate(
     snowflake: string,
@@ -385,7 +337,6 @@ export const SnowflakeUtil = {
         const now = Date.now();
         const diff = now - date.getTime();
 
-        // Convert to appropriate unit
         const seconds = Math.floor(diff / 1000);
         const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);

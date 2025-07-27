@@ -8,19 +8,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Native addon interface representing the loaded C++ zlib compression module.
- *
- * This interface defines the structure of the native Node.js addon that provides
- * high-performance zlib decompression capabilities specifically optimized for
- * Discord's Gateway transport compression protocol.
+ * Native addon interface for C++ zlib compression module.
+ * Provides high-performance zlib decompression for Discord Gateway protocol.
  *
  * @internal
  */
 interface NativeAddon {
   /**
-   * Constructor for streaming zlib instances with configurable options.
+   * Constructor for streaming zlib instances.
    *
-   * @param options - Optional configuration for the stream
+   * @param options - Stream configuration options
    * @returns Native stream instance
    */
   ZlibStream: new (
@@ -28,110 +25,92 @@ interface NativeAddon {
   ) => NativeZlibStream;
 
   /**
-   * The 4-byte zlib suffix marker used by Discord (0x00 0x00 0xFF 0xFF).
-   *
-   * @returns Buffer containing the zlib suffix bytes
+   * Discord's zlib suffix marker (0x00 0x00 0xFF 0xFF).
+   * Indicates complete message boundaries.
    */
   ZLIB_SUFFIX: Buffer;
 
   /**
-   * Default chunk size for internal buffering operations (32KB).
-   *
-   * @returns Buffer size in bytes
+   * Default chunk size for buffering operations.
+   * Optimized for streaming performance (32KB).
    */
   DEFAULT_CHUNK_SIZE: number;
 }
 
 /**
  * Native streaming zlib instance interface.
- *
- * Represents the actual native C++ object instance that maintains the zlib
- * decompression state and buffers.
+ * Maintains zlib decompression state and buffers.
  *
  * @internal
  */
 interface NativeZlibStream {
   /**
-   * Current error code from the last zlib operation.
-   *
-   * @returns Error code number
+   * Current error code from last operation.
+   * Zero indicates no error.
    */
   error: number;
 
   /**
-   * Human-readable error message from zlib, if any.
-   *
-   * @returns Error message or null
+   * Human-readable error message.
+   * Null when no error occurred.
    */
   message: string | null;
 
   /**
-   * Whether the stream has finished processing.
-   *
-   * @returns True if finished
+   * Stream completion status.
+   * True when all data processed.
    */
   finished: boolean;
 
   /**
-   * Push compressed data into the stream for processing.
+   * Processes compressed data through the stream.
    *
    * @param data - Compressed data to process
-   * @returns True if a complete message was processed and is ready for extraction
+   * @returns True if complete message processed
    */
   push(data: Buffer | Uint8Array): boolean;
 
   /**
-   * Force flush any remaining data in the decompression stream.
-   *
-   * @returns Void
+   * Forces flush of remaining buffered data.
    */
   flush(): void;
 
   /**
-   * Reset the stream state.
-   *
-   * @returns Void
+   * Resets stream to initial state.
    */
   reset(): void;
 
   /**
-   * Close the stream and release all allocated resources.
-   *
-   * @returns Void
+   * Closes stream and releases resources.
    */
   close(): void;
 
   /**
-   * Get the current accumulated decompressed data without clearing the buffer.
+   * Retrieves accumulated decompressed data.
    *
    * @returns Buffer with decompressed data
    */
   getBuffer(): Buffer;
 
   /**
-   * Clear the internal output buffer to free memory.
-   *
-   * @returns Void
+   * Clears internal output buffer.
    */
   clearBuffer(): void;
 }
 
 /**
- * Loads the native addon with multiple fallback strategies for different build configurations.
+ * Loads native addon with fallback strategies.
+ * Handles different build configurations and environments.
  *
- * Attempts to load the compiled native module from various potential locations,
- * providing resilience across different build environments.
+ * @returns Successfully loaded native addon
  *
- * @throws {Error} If all loading attempts fail or the addon lacks required exports
- * @returns The successfully loaded and validated native addon
+ * @throws {Error} When all loading attempts fail
+ *
  * @internal
  */
 function loadNativeAddon(): NativeAddon {
-  // Define possible paths for the native addon binary
   const possiblePaths = [
-    // Release build (production/optimized)
     join(__dirname, "..", "build", "Release", "zlib.node"),
-    // Debug build (development with debugging symbols)
     join(__dirname, "..", "build", "Debug", "zlib.node"),
   ];
 
@@ -141,7 +120,6 @@ function loadNativeAddon(): NativeAddon {
     try {
       const addon = require(path) as NativeAddon;
 
-      // Validate the addon has required exports
       if (addon && typeof addon.ZlibStream === "function") {
         return addon;
       }
@@ -154,7 +132,6 @@ function loadNativeAddon(): NativeAddon {
     }
   }
 
-  // Provide helpful error message
   const platform = `${process.platform}-${process.arch}`;
   const nodeVersion = process.version;
 
@@ -165,36 +142,26 @@ function loadNativeAddon(): NativeAddon {
   );
 }
 
-// Load the native addon once at module initialization to avoid repeated loading overhead
 const nativeAddon = loadNativeAddon();
 
 /**
- * Configuration options for initializing ZlibStream instances.
- *
- * These options control the behavior and performance characteristics of streaming
- * zlib decompression. Default values provide a good balance between memory usage and performance.
+ * Configuration options for ZlibStream initialization.
+ * Controls decompression behavior and performance characteristics.
  *
  * @public
  */
 export const ZlibStreamOptions = z.object({
   /**
-   * Window bits parameter for zlib initialization, controlling the size of the sliding window
-   * used for compression history and the compression format detection.
-   *
-   * Common values:
-   * - `15`: Standard zlib format with 32KB window (default, recommended for Discord)
-   * - `-15`: Raw deflate format without zlib headers
-   * - `31`: Automatic format detection supporting both gzip and zlib headers
+   * Window bits parameter controlling sliding window size.
+   * Common values: 15 (zlib), -15 (raw deflate), 31 (auto-detect).
    *
    * @default 15
    */
   windowBits: z.number().int().min(-15).max(47).default(15),
 
   /**
-   * Chunk size for internal buffering operations in bytes.
-   *
-   * Controls the size of internal buffers used for decompression operations.
-   * Larger values generally improve throughput but consume more memory per stream instance.
+   * Chunk size for internal buffering in bytes.
+   * Larger values improve throughput but use more memory.
    *
    * @default 128 * 1024
    */
@@ -206,26 +173,11 @@ export const ZlibStreamOptions = z.object({
     .default(128 * 1024),
 });
 
-/**
- * Type definition for ZlibStreamOptions.
- *
- * Represents the validated configuration options for ZlibStream instances.
- * Includes window bits and chunk size parameters with constraints on their values.
- *
- * @public
- */
 export type ZlibStreamOptions = z.infer<typeof ZlibStreamOptions>;
 
 /**
- * High-performance streaming zlib implementation for Discord Gateway transport compression.
- *
- * Provides specialized streaming zlib decompression designed specifically for Discord's Gateway
- * WebSocket compression protocol. Implements zlib-stream transport compression with shared context
- * across multiple messages and automatic detection of complete messages using the Z_SYNC_FLUSH
- * suffix (0x00 0x00 0xFF 0xFF).
- *
- * Key features include automatic message boundary detection, shared compression context for
- * improved ratios, memory efficient buffering, and native C++ performance.
+ * High-performance streaming zlib for Discord Gateway compression.
+ * Handles Discord's zlib-stream transport with message boundary detection.
  *
  * @example
  * ```typescript
@@ -244,42 +196,41 @@ export type ZlibStreamOptions = z.infer<typeof ZlibStreamOptions>;
  */
 export class ZlibStream {
   /**
-   * Total number of compressed bytes read from input since stream initialization.
-   * Includes all data passed to push(), regardless of complete frame processing.
+   * Total compressed bytes read since initialization.
+   * Includes all data passed to push operations.
    */
   bytesRead = 0;
 
   /**
-   * Total number of decompressed bytes written to output buffers since initialization.
-   * Represents cumulative size of all decompressed data produced by the stream.
+   * Total decompressed bytes written since initialization.
+   * Represents cumulative decompressed data size.
    */
   bytesWritten = 0;
 
   /**
-   * Indicates whether the stream has been destroyed and is no longer usable.
-   * Once destroyed, all operations will throw errors.
+   * Stream destruction status.
+   * True when stream is closed and unusable.
    */
   destroyed = false;
 
   /**
-   * Number of complete messages successfully processed by the stream.
-   * Each message corresponds to one complete compression unit.
+   * Complete messages processed by the stream.
+   * Each message represents one compression unit.
    */
   messagesProcessed = 0;
 
   /**
-   * Reference to the native C++ zlib stream instance.
-   * Maintains the actual zlib decompression state and buffers.
+   * Native C++ zlib stream instance.
    * @internal
    */
   readonly #native: NativeZlibStream;
 
   /**
-   * Creates a new ZlibStream instance with the specified configuration.
+   * Creates a new ZlibStream with specified configuration.
    *
-   * @param options - Configuration options for stream behavior and performance
+   * @param options - Stream behavior and performance options
    *
-   * @throws {Error} If option validation fails or native stream initialization fails
+   * @throws {Error} When validation fails or initialization fails
    *
    * @example
    * ```typescript
@@ -309,9 +260,8 @@ export class ZlibStream {
   }
 
   /**
-   * Gets the current error code from the native zlib stream.
-   *
-   * @returns The current zlib error code, or -1 if the stream has been destroyed
+   * Current zlib error code.
+   * Returns -1 if stream destroyed.
    *
    * @public
    */
@@ -320,9 +270,8 @@ export class ZlibStream {
   }
 
   /**
-   * Gets the current error message from the native zlib stream.
-   *
-   * @returns A descriptive error message, or null if no error has occurred or stream is destroyed
+   * Current zlib error message.
+   * Returns null if no error or stream destroyed.
    *
    * @public
    */
@@ -331,9 +280,8 @@ export class ZlibStream {
   }
 
   /**
-   * Indicates whether the stream has finished processing all input data.
-   *
-   * @returns True if stream processing is complete, false if more data is expected
+   * Stream completion status.
+   * True when all input data processed.
    *
    * @public
    */
@@ -342,16 +290,13 @@ export class ZlibStream {
   }
 
   /**
-   * Processes compressed data through the zlib stream.
+   * Processes compressed data through the stream.
+   * Detects complete messages using Discord's zlib suffix marker.
    *
-   * This is the primary interface for feeding compressed data into the stream.
-   * Accumulates data internally until a complete message is detected (indicated by
-   * Discord's zlib suffix marker). Returns true when decompressed output is available.
+   * @param data - Compressed data buffer from WebSocket transport
+   * @returns True if complete message processed and ready for extraction
    *
-   * @param data - Compressed data buffer from WebSocket or other transport
-   * @returns True if a complete message was processed and is ready for extraction, false otherwise
-   *
-   * @throws {Error} If the stream has been destroyed or if a fatal decompression error occurs
+   * @throws {Error} When stream destroyed or decompression fails
    *
    * @example
    * ```typescript
@@ -365,37 +310,29 @@ export class ZlibStream {
    * @public
    */
   push(data: Buffer | Uint8Array): boolean {
-    // Ensure the stream is still active and usable
     if (this.destroyed) {
       throw new Error(
         "Cannot push data to destroyed ZlibStream. Create a new instance to continue decompression.",
       );
     }
 
-    // Early return for empty data to avoid unnecessary processing
     if (!data || data.length === 0) {
       return false;
     }
 
     try {
-      // Update input byte counter before processing
       this.bytesRead += data.length;
-
-      // Process the data through the native zlib decompression engine
       const hasCompleteMessage = this.#native.push(data);
 
-      // Update output statistics if decompression produced a complete message
       if (hasCompleteMessage) {
         const decompressed = this.#native.getBuffer();
         this.bytesWritten += decompressed.length;
         this.messagesProcessed++;
-
         return true;
       }
 
       return false;
     } catch (error) {
-      // Re-throw with enhanced error context for debugging
       throw new Error(
         `Failed to process data through ZlibStream: ${(error as Error).message}. This may indicate corrupted input data or a stream state error.`,
       );
@@ -403,12 +340,8 @@ export class ZlibStream {
   }
 
   /**
-   * Forces the stream to flush any remaining buffered data.
-   *
-   * Attempts to process any data currently held in internal buffers, even if complete
-   * message markers have not been detected. Primarily useful for debugging or error recovery.
-   *
-   * @returns Void
+   * Forces flush of remaining buffered data.
+   * Processes data held in internal buffers.
    *
    * @public
    */
@@ -425,16 +358,11 @@ export class ZlibStream {
   }
 
   /**
-   * Resets the stream state to initial conditions.
-   *
-   * Clears all internal buffers and resets statistical counters while reinitializing
-   * the zlib decompression context. After reset, the stream is ready to process new data.
-   *
-   * @returns Void
+   * Resets stream to initial conditions.
+   * Clears buffers and reinitializes decompression context.
    *
    * @example
    * ```typescript
-   * // Reset after error or to reuse stream
    * stream.reset();
    * console.log(stream.bytesRead); // 0
    * ```
@@ -448,8 +376,6 @@ export class ZlibStream {
 
     try {
       this.#native.reset();
-
-      // Reset local statistics
       this.messagesProcessed = 0;
       this.bytesRead = 0;
       this.bytesWritten = 0;
@@ -459,14 +385,8 @@ export class ZlibStream {
   }
 
   /**
-   * Closes the stream and releases all allocated resources.
-   *
-   * Performs complete shutdown of the zlib stream, releasing all native resources,
-   * buffers, and the zlib decompression context. Once closed, the stream becomes unusable.
-   *
-   * Always call close() when finished to prevent memory leaks.
-   *
-   * @returns Void
+   * Closes stream and releases all resources.
+   * Makes stream unusable and prevents memory leaks.
    *
    * @example
    * ```typescript
@@ -487,7 +407,6 @@ export class ZlibStream {
     try {
       this.#native.close();
     } finally {
-      // Mark as destroyed regardless of close success
       this.destroyed = true;
       this.messagesProcessed = 0;
       this.bytesRead = 0;
@@ -496,25 +415,22 @@ export class ZlibStream {
   }
 
   /**
-   * Retrieves the current accumulated decompressed data from the stream buffer.
+   * Retrieves current accumulated decompressed data.
+   * Returns copy without clearing internal buffer.
    *
-   * Returns a copy of the decompressed data accumulated in the internal output buffer.
-   * The internal buffer is not cleared by this operation.
+   * @returns Buffer containing decompressed data
    *
-   * @returns Buffer containing the current decompressed data
-   *
-   * @throws {Error} If the stream has been destroyed or buffer retrieval fails
+   * @throws {Error} When stream destroyed or retrieval fails
    *
    * @example
    * ```typescript
    * if (stream.push(data)) {
    *   const decompressed = stream.getBuffer();
-   *   // Process decompressed data...
    *   stream.clearBuffer();
    * }
    * ```
    *
-   * @see {@link clearBuffer} - For freeing the internal buffer after use
+   * @see {@link clearBuffer} - For freeing internal buffer
    *
    * @public
    */
@@ -535,18 +451,14 @@ export class ZlibStream {
   }
 
   /**
-   * Clears the internal output buffer to free memory.
-   *
-   * Releases the memory used by the internal decompressed data buffer. Should be called
-   * after processing each batch of decompressed data to prevent memory accumulation.
-   *
-   * @returns Void
+   * Clears internal output buffer to free memory.
+   * Should be called after processing decompressed data.
    *
    * @example
    * ```typescript
    * const data = stream.getBuffer();
    * processData(data);
-   * stream.clearBuffer(); // Free memory
+   * stream.clearBuffer();
    * ```
    *
    * @see {@link getBuffer} - For retrieving data before clearing
@@ -567,25 +479,16 @@ export class ZlibStream {
 }
 
 /**
- * The 4-byte zlib suffix marker used by Discord Gateway transport compression.
- *
- * Represents the specific byte sequence (0x00 0x00 0xFF 0xFF) that Discord appends
- * to each complete message when using zlib-stream transport compression. The presence
- * of this marker indicates that a complete compressed message has been received.
- *
- * @returns Buffer containing the zlib suffix bytes
+ * Discord's zlib suffix marker for message boundaries.
+ * Byte sequence (0x00 0x00 0xFF 0xFF) indicating complete messages.
  *
  * @public
  */
 export const ZLIB_SUFFIX: Buffer = nativeAddon.ZLIB_SUFFIX;
 
 /**
- * Default chunk size for internal buffering operations (32KB).
- *
- * Recommended buffer size for zlib streaming decompression operations.
- * Determined to provide optimal performance across different system configurations.
- *
- * @returns Buffer size in bytes
+ * Default chunk size for optimal performance.
+ * Recommended buffer size for zlib streaming operations (32KB).
  *
  * @public
  */

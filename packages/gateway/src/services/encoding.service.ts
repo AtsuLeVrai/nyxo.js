@@ -3,151 +3,121 @@ import { z } from "zod";
 import type { PayloadEntity } from "../types/index.js";
 
 /**
- * Maximum size of a payload in bytes before it's rejected.
- * Discord's gateway has a limit of 4096 bytes per payload to prevent abuse
- * and ensure efficient message processing.
+ * Maximum size of payload in bytes before rejection.
+ * Discord's gateway limit to prevent abuse and ensure efficiency.
  *
- * This constant is used to validate encoded payloads before sending them to Discord.
- * Exceeding this limit will result in an error, as Discord would reject the payload anyway.
- *
- * Note: After compression, payloads may be significantly smaller than this limit.
- *
- * @constant {number}
- * @see {@link https://discord.com/developers/docs/events/gateway#sending-events}
+ * @internal
  */
 const MAX_PAYLOAD_SIZE = 4096;
 
 /**
  * Supported Gateway payload encoding types.
+ * Controls serialization format for Gateway communication.
  *
- * - json: Standard JSON encoding
- *   - Universal compatibility across all environments
- *   - Human-readable format for easier debugging
- *   - Larger payload size compared to binary formats
- *   - No additional dependencies required
- *
- * - etf: Erlang Term Format
- *   - Binary format used by Discord's backend (based on Erlang/Elixir)
- *   - Significantly smaller payload size (20-30% reduction vs JSON)
- *   - Faster encoding/decoding performance (up to 2-3x faster)
- *   - Requires the optional 'erlpack' dependency
- *
- * ETF encoding reduces bandwidth usage and improves performance for high-volume connections,
- * but requires the optional erlpack dependency to be installed.
- *
- * @see {@link https://discord.com/developers/docs/topics/gateway#encoding-and-compression}
- * @see {@link https://github.com/discord/erlpack} For more information about ETF and erlpack
+ * @public
  */
 export const EncodingType = z.enum(["json", "etf"]);
-
 export type EncodingType = z.infer<typeof EncodingType>;
 
 /**
  * Service responsible for encoding and decoding Gateway payloads.
+ * Handles serialization between JavaScript objects and wire formats.
  *
- * This service handles the serialization and deserialization of data sent to and
- * received from Discord's Gateway WebSocket connection. It supports both JSON (default)
- * and ETF (Erlang Term Format) encoding schemes.
+ * @example
+ * ```typescript
+ * const encoding = new EncodingService("json");
+ * await encoding.initialize();
  *
- * Key features:
- * - Transparent encoding/decoding between JavaScript objects and wire formats
- * - Support for both text-based (JSON) and binary (ETF) formats
- * - Automatic size validation to prevent oversized payloads
- * - Lazy loading of optional dependencies
+ * const encoded = encoding.encode(payload);
+ * const decoded = encoding.decode(data);
+ * ```
  *
- * Performance considerations:
- * - JSON: ~500-800 MB/s encoding, ~250-400 MB/s decoding
- * - ETF: ~800-1200 MB/s encoding, ~600-900 MB/s decoding
- * - ETF payloads are typically 20-30% smaller than equivalent JSON
- *
- * ETF encoding is more efficient than JSON for high-volume applications but requires
- * the optional 'erlpack' npm package to be installed.
+ * @public
  */
 export class EncodingService {
   /**
-   * Gets the encoding type currently used by this service.
+   * Encoding type currently used by this service.
+   * Either "json" or "etf" format.
    *
-   * This property is useful for checking the encoding type
-   * without needing to compare with string literals.
-   *
-   * @returns The current encoding type ("json" or "etf")
+   * @readonly
+   * @public
    */
   readonly type: EncodingType;
 
   /**
-   * The erlpack module reference if available
-   * Used for ETF encoding/decoding operations
-   * Null if not initialized or using JSON encoding
+   * Erlpack module reference for ETF operations.
+   * Null if not initialized or using JSON encoding.
+   *
    * @internal
    */
   #erlpack: typeof import("erlpack") | null = null;
 
   /**
    * Creates a new EncodingService instance.
+   * Must call initialize() before using the service.
    *
-   * Note that you must call {@link initialize} before using the service.
-   * The constructor only configures the service but doesn't load dependencies
-   * or verify their availability.
+   * @param type - Encoding type to use ("json" or "etf")
    *
-   * @param type - The encoding type to use ("json" or "etf")
+   * @example
+   * ```typescript
+   * const service = new EncodingService("etf");
+   * await service.initialize();
+   * ```
+   *
+   * @public
    */
   constructor(type: EncodingType) {
     this.type = type;
   }
 
   /**
-   * Determines if this service uses JSON encoding.
+   * Checks if service uses JSON encoding.
+   * Useful for conditional logic without string comparisons.
    *
-   * Useful for conditional logic based on the encoding type
-   * without having to directly compare with string literals.
+   * @returns True if using JSON encoding
    *
-   * @returns `true` if using JSON encoding, `false` if using ETF
+   * @public
    */
   get isJson(): boolean {
     return this.type === "json";
   }
 
   /**
-   * Determines if this service uses ETF encoding.
+   * Checks if service uses ETF encoding.
+   * Useful for conditional logic without string comparisons.
    *
-   * Useful for conditional logic based on the encoding type
-   * without having to directly compare with string literals.
+   * @returns True if using ETF encoding
    *
-   * @returns `true` if using ETF encoding, `false` if using JSON
+   * @public
    */
   get isEtf(): boolean {
     return this.type === "etf";
   }
 
   /**
-   * Initializes the encoding service by loading required modules.
+   * Initializes encoding service by loading required modules.
+   * Must be called before using service for encoding or decoding.
    *
-   * For ETF encoding, this will:
-   * - Attempt to load the erlpack module
-   * - Verify the module is properly functional
-   * - Store a reference for future encoding/decoding operations
+   * @throws {Error} If initialization fails due to missing dependencies
    *
-   * For JSON encoding, this resolves immediately as no external modules are required.
+   * @example
+   * ```typescript
+   * const service = new EncodingService("etf");
+   * await service.initialize();
+   * // Service is now ready for encoding/decoding
+   * ```
    *
-   * This method must be called before using the service for encoding or decoding.
-   * It's recommended to call this during application startup to ensure
-   * dependencies are available before handling gateway traffic.
-   *
-   * @throws {Error} If initialization fails due to missing dependencies or other errors
-   * @returns A promise that resolves when initialization is complete
+   * @public
    */
   async initialize(): Promise<void> {
-    // Early return if using JSON encoding or if erlpack is already loaded
     if (this.isJson || this.#erlpack) {
       return;
     }
 
     try {
-      // Attempt to dynamically import the erlpack module
       const result =
         await OptionalDeps.safeImport<typeof import("erlpack")>("erlpack");
 
-      // Check if the import was successful
       if (!result.success) {
         throw new Error(
           "The erlpack module is required for ETF encoding but is not available. " +
@@ -155,10 +125,8 @@ export class EncodingService {
         );
       }
 
-      // Store the erlpack module reference for later use
       this.#erlpack = result.data;
     } catch (error) {
-      // Wrap and rethrow errors with additional context
       throw new Error(`Failed to initialize ${this.type} encoding service`, {
         cause: error,
       });
@@ -166,48 +134,43 @@ export class EncodingService {
   }
 
   /**
-   * Encodes a payload entity into its string or buffer representation.
+   * Encodes payload entity into string or buffer representation.
+   * Validates payload size to ensure Discord compatibility.
    *
-   * This method serializes a JavaScript object (Gateway payload) into
-   * either a JSON string or an ETF binary buffer, depending on the
-   * configured encoding type.
+   * @param data - Payload object to encode
+   * @returns Encoded data as string (JSON) or Buffer (ETF)
    *
-   * The method also validates the size of the encoded payload to ensure
-   * it doesn't exceed Discord's maximum allowed size (4096 bytes).
+   * @throws {Error} If encoding fails, payload too large, or service not initialized
    *
-   * For JSON encoding:
-   * - Returns a JSON string representation
-   * - No special handling required for WebSocket transmission
+   * @example
+   * ```typescript
+   * const encoded = service.encode({
+   *   op: 1,
+   *   d: null,
+   *   s: null,
+   *   t: null
+   * });
+   * ```
    *
-   * For ETF encoding:
-   * - Returns a binary Buffer containing ETF data
-   * - Can be sent directly over WebSocket as binary data
-   *
-   * @param data - The payload object to encode
-   * @returns The encoded data as a string (JSON) or Buffer (ETF)
-   * @throws {Error} If encoding fails, the payload is too large, or the service wasn't initialized
+   * @public
    */
   encode(data: PayloadEntity): Buffer | string {
     try {
-      // Verify erlpack is loaded for ETF encoding
       if (this.isEtf && !this.#erlpack) {
         throw new Error(
           "Service not initialized. Call initialize() before using encode().",
         );
       }
 
-      // Encode the payload using the appropriate format
       const result = this.isEtf
         ? // biome-ignore lint/style/noNonNullAssertion: It's safe to assert that #erlpack is not null here
           this.#erlpack!.pack(data)
         : JSON.stringify(data);
 
-      // Validate the size of the encoded payload
       this.#validatePayloadSize(result);
 
       return result;
     } catch (error) {
-      // Wrap and rethrow errors with additional context
       throw new Error(`Failed to encode ${this.type} payload`, {
         cause: error,
       });
@@ -215,50 +178,40 @@ export class EncodingService {
   }
 
   /**
-   * Decodes a string or buffer into a payload entity.
+   * Decodes string or buffer into payload entity.
+   * Deserializes data from Discord's Gateway into JavaScript object.
    *
-   * This method deserializes data received from Discord's Gateway
-   * into a JavaScript object (PayloadEntity) that can be processed
-   * by the application.
+   * @param data - Encoded data to decode (string or Buffer)
+   * @returns Decoded payload entity as JavaScript object
    *
-   * The method handles different input types based on the encoding format:
+   * @throws {Error} If decoding fails or service not initialized
    *
-   * For JSON encoding:
-   * - Accepts either a string or a UTF-8 encoded Buffer
-   * - Converts Buffer to string if necessary before parsing
+   * @example
+   * ```typescript
+   * const payload = service.decode(receivedData);
+   * console.log(`Received opcode: ${payload.op}`);
+   * ```
    *
-   * For ETF encoding:
-   * - Accepts a Buffer containing ETF binary data
-   * - Converts string inputs to Buffer if necessary
-   * - Uses erlpack to unpack the binary data
-   *
-   * @param data - The encoded data to decode (string or Buffer)
-   * @returns The decoded payload entity as a JavaScript object
-   * @throws {Error} If decoding fails or the service wasn't initialized
+   * @public
    */
   decode(data: Buffer | string): PayloadEntity {
     try {
-      // ETF decoding path
       if (this.isEtf) {
-        // Verify the service is properly initialized
         if (!this.#erlpack) {
           throw new Error(
             "Service not initialized. Call initialize() before using decode().",
           );
         }
 
-        // Ensure we're working with a Buffer (convert string if necessary)
         return this.#erlpack.unpack(
           Buffer.isBuffer(data) ? data : Buffer.from(data),
         );
       }
 
-      // JSON decoding path - parse string or convert Buffer to string first
       return JSON.parse(
         typeof data === "string" ? data : data.toString("utf-8"),
       );
     } catch (error) {
-      // Wrap and rethrow errors with additional context
       throw new Error(`Failed to decode ${this.type} payload`, {
         cause: error,
       });
@@ -266,41 +219,34 @@ export class EncodingService {
   }
 
   /**
-   * Cleans up resources used by the encoding service.
+   * Cleans up resources used by encoding service.
+   * Should be called when service is no longer needed.
    *
-   * This method should be called when the service is no longer needed
-   * to prevent memory leaks, especially in long-running applications.
-   * It releases references to dynamically loaded modules.
+   * @example
+   * ```typescript
+   * service.destroy();
+   * // Service must be re-initialized before next use
+   * ```
    *
-   * After calling destroy(), the service must be re-initialized with
-   * initialize() before it can be used again.
+   * @public
    */
   destroy(): void {
-    // Release reference to the erlpack module
     this.#erlpack = null;
   }
 
   /**
-   * Validates that the payload size is within acceptable limits.
+   * Validates payload size is within acceptable limits.
+   * Ensures encoded payloads don't exceed Discord's 4096 byte limit.
    *
-   * Discord imposes a 4096 byte limit on Gateway payloads. This method
-   * ensures that encoded payloads don't exceed this limit before they're
-   * sent to Discord, preventing rejected messages and potential rate limiting.
+   * @param data - Encoded payload to validate (Buffer or string)
    *
-   * The size calculation depends on the data type:
-   * - For Buffers (ETF): Uses the buffer's length property
-   * - For strings (JSON): Calculates byte length accounting for UTF-8 encoding
+   * @throws {Error} If payload exceeds maximum size limit
    *
-   * @param data - The encoded payload to validate (Buffer or string)
-   * @throws {Error} If the payload exceeds the maximum size limit, with detailed size information
    * @internal
    */
   #validatePayloadSize(data: Buffer | string): void {
-    // Calculate the size in bytes
-    // For strings, we need to get the actual UTF-8 byte length, not character count
     const size = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
 
-    // Check if payload exceeds Discord's size limit
     if (size > MAX_PAYLOAD_SIZE) {
       throw new Error(
         `Payload exceeds maximum size of ${MAX_PAYLOAD_SIZE} bytes (actual: ${size} bytes). Consider splitting large payloads or removing unnecessary data.`,

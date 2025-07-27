@@ -1007,7 +1007,6 @@ export const RestEventNames = [
   "rateLimitUpdate",
   "rateLimitExpire",
   "retry",
-  "metricsUpdate",
 ] as const satisfies readonly (keyof RestEvents)[];
 
 /**

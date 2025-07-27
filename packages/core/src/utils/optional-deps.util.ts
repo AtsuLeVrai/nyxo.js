@@ -1,32 +1,29 @@
 /**
- * Utility for handling optional dependencies in a Node.js application.
- *
- * This utility provides methods to dynamically import modules that may or may not
- * be installed, check if modules are available, and import multiple modules at once.
- * It helps implement feature detection and graceful fallbacks for optional dependencies.
+ * Utility for handling optional dependencies in Node.js applications.
+ * Provides methods to dynamically import modules with graceful fallbacks.
  *
  * @example
  * ```typescript
- * // Try to import an optional dependency
  * const chalk = await OptionalDeps.import<typeof import('chalk')>('chalk');
- *
  * if (chalk) {
  *   console.log(chalk.green('Module loaded successfully!'));
  * } else {
- *   console.log('Chalk is not available, using fallback...');
+ *   console.log('Chalk not available, using fallback...');
  * }
  * ```
+ *
+ * @public
  */
 export const OptionalDeps = {
   /**
-   * Dynamically imports a module that may not be installed.
+   * Dynamically imports module that may not be installed.
+   * Handles both CommonJS and ESM modules automatically.
    *
-   * This method attempts to import a module and returns it if successful.
-   * It handles both CommonJS and ESM modules by checking for default exports.
+   * @typeParam T - Type of module to import
+   * @param moduleName - Name of module to import
+   * @returns Promise resolving to imported module
    *
-   * @template T - The type of the module to import
-   * @param moduleName - The name of the module to import (e.g., 'chalk', 'lodash')
-   * @returns A Promise that resolves to the imported module, or rejects if the module cannot be imported
+   * @throws {Error} When module cannot be imported
    *
    * @example
    * ```typescript
@@ -37,6 +34,8 @@ export const OptionalDeps = {
    *   console.error('Lodash not available:', error.message);
    * }
    * ```
+   *
+   * @public
    */
   async import<T>(moduleName: string): Promise<T> {
     const module = await import(moduleName);
@@ -44,30 +43,25 @@ export const OptionalDeps = {
   },
 
   /**
-   * Safely imports a module without throwing an exception, similar to Zod's safeParse.
+   * Safely imports module without throwing exceptions.
+   * Returns result object with success/error information.
    *
-   * This function attempts to dynamically import a module and returns an object with:
-   * - `success`: A boolean indicating whether the import was successful
-   * - `data`: The imported module (if successful)
-   * - `error`: The error that occurred (if unsuccessful)
-   *
-   * @template T - The expected type of the imported module
-   * @param moduleName - The name of the module to import
-   * @returns An object containing the result of the import attempt
+   * @typeParam T - Expected type of imported module
+   * @param moduleName - Name of module to import
+   * @returns Object containing import result
    *
    * @example
    * ```typescript
-   * // Try to import chalk
    * const result = await OptionalDeps.safeImport<typeof import('chalk')>('chalk');
    *
    * if (result.success) {
-   *   // Use the imported module safely
    *   console.log(result.data.green('Success!'));
    * } else {
-   *   // Handle the error gracefully
    *   console.log('Could not import chalk:', result.error.message);
    * }
    * ```
+   *
+   * @public
    */
   async safeImport<T>(
     moduleName: string,
@@ -87,13 +81,10 @@ export const OptionalDeps = {
   },
 
   /**
-   * Checks if a module is available without throwing an error.
+   * Checks if module is available without throwing error.
    *
-   * This method attempts to import a module and returns a boolean indicating
-   * whether the import was successful, without throwing an error on failure.
-   *
-   * @param moduleName - The name of the module to check
-   * @returns A Promise that resolves to true if the module is available, false otherwise
+   * @param moduleName - Name of module to check
+   * @returns Promise resolving to availability status
    *
    * @example
    * ```typescript
@@ -103,6 +94,8 @@ export const OptionalDeps = {
    *   // Use fallback image processing method
    * }
    * ```
+   *
+   * @public
    */
   async isAvailable(moduleName: string): Promise<boolean> {
     try {

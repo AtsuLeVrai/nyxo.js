@@ -1,232 +1,286 @@
 import type { Snowflake } from "./snowflake.util.js";
 
 /**
- * Type representing italicized text in Discord markdown.
+ * Italicized text in Discord markdown.
+ * Surrounded by single asterisks.
  *
- * In Discord, text surrounded by single asterisks is displayed in italics.
+ * @public
  */
 export type Italics = `*${string}*`;
 
 /**
  * Creates italicized text using Discord markdown.
  *
- * @param text - The text to be italicized
- * @returns The text wrapped in single asterisks
+ * @param text - Text to italicize
+ * @returns Text wrapped in single asterisks
  *
  * @example
- * italics("Hello world") // Returns "*Hello world*"
+ * ```typescript
+ * italics("Hello world") // "*Hello world*"
+ * ```
+ *
+ * @public
  */
 export function italics(text: string): Italics {
   return `*${text}*`;
 }
 
 /**
- * Type representing bold text in Discord markdown.
+ * Bold text in Discord markdown.
+ * Surrounded by double asterisks.
  *
- * In Discord, text surrounded by double asterisks is displayed in bold.
+ * @public
  */
 export type Bold = `**${string}**`;
 
 /**
  * Creates bold text using Discord markdown.
  *
- * @param text - The text to be bolded
- * @returns The text wrapped in double asterisks
+ * @param text - Text to bold
+ * @returns Text wrapped in double asterisks
  *
  * @example
- * bold("Hello world") // Returns "**Hello world**"
+ * ```typescript
+ * bold("Hello world") // "**Hello world**"
+ * ```
+ *
+ * @public
  */
 export function bold(text: string): Bold {
   return `**${text}**`;
 }
 
 /**
- * Type representing underlined text in Discord markdown.
+ * Underlined text in Discord markdown.
+ * Surrounded by double underscores.
  *
- * In Discord, text surrounded by double underscores is displayed with an underline.
+ * @public
  */
 export type Underline = `__${string}__`;
 
 /**
  * Creates underlined text using Discord markdown.
  *
- * @param text - The text to be underlined
- * @returns The text wrapped in double underscores
+ * @param text - Text to underline
+ * @returns Text wrapped in double underscores
  *
  * @example
- * underline("Hello world") // Returns "__Hello world__"
+ * ```typescript
+ * underline("Hello world") // "__Hello world__"
+ * ```
+ *
+ * @public
  */
 export function underline(text: string): Underline {
   return `__${text}__`;
 }
 
 /**
- * Type representing strikethrough text in Discord markdown.
+ * Strikethrough text in Discord markdown.
+ * Surrounded by double tildes.
  *
- * In Discord, text surrounded by double tildes is displayed with a strikethrough.
+ * @public
  */
 export type Strikethrough = `~~${string}~~`;
 
 /**
  * Creates strikethrough text using Discord markdown.
  *
- * @param text - The text to have a strikethrough effect
- * @returns The text wrapped in double tildes
+ * @param text - Text for strikethrough effect
+ * @returns Text wrapped in double tildes
  *
  * @example
- * strikethrough("Hello world") // Returns "~~Hello world~~"
+ * ```typescript
+ * strikethrough("Hello world") // "~~Hello world~~"
+ * ```
+ *
+ * @public
  */
 export function strikethrough(text: string): Strikethrough {
   return `~~${text}~~`;
 }
 
 /**
- * Type representing spoiler text in Discord markdown.
+ * Spoiler text in Discord markdown.
+ * Surrounded by double vertical bars.
  *
- * In Discord, text surrounded by double vertical bars is hidden as a spoiler
- * until clicked by the user.
+ * @public
  */
 export type Spoiler = `||${string}||`;
 
 /**
  * Creates spoiler text using Discord markdown.
  *
- * @param text - The text to be hidden as a spoiler
- * @returns The text wrapped in double vertical bars
+ * @param text - Text to hide as spoiler
+ * @returns Text wrapped in double vertical bars
  *
  * @example
- * spoiler("Hello world") // Returns "||Hello world||"
+ * ```typescript
+ * spoiler("Hello world") // "||Hello world||"
+ * ```
+ *
+ * @public
  */
 export function spoiler(text: string): Spoiler {
   return `||${text}||`;
 }
 
 /**
- * Type representing a large header (heading 1) in Discord markdown.
+ * Large header in Discord markdown.
+ * Preceded by hash symbol and space.
  *
- * In Discord, text preceded by a hash symbol and a space is displayed as a large header.
+ * @public
  */
 export type BigHeader = `# ${string}`;
 
 /**
- * Creates a large header (heading 1) using Discord markdown.
+ * Creates large header using Discord markdown.
  *
- * @param text - The text to be displayed as a large header
- * @returns The text preceded by a hash symbol and a space
+ * @param text - Text for large header
+ * @returns Text preceded by hash and space
  *
  * @example
- * bigHeader("Hello world") // Returns "# Hello world"
+ * ```typescript
+ * bigHeader("Hello world") // "# Hello world"
+ * ```
+ *
+ * @public
  */
 export function bigHeader(text: string): BigHeader {
   return `# ${text}`;
 }
 
 /**
- * Type representing a medium header (heading 2) in Discord markdown.
+ * Medium header in Discord markdown.
+ * Preceded by two hash symbols and space.
  *
- * In Discord, text preceded by two hash symbols and a space is displayed as a medium header.
+ * @public
  */
 export type SmallerHeader = `## ${string}`;
 
 /**
- * Creates a medium header (heading 2) using Discord markdown.
+ * Creates medium header using Discord markdown.
  *
- * @param text - The text to be displayed as a medium header
- * @returns The text preceded by two hash symbols and a space
+ * @param text - Text for medium header
+ * @returns Text preceded by two hashes and space
  *
  * @example
- * smallerHeader("Hello world") // Returns "## Hello world"
+ * ```typescript
+ * smallerHeader("Hello world") // "## Hello world"
+ * ```
+ *
+ * @public
  */
 export function smallerHeader(text: string): SmallerHeader {
   return `## ${text}`;
 }
 
 /**
- * Type representing a small header (heading 3) in Discord markdown.
+ * Small header in Discord markdown.
+ * Preceded by three hash symbols and space.
  *
- * In Discord, text preceded by three hash symbols and a space is displayed as a small header.
+ * @public
  */
 export type EvenSmallerHeader = `### ${string}`;
 
 /**
- * Creates a small header (heading 3) using Discord markdown.
+ * Creates small header using Discord markdown.
  *
- * @param text - The text to be displayed as a small header
- * @returns The text preceded by three hash symbols and a space
+ * @param text - Text for small header
+ * @returns Text preceded by three hashes and space
  *
  * @example
- * evenSmallerHeader("Hello world") // Returns "### Hello world"
+ * ```typescript
+ * evenSmallerHeader("Hello world") // "### Hello world"
+ * ```
+ *
+ * @public
  */
 export function evenSmallerHeader(text: string): EvenSmallerHeader {
   return `### ${text}`;
 }
 
 /**
- * Type representing subtext in Discord markdown.
+ * Subtext in Discord markdown.
+ * Preceded by dash, hash, and space.
  *
- * In Discord, text preceded by a dash, a hash symbol, and a space is displayed as subtext.
+ * @public
  */
 export type SubHeader = `-# ${string}`;
 
 /**
  * Creates subtext using Discord markdown.
  *
- * @param text - The text to be displayed as subtext
- * @returns The text preceded by a dash, a hash symbol, and a space
+ * @param text - Text for subtext
+ * @returns Text preceded by dash, hash, and space
  *
  * @example
- * subText("Hello world") // Returns "-# Hello world"
+ * ```typescript
+ * subText("Hello world") // "-# Hello world"
+ * ```
+ *
+ * @public
  */
 export function subText(text: string): SubHeader {
   return `-# ${text}`;
 }
 
 /**
- * Type representing a hyperlink in Discord markdown.
+ * Hyperlink in Discord markdown.
+ * Text in brackets followed by URL in parentheses.
  *
- * In Discord, a hyperlink is formatted with the link text in square brackets
- * followed by the URL in parentheses.
+ * @public
  */
 export type Link = `[${string}](${string})`;
 
 /**
- * Creates a hyperlink using Discord markdown.
+ * Creates hyperlink using Discord markdown.
  *
- * @param text - The text to be displayed for the link
- * @param url - The URL that the link points to
- * @returns The formatted hyperlink
+ * @param text - Display text for link
+ * @param url - URL that link points to
+ * @returns Formatted hyperlink
  *
  * @example
- * link("Discord", "https://discord.com") // Returns "[Discord](https://discord.com)"
+ * ```typescript
+ * link("Discord", "https://discord.com") // "[Discord](https://discord.com)"
+ * ```
+ *
+ * @public
  */
 export function link(text: string, url: string): Link {
   return `[${text}](${url})`;
 }
 
 /**
- * Type representing inline code in Discord markdown.
+ * Inline code in Discord markdown.
+ * Surrounded by backticks.
  *
- * In Discord, text surrounded by backticks is displayed as inline code.
+ * @public
  */
 export type Code = `\`${string}\``;
 
 /**
  * Creates inline code using Discord markdown.
  *
- * @param text - The text to be displayed as inline code
- * @returns The text wrapped in backticks
+ * @param text - Text for inline code
+ * @returns Text wrapped in backticks
  *
  * @example
- * code("const x = 1;") // Returns "`const x = 1;`"
+ * ```typescript
+ * code("const x = 1;") // "`const x = 1;`"
+ * ```
+ *
+ * @public
  */
 export function code(text: string): Code {
   return `\`${text}\``;
 }
 
 /**
- * Type representing the supported programming languages for code blocks in Discord.
+ * Programming languages supported for Discord code blocks.
+ * Enables syntax highlighting in code blocks.
  *
- * Discord supports syntax highlighting for various programming languages in code blocks.
+ * @public
  */
 export type ProgrammingLanguageType =
   | "python"
@@ -314,25 +368,27 @@ export type ProgrammingLanguageType =
   | "plaintext";
 
 /**
- * Type representing a code block in Discord markdown.
+ * Code block in Discord markdown.
+ * Surrounded by triple backticks with optional language.
  *
- * In Discord, text surrounded by triple backticks with an optional language specifier
- * is displayed as a code block with syntax highlighting.
+ * @public
  */
 export type CodeBlock = `\`\`\`${ProgrammingLanguageType}\n${string}\n\`\`\``;
 
 /**
- * Creates a code block with optional syntax highlighting using Discord markdown.
+ * Creates code block with syntax highlighting.
  *
- * @param text - The code to be displayed in the code block
- * @param language - The programming language for syntax highlighting (defaults to "plaintext")
- * @returns The formatted code block
+ * @param text - Code for the block
+ * @param language - Programming language for highlighting
+ * @returns Formatted code block
  *
  * @example
+ * ```typescript
  * codeBlock("const x = 1;", "javascript")
- * // Returns "```javascript
- * // const x = 1;
- * // ```"
+ * // Returns "```javascript\nconst x = 1;\n```"
+ * ```
+ *
+ * @public
  */
 export function codeBlock(
   text: string,
@@ -342,114 +398,135 @@ export function codeBlock(
 }
 
 /**
- * Type representing a single-line quote in Discord markdown.
+ * Single-line quote in Discord markdown.
+ * Preceded by greater-than symbol and space.
  *
- * In Discord, text preceded by a greater-than symbol and a space is displayed as a quote.
+ * @public
  */
 export type Quote = `> ${string}`;
 
 /**
- * Creates a single-line quote using Discord markdown.
+ * Creates single-line quote using Discord markdown.
  *
- * @param text - The text to be displayed as a quote
- * @returns The text preceded by a greater-than symbol and a space
+ * @param text - Text for quote
+ * @returns Text preceded by greater-than and space
  *
  * @example
- * quote("Hello world") // Returns "> Hello world"
+ * ```typescript
+ * quote("Hello world") // "> Hello world"
+ * ```
+ *
+ * @public
  */
 export function quote(text: string): Quote {
   return `> ${text}`;
 }
 
 /**
- * Type representing a multi-line quote block in Discord markdown.
+ * Multi-line quote block in Discord markdown.
+ * Preceded by three greater-than symbols and space.
  *
- * In Discord, text preceded by three greater-than symbols and a space
- * is displayed as a multi-line quote block.
+ * @public
  */
 export type QuoteBlock = `>>> ${string}`;
 
 /**
- * Creates a multi-line quote block using Discord markdown.
+ * Creates multi-line quote block using Discord markdown.
  *
- * @param text - The text to be displayed as a quote block
- * @returns The text preceded by three greater-than symbols and a space
+ * @param text - Text for quote block
+ * @returns Text preceded by three greater-than symbols and space
  *
  * @example
- * quoteBlock("Hello\nworld") // Returns ">>> Hello\nworld"
+ * ```typescript
+ * quoteBlock("Hello\nworld") // ">>> Hello\nworld"
+ * ```
+ *
+ * @public
  */
 export function quoteBlock(text: string): QuoteBlock {
   return `>>> ${text}`;
 }
 
 /**
- * Type representing a formatted user mention in Discord markdown.
+ * Formatted user mention in Discord markdown.
+ * User ID wrapped in angle brackets with @ prefix.
  *
- * In Discord, a user ID wrapped in <@ and > creates a clickable user mention
- * that will highlight and notify the mentioned user.
+ * @public
  */
 export type FormattedUser = `<@${Snowflake}>`;
 
 /**
- * Creates a user mention using Discord markdown.
+ * Creates user mention using Discord markdown.
  *
- * @param userId - The ID of the user to mention
- * @returns The formatted user mention
+ * @param userId - ID of user to mention
+ * @returns Formatted user mention
  *
  * @example
- * formatUser("123456789012345678") // Returns "<@123456789012345678>"
+ * ```typescript
+ * formatUser("123456789012345678") // "<@123456789012345678>"
+ * ```
+ *
+ * @public
  */
 export function formatUser(userId: Snowflake): FormattedUser {
   return `<@${userId}>`;
 }
 
 /**
- * Type representing a formatted channel mention in Discord markdown.
+ * Formatted channel mention in Discord markdown.
+ * Channel ID wrapped in angle brackets with # prefix.
  *
- * In Discord, a channel ID wrapped in <# and > creates a clickable channel mention
- * that will link to the specified channel.
+ * @public
  */
 export type FormattedChannel = `<#${Snowflake}>`;
 
 /**
- * Creates a channel mention using Discord markdown.
+ * Creates channel mention using Discord markdown.
  *
- * @param channelId - The ID of the channel to mention
- * @returns The formatted channel mention
+ * @param channelId - ID of channel to mention
+ * @returns Formatted channel mention
  *
  * @example
- * formatChannel("123456789012345678") // Returns "<#123456789012345678>"
+ * ```typescript
+ * formatChannel("123456789012345678") // "<#123456789012345678>"
+ * ```
+ *
+ * @public
  */
 export function formatChannel(channelId: Snowflake): FormattedChannel {
   return `<#${channelId}>`;
 }
 
 /**
- * Type representing a formatted role mention in Discord markdown.
+ * Formatted role mention in Discord markdown.
+ * Role ID wrapped in angle brackets with @& prefix.
  *
- * In Discord, a role ID wrapped in <@& and > creates a clickable role mention
- * that will highlight all users with that role.
+ * @public
  */
 export type FormattedRole = `<@&${Snowflake}>`;
 
 /**
- * Creates a role mention using Discord markdown.
+ * Creates role mention using Discord markdown.
  *
- * @param roleId - The ID of the role to mention
- * @returns The formatted role mention
+ * @param roleId - ID of role to mention
+ * @returns Formatted role mention
  *
  * @example
- * formatRole("123456789012345678") // Returns "<@&123456789012345678>"
+ * ```typescript
+ * formatRole("123456789012345678") // "<@&123456789012345678>"
+ * ```
+ *
+ * @public
  */
 export function formatRole(roleId: Snowflake): FormattedRole {
   return `<@&${roleId}>`;
 }
 
 /**
- * Type representing a formatted slash command mention in Discord markdown.
+ * Formatted slash command mention in Discord markdown.
+ * Command with optional subcommands and ID.
  *
- * In Discord, a command formatted with the command name and ID creates
- * a clickable slash command mention that will display the command info.
+ * @public
  */
 export type FormattedSlashCommand =
   | `</${string}:${Snowflake}>`
@@ -457,26 +534,24 @@ export type FormattedSlashCommand =
   | `</${string} ${string} ${string}:${Snowflake}>`;
 
 /**
- * Creates a formatted slash command mention using Discord markdown.
+ * Creates formatted slash command mention.
  *
- * @param commandName - The name of the slash command
- * @param commandId - The ID of the slash command
- * @param subCommandName - Optional name of the sub-command
- * @param subCommandGroupName - Optional name of the sub-command group
- * @returns The formatted slash command mention
+ * @param commandName - Name of slash command
+ * @param commandId - ID of slash command
+ * @param subCommandName - Optional subcommand name
+ * @param subCommandGroupName - Optional subcommand group name
+ * @returns Formatted slash command mention
  *
  * @example
- * // Basic command
+ * ```typescript
  * formatSlashCommand("help", "123456789012345678")
- * // Returns "</help:123456789012345678>"
+ * // "</help:123456789012345678>"
  *
- * // Command with subcommand
  * formatSlashCommand("settings", "123456789012345678", "privacy")
- * // Returns "</settings privacy:123456789012345678>"
+ * // "</settings privacy:123456789012345678>"
+ * ```
  *
- * // Command with subcommand group and subcommand
- * formatSlashCommand("permissions", "123456789012345678", "role", "view")
- * // Returns "</permissions role view:123456789012345678>"
+ * @public
  */
 export function formatSlashCommand(
   commandName: string,
@@ -496,31 +571,33 @@ export function formatSlashCommand(
 }
 
 /**
- * Type representing a formatted custom emoji in Discord markdown.
+ * Formatted custom emoji in Discord markdown.
+ * Emoji name and ID with optional animated prefix.
  *
- * In Discord, a custom emoji is formatted with the emoji name and ID,
- * with an optional 'a:' prefix for animated emojis.
+ * @public
  */
 export type FormattedCustomEmoji =
   | `<:${string}:${Snowflake}>`
   | `<a:${string}:${Snowflake}>`;
 
 /**
- * Creates a formatted custom emoji using Discord markdown.
+ * Creates formatted custom emoji.
  *
- * @param emojiName - The name of the custom emoji
- * @param emojiId - The ID of the custom emoji
- * @param animated - Whether the emoji is animated
- * @returns The formatted custom emoji
+ * @param emojiName - Name of custom emoji
+ * @param emojiId - ID of custom emoji
+ * @param animated - Whether emoji is animated
+ * @returns Formatted custom emoji
  *
  * @example
- * // Static emoji
+ * ```typescript
  * formatCustomEmoji("heart", "123456789012345678")
- * // Returns "<:heart:123456789012345678>"
+ * // "<:heart:123456789012345678>"
  *
- * // Animated emoji
  * formatCustomEmoji("wave", "123456789012345678", true)
- * // Returns "<a:wave:123456789012345678>"
+ * // "<a:wave:123456789012345678>"
+ * ```
+ *
+ * @public
  */
 export function formatCustomEmoji(
   emojiName: string,
@@ -535,60 +612,55 @@ export function formatCustomEmoji(
 }
 
 /**
- * Enum representing the different timestamp styles available in Discord.
+ * Timestamp styles available in Discord.
+ * Controls how timestamps are displayed.
  *
- * Discord supports various formats for displaying timestamps, including short and long
- * formats for time, date, and relative time.
- *
- * @see {@link https://discord.com/developers/docs/reference#message-formatting-timestamp-styles}
+ * @public
  */
 export enum TimestampStyle {
-  /** Displays the time in 24-hour format (e.g., "16:20") */
+  /** 24-hour format (16:20) */
   ShortTime = "t",
-
-  /** Displays the time in 12-hour format with AM/PM (e.g., "4:20 PM") */
+  /** 12-hour format with AM/PM (4:20 PM) */
   LongTime = "T",
-
-  /** Displays the date in short format (e.g., "20/04/2021") */
+  /** Short date format (20/04/2021) */
   ShortDate = "d",
-
-  /** Displays the date in long format (e.g., "20 April 2021") */
+  /** Long date format (20 April 2021) */
   LongDate = "D",
-
-  /** Displays the date and time in short format (e.g., "20 April 2021 16:20") */
+  /** Short date and time (20 April 2021 16:20) */
   ShortDateTime = "f",
-
-  /** Displays the date and time in long format with day of week (e.g., "Tuesday, 20 April 2021 16:20") */
+  /** Long date and time with weekday (Tuesday, 20 April 2021 16:20) */
   LongDateTime = "F",
-
-  /** Displays the time relative to the current time (e.g., "2 hours ago", "in 3 days") */
+  /** Relative time (2 hours ago, in 3 days) */
   RelativeTime = "R",
 }
 
 /**
- * Type representing a formatted timestamp in Discord markdown.
+ * Formatted timestamp in Discord markdown.
+ * Unix timestamp with optional style.
  *
- * In Discord, a timestamp is formatted with a Unix timestamp and an optional style.
+ * @public
  */
 export type FormattedTimestamp =
   | `<t:${number}>`
   | `<t:${number}:${TimestampStyle}>`;
 
 /**
- * Creates a formatted timestamp using Discord markdown.
+ * Creates formatted timestamp using Discord markdown.
  *
- * @param timestamp - The Unix timestamp in seconds
- * @param style - Optional style to format the timestamp
- * @returns The formatted timestamp
+ * @param timestamp - Unix timestamp in seconds
+ * @param style - Optional style for timestamp
+ * @returns Formatted timestamp
  *
  * @example
- * // Default format
+ * ```typescript
  * formatTimestamp(1618932219)
- * // Returns "<t:1618932219>"
+ * // "<t:1618932219>"
  *
- * // Relative time format
  * formatTimestamp(1618932219, TimestampStyle.RelativeTime)
- * // Returns "<t:1618932219:R>"
+ * // "<t:1618932219:R>"
+ * ```
+ *
+ * @public
  */
 export function formatTimestamp(
   timestamp: number,
@@ -602,42 +674,43 @@ export function formatTimestamp(
 }
 
 /**
- * Type representing the different guild navigation types available in Discord.
+ * Guild navigation types available in Discord.
+ * Different navigation targets within guilds.
  *
- * Discord supports various navigation targets within guilds, including customization,
- * browsing, guides, and linked roles.
- *
- * @see {@link https://discord.com/developers/docs/reference#message-formatting-guild-navigation-types}
+ * @public
  */
 export type GuildNavigationType =
-  | "customize" // Navigate to server customization
-  | "browse" // Navigate to server channel/category browser
-  | "guide" // Navigate to server guide/tutorial
-  | "linked-roles" // Navigate to all linked roles
-  | `linked-roles:${Snowflake}`; // Navigate to a specific linked role
+  | "customize"
+  | "browse"
+  | "guide"
+  | "linked-roles"
+  | `linked-roles:${Snowflake}`;
 
 /**
- * Type representing a formatted guild navigation link in Discord markdown.
+ * Formatted guild navigation link in Discord markdown.
+ * Guild ID with navigation type.
  *
- * In Discord, a guild navigation link is formatted with the guild ID and navigation type.
+ * @public
  */
 export type FormattedGuildNavigation = `<${Snowflake}:${GuildNavigationType}>`;
 
 /**
- * Creates a formatted guild navigation link using Discord markdown.
+ * Creates formatted guild navigation link.
  *
- * @param id - The ID of the guild
- * @param type - The type of navigation target within the guild
- * @returns The formatted guild navigation link
+ * @param id - ID of guild
+ * @param type - Navigation target type
+ * @returns Formatted guild navigation link
  *
  * @example
- * // Navigate to server customization
+ * ```typescript
  * formatGuildNavigation("123456789012345678", "customize")
- * // Returns "<123456789012345678:customize>"
+ * // "<123456789012345678:customize>"
  *
- * // Navigate to a specific linked role
  * formatGuildNavigation("123456789012345678", "linked-roles:987654321098765432")
- * // Returns "<123456789012345678:linked-roles:987654321098765432>"
+ * // "<123456789012345678:linked-roles:987654321098765432>"
+ * ```
+ *
+ * @public
  */
 export function formatGuildNavigation(
   id: Snowflake,

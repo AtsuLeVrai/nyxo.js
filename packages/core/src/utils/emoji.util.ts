@@ -1,75 +1,69 @@
 import type { EmojiEntity } from "../entities/index.js";
 
 /**
- * Types of input that can be resolved to an emoji
+ * Input types that can be resolved to an emoji.
+ * Supports Unicode, Discord format, or emoji objects.
+ *
+ * @public
  */
 export type EmojiResolvable =
-  | string // Unicode emoji or Discord format (<:name:id>)
-  | Pick<EmojiEntity, "id" | "name" | "animated"> // Already resolved emoji object
-  | Partial<Pick<EmojiEntity, "id" | "name" | "animated">>; // Partial object
+  | string
+  | Pick<EmojiEntity, "id" | "name" | "animated">
+  | Partial<Pick<EmojiEntity, "id" | "name" | "animated">>;
 
 /**
- * Encodes an emoji for use in Discord API URLs.
+ * Encodes emoji for Discord API URLs.
  *
- * @param emoji - The emoji to encode (unicode, emoji object, or Discord format)
- * @returns The encoded emoji for the API
+ * @param emoji - Emoji to encode
+ * @returns Encoded emoji for API
  *
  * @example
  * ```typescript
- * // Encode a Unicode emoji
  * encodeEmoji('🔥'); // '%F0%9F%94%A5'
- *
- * // Encode a custom emoji via object
  * encodeEmoji({ name: 'discord', id: '1234567890' }); // 'discord%3A1234567890'
- *
- * // Encode a custom emoji via Discord format
  * encodeEmoji('<:megumin:1234567890>'); // 'megumin%3A1234567890'
  * ```
+ *
+ * @public
  */
 export function encodeEmoji(emoji: EmojiResolvable): string {
   const resolved = resolveEmoji(emoji);
 
-  // If the emoji has an ID (custom emoji), encode in name:id format
   if (resolved.id) {
-    // Format: name:id (URL encoded)
     return encodeURIComponent(`${resolved.name}:${resolved.id}`);
   }
 
-  // Otherwise it's a standard emoji, just encode the unicode character
   return encodeURIComponent(resolved.name as string);
 }
 
 /**
- * Decodes a URL-encoded emoji.
+ * Decodes URL-encoded emoji.
  *
- * @param encoded - The URL-encoded emoji
- * @returns The decoded emoji as an object
+ * @param encoded - URL-encoded emoji
+ * @returns Decoded emoji object
  *
  * @example
  * ```typescript
- * // Decode an encoded Unicode emoji
  * decodeEmoji('%F0%9F%94%A5'); // { name: '🔥', id: null, animated: false }
- *
- * // Decode an encoded custom emoji
  * decodeEmoji('discord%3A1234567890'); // { name: 'discord', id: '1234567890', animated: false }
  * ```
+ *
+ * @public
  */
 export function decodeEmoji(
   encoded: string,
 ): Pick<EmojiEntity, "id" | "name" | "animated"> {
   const decoded = decodeURIComponent(encoded);
 
-  // Check if it's a custom emoji (name:id format)
   const customEmojiMatch = decoded.match(/^(.+):(\d+)$/);
   if (customEmojiMatch) {
     return {
       name: customEmojiMatch[1] as string,
       id: customEmojiMatch[2] as string,
-      animated: false, // Can't determine from encoding alone
+      animated: false,
     };
   }
 
-  // It's a standard emoji
   return {
     name: decoded,
     id: null,
@@ -78,25 +72,23 @@ export function decodeEmoji(
 }
 
 /**
- * Resolves different emoji formats into a uniform ResolvedEmoji object.
+ * Resolves different emoji formats to uniform object.
  *
- * @param emoji - The emoji to resolve (unicode, emoji object, or Discord format)
- * @returns A normalized ResolvedEmoji object
+ * @param emoji - Emoji to resolve
+ * @returns Normalized emoji object
  *
  * @example
  * ```typescript
- * // Resolve a Unicode emoji
  * resolveEmoji('🔥'); // { name: '🔥', id: null, animated: false }
- *
- * // Resolve a Discord format emoji
  * resolveEmoji('<:discord:1234567890>'); // { name: 'discord', id: '1234567890', animated: false }
  * resolveEmoji('<a:blob:9876543210>'); // { name: 'blob', id: '9876543210', animated: true }
  * ```
+ *
+ * @public
  */
 export function resolveEmoji(
   emoji: EmojiResolvable,
 ): Pick<EmojiEntity, "id" | "name" | "animated"> {
-  // If it's already a complete emoji object
   if (typeof emoji !== "string" && "name" in emoji) {
     return {
       name: String(emoji.name),
@@ -105,9 +97,7 @@ export function resolveEmoji(
     };
   }
 
-  // If it's a string
   if (typeof emoji === "string") {
-    // Check if it's a Discord format emoji <:name:id> or <a:name:id>
     const customEmojiMatch = emoji.match(/<(a)?:([a-zA-Z0-9_]+):(\d+)>/);
     if (customEmojiMatch) {
       return {
@@ -117,17 +107,15 @@ export function resolveEmoji(
       };
     }
 
-    // Check for name:id format (used by the API)
     const plainCustomEmojiMatch = emoji.match(/^([a-zA-Z0-9_]+):(\d+)$/);
     if (plainCustomEmojiMatch) {
       return {
         name: plainCustomEmojiMatch[1] as string,
         id: plainCustomEmojiMatch[2] as string,
-        animated: false, // Can't determine from this format
+        animated: false,
       };
     }
 
-    // It's a standard emoji (unicode)
     return {
       name: emoji,
       id: null,
@@ -135,6 +123,5 @@ export function resolveEmoji(
     };
   }
 
-  // If we get here, the input format is invalid
   throw new Error(`Invalid emoji format: ${String(emoji)}`);
 }

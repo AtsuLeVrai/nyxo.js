@@ -3,224 +3,167 @@ import type { CompressionType, EncodingType } from "../services/index.js";
 import type { ReadyEntity, ResumeEntity } from "../types/index.js";
 
 /**
- * Manages Discord Gateway session state and lifecycle
+ * Manages Discord Gateway session state and lifecycle.
+ * Handles session establishment, resumption, and invalidation.
  *
- * The SessionManager is a critical component that maintains the connection state
- * between your application and Discord's Gateway WebSocket. It handles all aspects
- * of session management including establishment, resumption, and invalidation.
+ * @example
+ * ```typescript
+ * const session = new SessionManager(gateway);
  *
- * Key responsibilities:
- * - **Session Tracking**: Maintains session ID, resume URL, and sequence numbers
- * - **Session Resumption**: Enables reconnecting to existing sessions to avoid re-downloading guild data
- * - **State Management**: Tracks session health, user information, and guild counts
- * - **Event Coordination**: Emits session lifecycle events for monitoring and debugging
- * - **Metrics Collection**: Provides session uptime and health statistics
+ * // After READY event
+ * if (session.canResume) {
+ *   console.log(`Session ${session.id} can be resumed`);
+ * }
  *
- * ## Session Lifecycle
+ * console.log(`Uptime: ${session.uptime}ms`);
+ * ```
  *
- * 1. **Fresh Session**: Initial connection with no prior state
- * 2. **Ready Session**: Received READY event, session is fully operational
- * 3. **Active Session**: Can send/receive events normally
- * 4. **Resumable Session**: Can be resumed if connection drops
- * 5. **Invalid Session**: Must be terminated and recreated
- *
- * ## Performance Considerations
- *
- * Session resumption significantly reduces connection time and server load:
- * - Fresh connection: ~2-5 seconds with full guild data download
- * - Session resumption: ~200-500ms with only missed events
- * - Bandwidth savings: Up to 95% reduction during reconnection
- *
- * The manager automatically tracks sequence numbers to ensure no events are missed
- * during disconnections and properly handles Discord's session invalidation scenarios.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway#sessions}
- * @see {@link https://discord.com/developers/docs/events/gateway#resume}
+ * @public
  */
 export class SessionManager {
   /**
-   * Session ID assigned by Discord for this connection
+   * Session ID assigned by Discord for this connection.
+   * Required for session resumption.
    *
-   * This unique identifier is provided by Discord in the READY event and is required
-   * for session resumption. The session ID remains valid until Discord invalidates
-   * the session (typically due to extended disconnection or server maintenance).
-   *
-   * A null value indicates no active session or a fresh connection state.
+   * @public
    */
   id: string | null = null;
 
   /**
-   * URL for resuming the WebSocket connection
+   * URL for resuming the WebSocket connection.
+   * Provided by Discord in READY event for optimal resumption.
    *
-   * Discord provides this URL in the READY event to specify where session resumption
-   * should be attempted. This URL is typically different from the initial connection
-   * URL and is optimized for the current session's geographic location.
-   *
-   * Using the correct resume URL ensures optimal performance and reduces the likelihood
-   * of resume failures due to server routing issues.
+   * @public
    */
   resumeUrl: string | null = null;
 
   /**
-   * Last received sequence number from Discord
+   * Last received sequence number from Discord.
+   * Critical for session resumption and event ordering.
    *
-   * Discord assigns sequential numbers to all events sent to clients. This sequence
-   * number is crucial for session resumption as it tells Discord which events the
-   * client has already received, allowing Discord to send only missed events.
-   *
-   * The sequence number should be included in heartbeats and resume attempts to
-   * maintain synchronization with Discord's event stream.
+   * @public
    */
   sequence = 0;
 
   /**
-   * Timestamp when the session became ready (in milliseconds since epoch)
+   * Timestamp when session became ready.
+   * Used to calculate uptime and monitor connection stability.
    *
-   * This timestamp is set when the READY event is received and the session becomes
-   * fully operational. It's used to calculate session uptime and can help with
-   * debugging connection issues or performance monitoring.
-   *
-   * A null value indicates the session has never been ready or has been reset.
+   * @public
    */
   readyAt: number | null = null;
 
   /**
-   * User ID of the bot/application associated with this session
+   * User ID of bot associated with this session.
+   * Extracted from user object in READY event.
    *
-   * This is the unique Discord user ID for the bot or user account that established
-   * the session. It's extracted from the user object in the READY event and can be
-   * useful for logging, metrics, or multi-bot applications.
-   *
-   * The user ID remains constant for the lifetime of the bot token.
+   * @public
    */
   userId: string | null = null;
 
   /**
-   * Total number of guilds (servers) available to this session
+   * Total number of guilds available to this session.
+   * Set during READY event for monitoring and metrics.
    *
-   * This count represents the number of guilds the bot has access to and is set
-   * during the READY event. It's useful for monitoring bot growth, calculating
-   * memory requirements, or implementing shard distribution logic.
-   *
-   * For large bots (2500+ guilds), this will be the partial guild count as Discord
-   * sends guild data in chunks during the ready sequence.
+   * @public
    */
   guildCount = 0;
 
   /**
-   * Whether this session can be resumed if the connection drops
+   * Whether session can be resumed if connection drops.
+   * Enables faster reconnection without re-downloading guild data.
    *
-   * Session resumption allows reconnecting to an existing session without
-   * re-downloading all guild data. This flag is set to true when a session
-   * is successfully established and set to false when Discord invalidates
-   * the session.
-   *
-   * Common reasons for non-resumable sessions:
-   * - Session has been offline too long (>24 hours typically)
-   * - Discord server maintenance
-   * - Invalid sequence number
-   * - Authentication issues
+   * @public
    */
   resumable = false;
 
   /**
-   * Gateway instance that owns and manages this session
+   * Gateway instance that owns this session manager.
+   * Used for emitting events and coordinating with other components.
    *
-   * Reference to the parent Gateway instance that created this SessionManager.
-   * Used for emitting session events and coordinating with other Gateway components
-   * like the heartbeat manager and message handlers.
-   *
+   * @readonly
    * @internal
    */
   readonly #gateway: Gateway;
 
   /**
-   * Creates a new SessionManager instance
+   * Creates a new SessionManager instance.
+   * Starts in fresh state with no active session data.
    *
-   * The SessionManager starts in a fresh state with no active session data.
-   * All session properties are reset to their initial values and the manager
-   * is ready to handle a new connection.
+   * @param gateway - Gateway instance that will own this session manager
    *
-   * @param gateway - The Gateway instance that will own this session manager
+   * @example
+   * ```typescript
+   * const session = new SessionManager(gateway);
+   * ```
+   *
+   * @public
    */
   constructor(gateway: Gateway) {
     this.#gateway = gateway;
   }
 
   /**
-   * Gets the session uptime in milliseconds
+   * Session uptime in milliseconds.
+   * Calculates time since READY event was received.
    *
-   * Calculates how long the current session has been active since the READY
-   * event was received. This is useful for monitoring session stability,
-   * debugging connection issues, or displaying uptime statistics.
+   * @returns Uptime in milliseconds, or 0 if never ready
    *
-   * For sessions that have never been ready, this returns 0.
-   *
-   * @returns The uptime in milliseconds, or 0 if the session was never ready
+   * @public
    */
   get uptime(): number {
     return this.readyAt ? Date.now() - this.readyAt : 0;
   }
 
   /**
-   * Checks if the session is active and ready to handle events
+   * Checks if session is active and ready to handle events.
+   * Requires valid session ID and successful READY event.
    *
-   * An active session has both a valid session ID and has received the READY
-   * event from Discord. Only active sessions can send and receive Gateway events.
+   * @returns True if session is active and ready
    *
-   * This is the primary indicator that the session is fully operational and
-   * ready for normal Discord API operations.
-   *
-   * @returns True if the session is active and ready, false otherwise
+   * @public
    */
   get isActive(): boolean {
     return this.id !== null && this.readyAt !== null;
   }
 
   /**
-   * Checks if the session can be resumed after a disconnection
+   * Checks if session can be resumed after disconnection.
+   * Requires valid session data and resumable flag.
    *
-   * A session can be resumed if it has a valid session ID, is marked as resumable,
-   * and has received at least one event (sequence > 0). Meeting all these conditions
-   * allows attempting session resumption instead of establishing a fresh connection.
+   * @returns True if session can be resumed
    *
-   * Resumption is significantly faster than fresh connections and reduces server load.
-   *
-   * @returns True if the session can be resumed, false if a fresh connection is needed
+   * @public
    */
   get canResume(): boolean {
     return this.resumable && this.id !== null && this.sequence > 0;
   }
 
   /**
-   * Checks if this is a fresh session that has never been ready
+   * Checks if this is fresh session that has never been ready.
+   * Fresh sessions require complete connection handshake.
    *
-   * A fresh session is one that has not yet received the READY event from Discord.
-   * This typically occurs during initial connection before the session is fully
-   * established.
+   * @returns True if session has never been ready
    *
-   * Fresh sessions cannot be resumed and require a complete connection handshake.
-   *
-   * @returns True if this is a fresh session, false if it has been ready before
+   * @public
    */
   get isFresh(): boolean {
     return this.readyAt === null;
   }
 
   /**
-   * Updates the sequence number from a received Gateway payload
+   * Updates sequence number from received Gateway payload.
+   * Maintains event ordering and enables proper session resumption.
    *
-   * Discord includes a sequence number in most Gateway events to maintain ordering
-   * and enable proper session resumption. This method should be called for every
-   * received event that includes a sequence number.
+   * @param sequence - Sequence number from received payload
    *
-   * The sequence number should only increase, so this method ignores updates with
-   * lower values to prevent race conditions or out-of-order processing.
+   * @example
+   * ```typescript
+   * session.updateSequence(42);
+   * console.log(`Current sequence: ${session.sequence}`);
+   * ```
    *
-   * When the sequence is updated, a 'sequenceUpdate' event is emitted to notify
-   * other components (like the heartbeat manager) of the change.
-   *
-   * @param sequence - The sequence number from the received payload
+   * @public
    */
   updateSequence(sequence: number): void {
     if (sequence > this.sequence) {
@@ -230,22 +173,19 @@ export class SessionManager {
   }
 
   /**
-   * Initializes a new session with data from Discord's READY event
+   * Initializes new session with data from READY event.
+   * Establishes active session and enables resumption.
    *
-   * This method processes the READY event payload to establish a new active session.
-   * It extracts essential session information including the session ID, resume URL,
-   * user details, and guild information.
+   * @param data - READY event data containing session information
+   * @param encoding - Encoding type used for this session
+   * @param compression - Compression type used, if any
    *
-   * The method also emits a 'sessionStart' event with comprehensive session details
-   * for monitoring and debugging purposes. This event includes encoding/compression
-   * information and connection metadata.
+   * @example
+   * ```typescript
+   * session.initializeSession(readyData, "json", "zlib-stream");
+   * ```
    *
-   * After calling this method, the session becomes active and resumable, and normal
-   * Gateway operations can begin.
-   *
-   * @param data - The READY event data from Discord containing session information
-   * @param encoding - The encoding type used for this session (json or etf)
-   * @param compression - The compression type used, if any (zlib-stream, zstd-stream, or null)
+   * @public
    */
   initializeSession(
     data: ReadyEntity,
@@ -254,7 +194,6 @@ export class SessionManager {
   ): void {
     const now = Date.now();
 
-    // Extract and store session information from the READY event
     this.id = data.session_id;
     this.resumeUrl = data.resume_gateway_url;
     this.readyAt = now;
@@ -262,7 +201,6 @@ export class SessionManager {
     this.guildCount = data.guilds.length;
     this.resumable = true;
 
-    // Emit comprehensive session start event for monitoring
     this.#gateway.emit("sessionStart", {
       timestamp: new Date().toISOString(),
       sessionId: data.session_id,
@@ -271,68 +209,57 @@ export class SessionManager {
       guildCount: data.guilds.length,
       encoding: encoding,
       compression: compression,
-      shardCount: 0, // Will be set by shard manager if sharding is enabled
+      shardCount: 0,
     });
   }
 
   /**
-   * Handles successful session resumption after reconnection
+   * Handles successful session resumption after reconnection.
+   * Updates state to reflect active connection.
    *
-   * This method should be called when Discord successfully resumes an existing session
-   * (typically after receiving a RESUMED event). It updates the session state to reflect
-   * that the connection is active again and emits appropriate events.
+   * @throws {Error} If no session ID is available
    *
-   * Session resumption is significantly faster than establishing a fresh connection
-   * because Discord only sends events that were missed during the disconnection period.
+   * @example
+   * ```typescript
+   * session.resumeSession();
+   * console.log("Session resumed successfully");
+   * ```
    *
-   * The method updates the ready timestamp for accurate uptime calculation and ensures
-   * the session remains marked as resumable for future disconnections.
-   *
-   * @throws Error If called when no session ID is available (invalid state)
+   * @public
    */
   resumeSession(): void {
     if (!this.id) {
       throw new Error("Cannot resume session: no session ID available");
     }
 
-    // Update ready timestamp for accurate uptime calculation after resumption
     this.readyAt = Date.now();
     this.resumable = true;
 
-    // Emit session resume event with current metrics
     this.#gateway.emit("sessionResume", {
       timestamp: new Date().toISOString(),
       sessionId: this.id,
       sequence: this.sequence,
-      latency: 0, // Will be updated by heartbeat manager when next heartbeat completes
+      latency: 0,
     });
   }
 
   /**
-   * Invalidates the current session based on Discord's instructions
+   * Invalidates current session based on Discord's instructions.
+   * Handles various invalidation scenarios from Discord.
    *
-   * This method handles session invalidation scenarios where Discord signals that
-   * the current session is no longer valid. This can occur due to various reasons
-   * including authentication issues, server maintenance, or extended disconnections.
+   * @param resumable - Whether session can potentially be resumed later
+   * @param reason - Human-readable reason for invalidation
    *
-   * The method emits a 'sessionInvalidate' event before making any state changes,
-   * allowing other components to react appropriately. Based on the resumable flag,
-   * it either preserves session data for potential resumption or completely destroys
-   * the session.
+   * @example
+   * ```typescript
+   * session.invalidateSession(false, "authentication_failed");
+   * ```
    *
-   * Common invalidation scenarios:
-   * - Invalid session close code (4004, 4007, 4012, etc.)
-   * - Authentication token expired or revoked
-   * - Session exceeded maximum offline duration
-   * - Discord server maintenance requiring fresh connections
-   *
-   * @param resumable - Whether the session can potentially be resumed later
-   * @param reason - Human-readable reason for the invalidation (for logging/debugging)
+   * @public
    */
   invalidateSession(resumable: boolean, reason: string): void {
     const sessionId = this.id ?? "";
 
-    // Emit invalidation event before clearing session data
     this.#gateway.emit("sessionInvalidate", {
       timestamp: new Date().toISOString(),
       sessionId,
@@ -340,28 +267,24 @@ export class SessionManager {
       reason,
     });
 
-    // Update session resumability based on Discord's instructions
     this.resumable = resumable;
 
-    // If the session cannot be resumed, completely destroy all session data
     if (!resumable) {
       this.destroy();
     }
   }
 
   /**
-   * Completely destroys the current session and resets all state
+   * Completely destroys current session and resets all state.
+   * Prepares manager for fresh connection.
    *
-   * This method resets the SessionManager to its initial state, clearing all
-   * session-related data including the session ID, resume URL, sequence number,
-   * and user information. After calling this method, the manager is ready to
-   * handle a fresh connection.
+   * @example
+   * ```typescript
+   * session.destroy();
+   * // Manager is now ready for fresh connection
+   * ```
    *
-   * This is typically called when:
-   * - Discord invalidates a session that cannot be resumed
-   * - Explicitly starting a fresh connection
-   * - Cleaning up before application shutdown
-   * - Resetting state after unrecoverable errors
+   * @public
    */
   destroy(): void {
     this.id = null;
@@ -374,19 +297,21 @@ export class SessionManager {
   }
 
   /**
-   * Prepares session data required for resuming a disconnected session
+   * Prepares session data for resuming disconnected session.
+   * Creates properly formatted resume payload for Discord.
    *
-   * This method creates a properly formatted resume payload that can be sent to
-   * Discord to resume an existing session. The payload includes the bot token,
-   * session ID, and last received sequence number.
+   * @param token - Bot token for authentication during resume
+   * @returns Formatted resume payload for Discord's Gateway
    *
-   * Discord uses this information to determine what events need to be resent to
-   * bring the client back up to date. Only events with sequence numbers greater
-   * than the provided sequence will be sent.
+   * @throws {Error} If session cannot be resumed
    *
-   * @param token - The bot token for authentication during resume
-   * @returns A properly formatted resume payload for Discord's Gateway
-   * @throws Error If the session cannot be resumed (invalid state)
+   * @example
+   * ```typescript
+   * const resumeData = session.getResumeData("Bot TOKEN");
+   * gateway.send(GatewayOpcodes.Resume, resumeData);
+   * ```
+   *
+   * @public
    */
   getResumeData(token: string): ResumeEntity {
     if (!this.canResume) {
@@ -401,37 +326,33 @@ export class SessionManager {
   }
 
   /**
-   * Updates the guild count for this session
+   * Updates guild count for this session.
+   * Used for monitoring and shard management.
    *
-   * This method allows updating the guild count after the initial session
-   * establishment. This is particularly useful for:
-   * - Shard managers that need to track guild distribution
-   * - Monitoring bot growth over time
-   * - Updating counts after guild create/delete events
+   * @param count - New guild count for this session
    *
-   * The guild count is primarily used for informational and monitoring purposes
-   * and doesn't affect core session functionality.
+   * @example
+   * ```typescript
+   * session.updateGuildCount(150);
+   * ```
    *
-   * @param count - The new guild count for this session
+   * @public
    */
   updateGuildCount(count: number): void {
     this.guildCount = count;
   }
 
   /**
-   * Marks the session as non-resumable
+   * Marks session as non-resumable.
+   * Used when Discord indicates session cannot be resumed.
    *
-   * This method explicitly marks the current session as non-resumable, typically
-   * in response to specific disconnect codes from Discord that indicate the session
-   * cannot be resumed (such as authentication failures or invalid session states).
+   * @example
+   * ```typescript
+   * session.markNonResumable();
+   * // Future disconnections will require fresh connection
+   * ```
    *
-   * After calling this method, any future disconnection will require establishing
-   * a completely fresh connection rather than attempting to resume the current session.
-   *
-   * Common scenarios for non-resumable sessions:
-   * - Close code 4004: Authentication failed
-   * - Close code 4007: Invalid sequence number
-   * - Close code 4012: Invalid API version
+   * @public
    */
   markNonResumable(): void {
     this.resumable = false;

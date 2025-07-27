@@ -1,13 +1,19 @@
 /**
- * Creates a promise that resolves after a specified duration, effectively
- * pausing execution in an async function for the given time.
+ * Creates promise that resolves after specified duration.
+ * Pauses execution in async function for given time.
  *
- * @param duration - The time to sleep in milliseconds. If the value is negative or zero, the promise will resolve immediately.
+ * @param duration - Time to sleep in milliseconds
+ * @returns Promise resolving after duration
  *
- * @returns A Promise that resolves after the specified duration.
+ * @example
+ * ```typescript
+ * await sleep(1000); // Wait 1 second
+ * console.log('This runs after 1 second');
+ * ```
+ *
+ * @public
  */
 export async function sleep(duration: number): Promise<void> {
-  // Handle negative or zero duration
   if (duration <= 0) {
     return;
   }
@@ -16,11 +22,20 @@ export async function sleep(duration: number): Promise<void> {
 }
 
 /**
- * Creates a promise that resolves at a specific date/time.
+ * Creates promise that resolves at specific date/time.
+ * If date is in past, resolves immediately.
  *
- * @param date - The target date/time when the promise should resolve. If the date is in the past, the promise resolves immediately.
+ * @param date - Target date/time for resolution
+ * @returns Promise resolving at specified time
  *
- * @returns A Promise that resolves at the specified date/time.
+ * @example
+ * ```typescript
+ * const targetDate = new Date('2024-01-01T00:00:00Z');
+ * await sleepUntil(targetDate);
+ * console.log('Happy New Year!');
+ * ```
+ *
+ * @public
  */
 export function sleepUntil(date: Date): Promise<void> {
   const now = Date.now();
