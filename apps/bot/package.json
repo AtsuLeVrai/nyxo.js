@@ -22,9 +22,9 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
-    "start": "node dist/index.js",
-    "build": "rimraf dist && tsc -p tsconfig.json",
-    "dev": "tsx watch src/index.ts",
+    "bot:start": "node dist/index.js",
+    "bot:build": "tsc -p tsconfig.json",
+    "bot:dev": "tsx watch src/index.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -33,7 +33,6 @@
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
-    "rimraf": "^6.0.1",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }

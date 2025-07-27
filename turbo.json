@@ -7,11 +7,6 @@
       "outputs": [],
       "cache": true
     },
-    "clean": {
-      "dependsOn": ["^clean"],
-      "outputs": [],
-      "cache": false
-    },
     "build:dev": {
       "dependsOn": ["//#biome:check", "^build:dev"],
       "outputs": ["dist/**"],

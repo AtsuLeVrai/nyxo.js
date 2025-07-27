@@ -108,7 +108,6 @@ pids/
 .history/
 
 # Other IDEs
-.idea
 .project
 .classpath
 .c9/

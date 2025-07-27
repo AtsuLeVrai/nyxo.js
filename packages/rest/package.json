@@ -60,8 +60,7 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
-    "clean": "rimraf dist",
-    "build:dev": "rimraf dist && tsc -p tsconfig.json",
+    "build:dev": "tsc -p tsconfig.json",
     "build:prod": "tsdown",
     "type-check": "tsc --noEmit"
   },
@@ -76,7 +75,6 @@
   "devDependencies": {
     "@types/mime-types": "^3.0.1",
     "@types/node": "^24.1.0",
-    "rimraf": "^6.0.1",
     "tsdown": "^0.13.0",
     "typescript": "^5.8.3"
   }
