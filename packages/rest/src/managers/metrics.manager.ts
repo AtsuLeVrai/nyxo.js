@@ -37,11 +37,11 @@ export const MetricsOptions = z.object({
   /**
    * Histogram bucket boundaries for latency measurements (milliseconds).
    *
-   * @default [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, Infinity]
+   * @default [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 20000]
    */
   histogramBuckets: z
     .array(z.number().int().positive())
-    .default([10, 25, 50, 100, 250, 500, 1000, 2500, 5000, Infinity]),
+    .default([10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 20000]),
 
   /**
    * How long to retain detailed metrics data (milliseconds).

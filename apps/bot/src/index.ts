@@ -49,6 +49,10 @@ const client = new Client({
   ],
 });
 
+client.on("metricsUpdate", (metrics) => {
+  console.log(`[METRICS] Updated metrics: ${JSON.stringify(metrics, null, 2)}`);
+});
+
 /**
  * Toggle for registering commands with Discord API
  * Set to false to skip registration during development

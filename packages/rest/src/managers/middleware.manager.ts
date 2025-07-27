@@ -257,6 +257,7 @@ export class MiddlewareManager {
       if (!middleware.beforeRequest) continue;
 
       const result = await this.#executeMiddlewareHook(middleware.name, () =>
+        // @ts-expect-error - beforeRequest is checked before calling
         middleware.beforeRequest?.(currentContext),
       );
 
@@ -314,6 +315,7 @@ export class MiddlewareManager {
       if (!middleware.afterResponse) continue;
 
       const result = await this.#executeMiddlewareHook(middleware.name, () =>
+        // @ts-expect-error - afterResponse is checked before calling
         middleware.afterResponse?.(currentContext),
       );
 
@@ -374,6 +376,7 @@ export class MiddlewareManager {
       if (!middleware.onError) continue;
 
       const result = await this.#executeMiddlewareHook(middleware.name, () =>
+        // @ts-expect-error - onError is checked before calling
         middleware.onError?.(currentContext),
       );
 
