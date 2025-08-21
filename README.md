@@ -1,84 +1,149 @@
 <div align="center">
   <h1>🌌 Nyxo.js</h1>
-  <h3>The Enterprise-Grade TypeScript Framework for Discord Bot Development</h3>
+  <h3>Modern TypeScript Discord Library - Simple, Fast, Powerful</h3>
 
   <p align="center">
-    <a href="https://github.com/AtsuLeVrai/nyxo.js/blob/main/LICENSE">
-      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyxo.js?style=for-the-badge&logo=gnu&color=A42E2B" alt="License">
+    <a href="https://github.com/nyxo-labs/nyxo.js/blob/main/LICENSE">
+      <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge" alt="License">
     </a>
     <a href="https://www.typescriptlang.org/">
-      <img src="https://img.shields.io/badge/TypeScript-100%25-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
+      <img src="https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+    </a>
+    <a href="https://www.npmjs.com/package/nyxo">
+      <img src="https://img.shields.io/badge/npm-package-CB3837?style=for-the-badge&logo=npm&logoColor=white" alt="npm">
     </a>
     <a href="https://biomejs.com/">
-      <img src="https://img.shields.io/badge/biome-Check-60a5fa?style=for-the-badge&logo=biome&color=60a5fa" alt="Biome Check">
-    </a>
-    <a href="https://discord.gg/hfMzQMbaMg">
-        <img src="https://img.shields.io/discord/1301585513651634236?color=5865F2&label=Discord&logo=discord&style=for-the-badge" alt="Discord">
+      <img src="https://img.shields.io/badge/BiomeJS-60A5FA?style=for-the-badge&logo=biome&logoColor=white" alt="Biome">
     </a>
   </p>
-
-  <br />
-  <img src="./public/nyxojs_banner.png" alt="nyxo.js Banner" width="70%" style="border-radius: 8px;">
 </div>
 
-## 🚀 About
+---
 
-**Nyxo.js** is a next-generation Discord bot framework that combines enterprise-grade features with developer-friendly
-design. Built from the ground up with TypeScript, it offers unmatched type safety, modular architecture, and advanced
-performance optimizations.
+## 🎯 Philosophy
 
-Unlike other Discord libraries, Nyxo.js is designed for **scalable applications** that demand reliability,
-maintainability, and professional-grade features.
+**Discord libraries shouldn't be complicated.** Nyxo.js focuses on what matters: **simplicity**, **performance**, and **modern TypeScript**.
 
-## 🌙 Why "Nyxo.js"?
+**Core Principles:**
+- 🎯 **Simple API** - Intuitive and easy to understand
+- ⚡ **High Performance** - Optimized for speed and efficiency  
+- 🛡️ **Type Safety** - Full TypeScript support with excellent IntelliSense
+- 📦 **Single Package** - Everything you need in one install
+- 🔧 **Modern Patterns** - Built with latest JavaScript/TypeScript features
+- 🚀 **Zero Bloat** - Only what you actually need
+
+---
+
+## 🌙 Why "Nyxo"?
 
 The name **Nyxo** is inspired by **Nyx**, the Greek goddess of the night, symbolizing mystery, power, and elegance.  
-The suffix **-o** adds a modern and dynamic touch, reflecting the framework's ambition: to provide a powerful, smooth,
-and innovative solution for building Discord bots with TypeScript.
+The suffix **-o** adds a modern and dynamic touch, reflecting the library's ambition: to provide a powerful, smooth, and innovative solution for Discord bot development.
 
-Thus, **Nyxo.js** embodies both the depth and sophistication of the night and the modernity of a tool designed for
-today's developers.
+---
 
-## ⚠️ Project Status
+## ⚠️ Development Status
 
-> [!NOTE]
-> **Current Status: Beta Release**  
-> Nyxo.js is now in beta! Core features are stable and ready for testing. We welcome feedback and contributions as we
-> work towards v1.0.
+> [!IMPORTANT]
+> **Currently in active development** - Complete rewrite focusing on simplicity and performance.  
+> This represents a fresh start with lessons learned from complex enterprise architectures.
+
+**Goals for v1.0:**
+- Complete Discord API coverage
+- Intuitive TypeScript API
+- Excellent developer experience
+- Production-ready performance
+- Comprehensive documentation
+
+---
+
+## ✨ What Makes Nyxo Different
+
+### **🎯 Simplicity First**
+- Clean, intuitive API design
+- No unnecessary abstractions
+- One obvious way to do things
+
+### **⚡ Performance Focused**
+- Optimized for high-throughput applications
+- Efficient memory usage
+- Smart caching strategies
+
+### **🛡️ Developer Experience**
+- Excellent TypeScript support
+- Rich IntelliSense and auto-completion
+- Clear error messages and debugging
+
+### **📦 Modern Architecture**
+- Built with latest TypeScript features
+- ES modules and tree-shaking support
+- Zero legacy dependencies
+
+---
+
+## 🛠️ Installation
+
+```bash
+npm install nyxo.js
+# or
+yarn add nyxo.js
+# or
+pnpm add nyxo.js
+# or
+bun add nyxo.js
+```
+
+**Requirements:**
+- Node.js 24+ 
+- TypeScript 5.9+
+
+---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md) for details.
+This project is in active development and welcomes contributors! Whether you're:
 
-### Development Setup
+- 🐛 **Finding bugs** - Help us identify and fix issues
+- 💡 **Suggesting features** - Share ideas for improvements  
+- 📝 **Writing code** - Contribute to the core library
+- 📖 **Improving docs** - Help make documentation clearer
+
+### **Development Setup**
 
 ```bash
-git clone https://github.com/AtsuLeVrai/nyxo.js
+git clone https://github.com/nyxo-labs/nyxo.js.git
 cd nyxo.js
-pnpm install -r
-pnpm run build:dev
+pnpm install
+pnpm run dev
 ```
 
-## 🎉 Community
+### **Project Structure**
+```
+src/
+├── client/          # Main client implementation
+├── structures/      # Discord data structures  
+├── managers/        # Resource managers
+├── utils/           # Utility functions
+└── types/           # TypeScript type definitions
+```
 
-- 💬 **[Discord Server](https://discord.gg/hfMzQMbaMg)** - Join our community
-- 🐛 **[Issues](https://github.com/AtsuLeVrai/nyxo.js/issues)** - Report bugs and request features
+---
 
-## 🙏 Acknowledgments
+## 📄 License
 
-Nyxo.js draws inspiration from the innovative features and design patterns of various Discord libraries including
-Discord.js, Eris, Oceanic.js, and others, combining the best aspects of each to create a comprehensive
-enterprise-grade solution.
+This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
 
-## 📜 License
+---
 
-Nyxo.js is [Apache 2.0 licensed](LICENSE).
+## 🔗 Links
+
+- **🏠 Nyxo Labs** - [github.com/nyxo-labs](https://github.com/nyxo-labs)
 
 ---
 
 <div align="center">
-  <h3>🌟 Star this repository if you find Nyxo.js useful!</h3>
-  <p>
-    Built with ❤️ by the Nyxo.js team
-  </p>
+
+### **Built with ❤️ for modern Discord development**
+
+*Simple. Fast. Powerful.*
+
 </div>

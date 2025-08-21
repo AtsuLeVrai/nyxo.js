@@ -1,176 +1,74 @@
-# Combined comprehensive .gitignore
-
-### Build outputs ###
-dist/
-deps/
-tmp/
-temp/
-temps/
-out/
-out-tsc/
-build/
-.next/
-.turbo/
-.vercel/
-.astro/
-dist-storybook/
-build/Release/
-
-### Dependencies ###
 node_modules/
-jspm_packages/
-bower_components/
-web_modules/
-.pnp/
-.pnp.js
-
-### Package management ###
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-.yarn/cache/
-.yarn/unplugged/
-.yarn/build-state.yml
-.yarn/install-state.gz
-.yarn-integrity
-.npm/
-*.tgz
-.pnpm-debug.log*
-
-### Environment variables ###
-.env
-.env.*
-!.env.example
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-### Logs ###
-logs/
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 lerna-debug.log*
-libpeerconnection.log
-testem.log
+.pnpm-debug.log*
 
-### Reports and debugging ###
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-*.lcov
-connect.lock/
+.npm
+.yarn/
+.pnp
+.pnp.js
 
-### Testing and coverage ###
 coverage/
-.nyc_output/
-lib-cov/
+*.lcov
+.nyc_output
 
-### Cache and temporary files ###
-.cache/
-.parcel-cache/
-.temp/
-.eslintcache
-.stylelintcache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-.rollup.cache/
-.docusaurus/
-.fusebox/
-.dynamodb/
-.serverless/
-.sass-cache/
-.claude/
+.grunt
+.bower_components
 
-### TypeScript specific ###
+dist/
+build/
+lib/
+out/
 *.tsbuildinfo
 
-### Runtime data ###
-pids/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+.cache
+.parcel-cache
+.next
+.nuxt
+.vuepress/dist
+.serverless/
+.fusebox/
+
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+*.log
 *.pid
 *.seed
 *.pid.lock
 
-### IDE and editors ###
-# VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-.history/
-
-# Other IDEs
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+.vscode/
+.idea/
 *.swp
 *.swo
-.vscode-test
+*~
 
-### macOS ###
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-*.icloud
+*.tgz
+*.tar.gz
 
-### Windows ###
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
+.eslintcache
+.stylelintcache
 
-### Node.js specific ###
-.lock-wscript
-.node_repl_history
-.npm
-.grunt/
+.firebase/
+.vercel
+.netlify/
 
-### Build tools and runtime ###
-.gradle/
-.maven/
-.dart_tool/
-.heft/
-.rush/
-.rush-logs/
-common/temp/
-common/deploy/
-common/autoinstallers/*/.npmrc
+temp/
+tmp/
+*.tmp
 
-### Cargo / Rust ###
-/target
-Cargo.lock
-*.node
+.pnpm-store/
+.claude/

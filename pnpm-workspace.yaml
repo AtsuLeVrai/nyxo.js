@@ -1,13 +1,3 @@
-packages:
-  - apps/*
-  - packages/*
 onlyBuiltDependencies:
-  - '@biomejs/biome'
   - bufferutil
   - erlpack
-  - sharp
-publicHoistPattern:
-  - '@nyxojs/zlib'
-  - '@nyxojs/zstd'
-  - '*bufferutil*'
-  - '*erlpack*'

@@ -1,82 +1,162 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
   "vcs": {
-    "clientKind": "git",
-    "defaultBranch": "main",
     "enabled": true,
-    "useIgnoreFile": true
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
   },
   "files": {
-    "ignoreUnknown": true,
-    "includes": [
-      "**",
-      "!**/build/**",
-      "!**/dist/**",
-      "!**/node_modules/**",
-      "!**/*.d.ts",
-      "!libs/**",
-      "!docs/discord-api-docs/**"
-    ]
+    "ignoreUnknown": false,
+    "includes": ["src/**/*", "scripts/**/*", "*.config.{js,ts,mjs}", "*.js", "*.ts"],
+    "maxSize": 1048576
   },
   "formatter": {
     "enabled": true,
-    "formatWithErrors": true,
+    "useEditorconfig": true,
+    "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
-    "lineWidth": 80
+    "lineWidth": 100,
+    "attributePosition": "auto",
+    "bracketSpacing": true
   },
-  "javascript": {
-    "formatter": {
-      "arrowParentheses": "always",
-      "bracketSameLine": false,
-      "enabled": true,
-      "jsxQuoteStyle": "double",
-      "quoteProperties": "asNeeded",
-      "quoteStyle": "double",
-      "semicolons": "always",
-      "trailingCommas": "all"
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "recommended": true
+      },
+      "complexity": {
+        "recommended": true,
+        "noExcessiveCognitiveComplexity": "info",
+        "noExcessiveLinesPerFunction": "error",
+        "noUselessConstructor": "error",
+        "useFlatMap": "error"
+      },
+      "correctness": {
+        "recommended": true,
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error",
+        "useExhaustiveDependencies": "error",
+        "useHookAtTopLevel": "error"
+      },
+      "performance": {
+        "recommended": true,
+        "noAccumulatingSpread": "error",
+        "noBarrelFile": "off",
+        "noDelete": "error"
+      },
+      "security": {
+        "recommended": true,
+        "noBlankTarget": "error",
+        "noDangerouslySetInnerHtml": "error",
+        "noGlobalEval": "error"
+      },
+      "style": {
+        "recommended": true,
+        "noDefaultExport": "warn",
+        "noInferrableTypes": "error",
+        "noNamespace": "error",
+        "noNonNullAssertion": "error",
+        "noParameterAssign": "error",
+        "useConst": "error",
+        "useExportType": "error",
+        "useImportType": "error",
+        "useNodejsImportProtocol": "error",
+        "useNumberNamespace": "error",
+        "useShorthandAssign": "error",
+        "useTemplate": "error"
+      },
+      "suspicious": {
+        "recommended": true,
+        "noConsole": "warn",
+        "noDebugger": "error",
+        "noDoubleEquals": "error",
+        "noExplicitAny": "error",
+        "noSparseArray": "error",
+        "useAwait": "error",
+        "useIsArray": "error"
+      },
+      "nursery": {
+        "recommended": true,
+        "noSecrets": "error",
+        "noUnresolvedImports": "off",
+        "useSortedClasses": "warn"
+      }
     }
   },
   "assist": {
+    "enabled": true,
     "actions": {
       "source": {
         "organizeImports": "on"
       }
     }
   },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "correctness": {
-        "noNodejsModules": "off",
-        "noUndeclaredDependencies": "off"
-      },
-      "performance": {
-        "noReExportAll": "off",
-        "noBarrelFile": "off"
-      },
-      "suspicious": {
-        "noExplicitAny": "warn"
-      },
-      "style": {
-        "useAsConstAssertion": "error",
-        "noUnusedTemplateLiteral": "error",
-        "noInferrableTypes": "error",
-        "noUselessElse": "error"
-      }
+  "javascript": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "lineWidth": 100,
+      "quoteStyle": "double",
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false,
+      "attributePosition": "auto"
+    },
+    "linter": {
+      "enabled": true
+    },
+    "assist": {
+      "enabled": true
+    }
+  },
+  "json": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "trailingCommas": "none"
+    },
+    "linter": {
+      "enabled": true
+    },
+    "parser": {
+      "allowComments": true,
+      "allowTrailingCommas": false
+    }
+  },
+  "css": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "lineWidth": 100,
+      "quoteStyle": "double"
+    },
+    "linter": {
+      "enabled": true
     }
   },
   "overrides": [
     {
-      "includes": ["**/apps/bot/**", "**/apps/benchmark/**", "**/scripts/**"],
+      "includes": ["**/*.test.{js,ts}", "**/*.spec.{js,ts}", "**/__tests__/**/*"],
       "linter": {
         "rules": {
           "suspicious": {
+            "noExplicitAny": "off",
             "noConsole": "off"
           },
           "style": {
-            "noDefaultExport": "off"
+            "noNonNullAssertion": "off"
           }
         }
       }

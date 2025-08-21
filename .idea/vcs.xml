@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="VcsDirectoryMappings">
-    <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/docs/discord-api-docs" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/packages/zlib/deps/zlib" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/packages/zstd/deps/zstd" vcs="Git" />
-  </component>
-</project>
