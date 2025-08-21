@@ -1,10 +1,21 @@
 import type { Snowflake } from "../common/index.js";
-import { ApplicationIntegrationType } from "./application.js";
+import type { ApplicationIntegrationType } from "./application.js";
+import type { ApplicationCommandOptionChoiceObject } from "./application-commands.js";
 import type { AnyChannelObject } from "./channel.js";
-import type { EmojiObject } from "./emoji.js";
+import type {
+  ActionRowComponentObject,
+  ComponentType,
+  TextInputComponentObject,
+} from "./components.js";
 import type { EntitlementObject } from "./entitlement.js";
 import type { GuildMemberObject, GuildObject, RoleObject } from "./guild.js";
-import type { AttachmentObject, MessageObject } from "./message.js";
+import type {
+  AllowedMentionsObject,
+  AttachmentObject,
+  EmbedObject,
+  MessageObject,
+} from "./message.js";
+import type { PollCreateRequestObject } from "./poll.js";
 import type { UserObject } from "./user.js";
 
 export enum InteractionType {
@@ -30,22 +41,7 @@ export enum InteractionCallbackType {
   ApplicationCommandAutocompleteResult = 8,
   Modal = 9,
   PremiumRequired = 10,
-}
-
-export enum ComponentType {
-  ActionRow = 1,
-  Button = 2,
-  StringSelect = 3,
-  TextInput = 4,
-  UserSelect = 5,
-  RoleSelect = 6,
-  MentionableSelect = 7,
-  ChannelSelect = 8,
-}
-
-export interface AuthorizingIntegrationOwnersObject {
-  [ApplicationIntegrationType.GuildInstall]?: Snowflake;
-  [ApplicationIntegrationType.UserInstall]?: Snowflake;
+  LaunchActivity = 12,
 }
 
 export interface ResolvedDataObject {
@@ -57,32 +53,27 @@ export interface ResolvedDataObject {
   attachments?: Record<Snowflake, AttachmentObject>;
 }
 
-interface BaseInteractionObject {
+export interface InteractionObject {
   id: Snowflake;
   application_id: Snowflake;
+  type: InteractionType;
+  data?: AnyInteractionDataObject;
+  guild?: Partial<GuildObject>;
+  guild_id?: Snowflake;
+  channel?: Partial<AnyChannelObject>;
+  channel_id?: Snowflake;
+  member?: GuildMemberObject;
+  user?: UserObject;
   token: string;
   version: number;
+  message?: MessageObject;
   app_permissions: string;
   locale?: string;
   guild_locale?: string;
   entitlements: EntitlementObject[];
-  authorizing_integration_owners: AuthorizingIntegrationOwnersObject;
+  authorizing_integration_owners: Partial<Record<ApplicationIntegrationType, Snowflake>>;
   context?: InteractionContextType;
   attachment_size_limit: number;
-}
-
-interface BaseGuildInteractionObject extends BaseInteractionObject {
-  guild: Partial<GuildObject>;
-  guild_id: Snowflake;
-  channel: Partial<AnyChannelObject>;
-  channel_id: Snowflake;
-  member: GuildMemberObject;
-}
-
-interface BaseDMInteractionObject extends BaseInteractionObject {
-  channel?: Partial<AnyChannelObject>;
-  channel_id?: Snowflake;
-  user: UserObject;
 }
 
 export interface ApplicationCommandInteractionDataOptionObject {
@@ -112,120 +103,192 @@ export interface MessageComponentInteractionDataObject {
 
 export interface ModalSubmitInteractionDataObject {
   custom_id: string;
-  components: MessageComponentObject[];
+  components: ActionRowComponentObject<TextInputComponentObject>[];
 }
 
-export interface MessageComponentObject {
-  type: ComponentType;
-  custom_id?: string;
-  disabled?: boolean;
-  style?: number;
-  label?: string;
-  emoji?: Partial<EmojiObject>;
-  url?: string;
-  options?: SelectOptionObject[];
-  placeholder?: string;
-  min_values?: number;
-  max_values?: number;
-  min_length?: number;
-  max_length?: number;
-  required?: boolean;
-  value?: string;
-  components?: MessageComponentObject[];
-}
+export type AnyInteractionDataObject =
+  | ApplicationCommandInteractionDataObject
+  | MessageComponentInteractionDataObject
+  | ModalSubmitInteractionDataObject;
 
-export interface SelectOptionObject {
-  label: string;
-  value: string;
-  description?: string;
-  emoji?: Pick<EmojiObject, "id" | "name" | "animated">;
-  default?: boolean;
-}
-
-export interface PingInteractionObject extends BaseInteractionObject {
+export interface PingInteractionObject
+  extends Pick<
+    InteractionObject,
+    | "id"
+    | "application_id"
+    | "token"
+    | "version"
+    | "app_permissions"
+    | "entitlements"
+    | "authorizing_integration_owners"
+    | "context"
+    | "attachment_size_limit"
+  > {
   type: InteractionType.Ping;
 }
 
-export interface ApplicationCommandGuildInteractionObject extends BaseGuildInteractionObject {
+export interface ApplicationCommandInteractionObject
+  extends Pick<
+    InteractionObject,
+    | "id"
+    | "application_id"
+    | "data"
+    | "guild"
+    | "guild_id"
+    | "channel"
+    | "channel_id"
+    | "member"
+    | "user"
+    | "token"
+    | "version"
+    | "app_permissions"
+    | "locale"
+    | "guild_locale"
+    | "entitlements"
+    | "authorizing_integration_owners"
+    | "context"
+    | "attachment_size_limit"
+  > {
   type: InteractionType.ApplicationCommand;
   data: ApplicationCommandInteractionDataObject;
 }
 
-export interface ApplicationCommandDMInteractionObject extends BaseDMInteractionObject {
-  type: InteractionType.ApplicationCommand;
-  data: ApplicationCommandInteractionDataObject;
-}
-
-export interface MessageComponentGuildInteractionObject extends BaseGuildInteractionObject {
+export interface MessageComponentInteractionObject
+  extends Pick<
+    InteractionObject,
+    | "id"
+    | "application_id"
+    | "data"
+    | "guild"
+    | "guild_id"
+    | "channel"
+    | "channel_id"
+    | "member"
+    | "user"
+    | "token"
+    | "version"
+    | "message"
+    | "app_permissions"
+    | "locale"
+    | "guild_locale"
+    | "entitlements"
+    | "authorizing_integration_owners"
+    | "context"
+    | "attachment_size_limit"
+  > {
   type: InteractionType.MessageComponent;
   data: MessageComponentInteractionDataObject;
   message: MessageObject;
 }
 
-export interface MessageComponentDMInteractionObject extends BaseDMInteractionObject {
-  type: InteractionType.MessageComponent;
-  data: MessageComponentInteractionDataObject;
-  message: MessageObject;
-}
-
-export interface ApplicationCommandAutocompleteGuildInteractionObject
-  extends BaseGuildInteractionObject {
+export interface ApplicationCommandAutocompleteInteractionObject
+  extends Pick<
+    InteractionObject,
+    | "id"
+    | "application_id"
+    | "data"
+    | "guild"
+    | "guild_id"
+    | "channel"
+    | "channel_id"
+    | "member"
+    | "user"
+    | "token"
+    | "version"
+    | "app_permissions"
+    | "locale"
+    | "guild_locale"
+    | "entitlements"
+    | "authorizing_integration_owners"
+    | "context"
+    | "attachment_size_limit"
+  > {
   type: InteractionType.ApplicationCommandAutocomplete;
-  data: Partial<ApplicationCommandInteractionDataObject>;
+  data: ApplicationCommandInteractionDataObject;
 }
 
-export interface ApplicationCommandAutocompleteDMInteractionObject extends BaseDMInteractionObject {
-  type: InteractionType.ApplicationCommandAutocomplete;
-  data: Partial<ApplicationCommandInteractionDataObject>;
-}
-
-export interface ModalSubmitGuildInteractionObject extends BaseGuildInteractionObject {
+export interface ModalSubmitInteractionObject
+  extends Pick<
+    InteractionObject,
+    | "id"
+    | "application_id"
+    | "data"
+    | "guild"
+    | "guild_id"
+    | "channel"
+    | "channel_id"
+    | "member"
+    | "user"
+    | "token"
+    | "version"
+    | "message"
+    | "app_permissions"
+    | "locale"
+    | "guild_locale"
+    | "entitlements"
+    | "authorizing_integration_owners"
+    | "context"
+    | "attachment_size_limit"
+  > {
   type: InteractionType.ModalSubmit;
   data: ModalSubmitInteractionDataObject;
   message?: MessageObject;
 }
-
-export interface ModalSubmitDMInteractionObject extends BaseDMInteractionObject {
-  type: InteractionType.ModalSubmit;
-  data: ModalSubmitInteractionDataObject;
-  message?: MessageObject;
-}
-
-export type GuildInteractionObject =
-  | ApplicationCommandGuildInteractionObject
-  | MessageComponentGuildInteractionObject
-  | ApplicationCommandAutocompleteGuildInteractionObject
-  | ModalSubmitGuildInteractionObject;
-
-export type DMInteractionObject =
-  | ApplicationCommandDMInteractionObject
-  | MessageComponentDMInteractionObject
-  | ApplicationCommandAutocompleteDMInteractionObject
-  | ModalSubmitDMInteractionObject;
-
-export type ApplicationCommandInteractionObject =
-  | ApplicationCommandGuildInteractionObject
-  | ApplicationCommandDMInteractionObject;
-
-export type MessageComponentInteractionObject =
-  | MessageComponentGuildInteractionObject
-  | MessageComponentDMInteractionObject;
-
-export type ApplicationCommandAutocompleteInteractionObject =
-  | ApplicationCommandAutocompleteGuildInteractionObject
-  | ApplicationCommandAutocompleteDMInteractionObject;
-
-export type ModalSubmitInteractionObject =
-  | ModalSubmitGuildInteractionObject
-  | ModalSubmitDMInteractionObject;
 
 export type AnyInteractionObject =
   | PingInteractionObject
-  | ApplicationCommandGuildInteractionObject
-  | ApplicationCommandDMInteractionObject
-  | MessageComponentGuildInteractionObject
-  | MessageComponentDMInteractionObject
-  | ApplicationCommandAutocompleteGuildInteractionObject
-  | ApplicationCommandAutocompleteDMInteractionObject
-  | ModalSubmitGuildInteractionObject
-  | ModalSubmitDMInteractionObject;
+  | ApplicationCommandInteractionObject
+  | MessageComponentInteractionObject
+  | ApplicationCommandAutocompleteInteractionObject
+  | ModalSubmitInteractionObject;
+
+export interface MessageInteractionObject {
+  id: Snowflake;
+  type: InteractionType;
+  name: string;
+  user: UserObject;
+  member?: Partial<GuildMemberObject>;
+}
+
+export interface InteractionResponseObject {
+  type: InteractionCallbackType;
+  data?: InteractionCallbackDataStructure;
+}
+
+export interface InteractionCallbackDataStructure {
+  tts?: boolean;
+  content?: string;
+  embeds?: EmbedObject[];
+  allowed_mentions?: AllowedMentionsObject;
+  flags?: number;
+  components?: ActionRowComponentObject[];
+  attachments?: Partial<AttachmentObject>[];
+  poll?: PollCreateRequestObject;
+  choices?: ApplicationCommandOptionChoiceObject[];
+  custom_id?: string;
+  title?: string;
+}
+
+export interface InteractionCallbackResponseObject {
+  interaction: InteractionCallbackObject;
+  resource?: InteractionCallbackResourceObject;
+}
+
+export interface InteractionCallbackObject {
+  id: Snowflake;
+  type: InteractionType;
+  activity_instance_id?: string;
+  response_message_id?: Snowflake;
+  response_message_loading?: boolean;
+  response_message_ephemeral?: boolean;
+}
+
+export interface InteractionCallbackResourceObject {
+  type: InteractionCallbackType;
+  activity_instance?: InteractionCallbackActivityInstanceResource;
+  message?: MessageObject;
+}
+
+export interface InteractionCallbackActivityInstanceResource {
+  id: string;
+}

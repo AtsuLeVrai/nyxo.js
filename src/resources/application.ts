@@ -1,4 +1,5 @@
 import type { Snowflake } from "../common/index.js";
+import type { BitwisePermissionFlags, OAuth2Scope } from "../constants/index.js";
 import type { GuildObject } from "./guild.js";
 import type { TeamObject } from "./teams.js";
 import type { UserObject } from "./user.js";
@@ -33,8 +34,8 @@ export enum ActivityLocationKind {
 }
 
 export interface InstallParamsObject {
-  scopes: string[];
-  permissions: string;
+  scopes: OAuth2Scope[];
+  permissions: `${BitwisePermissionFlags}`;
 }
 
 export interface ApplicationIntegrationTypeConfigurationObject {
@@ -75,7 +76,7 @@ export interface ApplicationObject {
   primary_sku_id?: Snowflake;
   slug?: string;
   cover_image?: string;
-  flags?: number | ApplicationFlags;
+  flags?: ApplicationFlags;
   approximate_guild_count?: number;
   approximate_user_install_count?: number;
   approximate_user_authorization_count?: number;

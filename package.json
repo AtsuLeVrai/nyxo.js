@@ -41,6 +41,7 @@
     "biome:check": "biome check --unsafe --write",
     "build:dev": "tsc -p tsconfig.json",
     "build:prod": "tsdown",
+    "test": "vitest run",
     "type-check": "tsc --noEmit",
     "prepare": "husky"
   },
@@ -61,7 +62,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
     "tsdown": "^0.14.1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [

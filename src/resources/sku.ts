@@ -19,5 +19,5 @@ export interface SKUObject {
   application_id: Snowflake;
   name: string;
   slug: string;
-  flags: number | SKUFlags;
+  flags: SKUFlags;
 }

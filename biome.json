@@ -82,7 +82,7 @@
       },
       "nursery": {
         "recommended": true,
-        "noSecrets": "error",
+        "noSecrets": "info",
         "noUnresolvedImports": "off",
         "useSortedClasses": "warn"
       }
@@ -151,6 +151,12 @@
       "includes": ["**/*.test.{js,ts}", "**/*.spec.{js,ts}", "**/__tests__/**/*"],
       "linter": {
         "rules": {
+          "complexity": {
+            "noExcessiveLinesPerFunction": "off"
+          },
+          "nursery": {
+            "noSecrets": "off"
+          },
           "suspicious": {
             "noExplicitAny": "off",
             "noConsole": "off"

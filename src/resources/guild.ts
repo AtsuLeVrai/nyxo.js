@@ -90,6 +90,29 @@ export enum ActivityFlags {
   Embedded = 1 << 8,
 }
 
+export enum GuildMemberFlags {
+  DidRejoin = 1 << 0,
+  CompletedOnboarding = 1 << 1,
+  BypassesVerification = 1 << 2,
+  StartedOnboarding = 1 << 3,
+  IsGuest = 1 << 4,
+  StartedHomeActions = 1 << 5,
+  CompletedHomeActions = 1 << 6,
+  AutomodQuarantinedUsername = 1 << 7,
+  DmSettingsUpsellAcknowledged = 1 << 9,
+  AutomodQuarantinedGuildTag = 1 << 10,
+}
+
+export enum OnboardingMode {
+  OnboardingDefault = 0,
+  OnboardingAdvanced = 1,
+}
+
+export enum PromptType {
+  MultipleChoice = 0,
+  Dropdown = 1,
+}
+
 export interface GuildObject {
   id: Snowflake;
   name: string;
@@ -114,7 +137,7 @@ export interface GuildObject {
   mfa_level: MfaLevel;
   application_id: Snowflake | null;
   system_channel_id: Snowflake | null;
-  system_channel_flags: number | SystemChannelFlags;
+  system_channel_flags: SystemChannelFlags;
   rules_channel_id: Snowflake | null;
   max_presences?: number | null;
   max_members?: number;
@@ -174,12 +197,13 @@ export interface GuildMemberObject {
   user?: UserObject;
   nick?: string | null;
   avatar?: string | null;
+  banner?: string | null;
   roles: Snowflake[];
-  joined_at: string;
+  joined_at: string | null;
   premium_since?: string | null;
   deaf: boolean;
   mute: boolean;
-  flags: number;
+  flags: GuildMemberFlags;
   pending?: boolean;
   permissions?: string;
   communication_disabled_until?: string | null;
@@ -276,7 +300,7 @@ export interface ActivityObject {
   assets?: ActivityAssetsObject;
   secrets?: ActivitySecretsObject;
   instance?: boolean;
-  flags?: number | ActivityFlags;
+  flags?: ActivityFlags;
   buttons?: ActivityButtonObject[];
 }
 
@@ -326,7 +350,7 @@ export interface RoleObject {
   managed: boolean;
   mentionable: boolean;
   tags?: RoleTagsObject;
-  flags: number | BitwisePermissionFlags;
+  flags: BitwisePermissionFlags;
 }
 
 export interface RoleTagsObject {
@@ -341,4 +365,36 @@ export interface RoleTagsObject {
 export interface IncidentsDataObject {
   invites_disabled_until: string | null;
   dms_disabled_until: string | null;
+  dm_spam_detected_at?: string | null;
+  raid_detected_at?: string | null;
+}
+
+export interface GuildOnboardingObject {
+  guild_id: Snowflake;
+  prompts: OnboardingPromptObject[];
+  default_channel_ids: Snowflake[];
+  enabled: boolean;
+  mode: OnboardingMode;
+}
+
+export interface OnboardingPromptObject {
+  id: Snowflake;
+  type: PromptType;
+  options: PromptOptionObject[];
+  title: string;
+  single_select: boolean;
+  required: boolean;
+  in_onboarding: boolean;
+}
+
+export interface PromptOptionObject {
+  id: Snowflake;
+  channel_ids: Snowflake[];
+  role_ids: Snowflake[];
+  emoji?: EmojiObject;
+  emoji_id?: Snowflake;
+  emoji_name?: string;
+  emoji_animated?: boolean;
+  title: string;
+  description: string | null;
 }

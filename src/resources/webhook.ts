@@ -23,3 +23,23 @@ export interface WebhookObject {
   source_channel?: Partial<AnyChannelObject>;
   url?: string;
 }
+
+export interface IncomingWebhookObject
+  extends Omit<WebhookObject, "type" | "source_guild" | "source_channel"> {
+  type: WebhookType.Incoming;
+}
+
+export interface ChannelFollowerWebhookObject
+  extends Omit<WebhookObject, "type" | "token" | "url"> {
+  type: WebhookType.ChannelFollower;
+}
+
+export interface ApplicationWebhookObject
+  extends Pick<WebhookObject, "id" | "name" | "avatar" | "application_id"> {
+  type: WebhookType.Application;
+}
+
+export type AnyWebhookObject =
+  | IncomingWebhookObject
+  | ChannelFollowerWebhookObject
+  | ApplicationWebhookObject;

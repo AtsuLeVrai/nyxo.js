@@ -5,7 +5,9 @@ import type {
   PrivateThreadChannelObject,
   PublicThreadChannelObject,
 } from "./channel.js";
+import type { ActionRowComponentObject } from "./components.js";
 import type { EmojiObject } from "./emoji.js";
+import type { AnyInteractionObject, ResolvedDataObject } from "./interaction.js";
 import type { PollObject } from "./poll.js";
 import type { StickerItemObject, StickerObject } from "./sticker.js";
 import type { UserObject } from "./user.js";
@@ -210,7 +212,7 @@ export interface AttachmentObject {
   ephemeral?: boolean;
   duration_secs?: number;
   waveform?: string;
-  flags?: number | AttachmentFlags;
+  flags?: AttachmentFlags;
 }
 
 export interface ChannelMentionObject {
@@ -261,19 +263,19 @@ export interface MessageObject {
   activity?: MessageActivityObject;
   application?: Partial<ApplicationObject>;
   application_id?: Snowflake;
-  flags?: number | MessageFlags;
+  flags?: MessageFlags;
   message_reference?: MessageReferenceObject;
   message_snapshots?: MessageSnapshotObject[];
   referenced_message?: MessageObject | null;
   interaction_metadata?: MessageInteractionMetadataObject;
-  interaction?: Record<string, unknown>;
+  interaction?: AnyInteractionObject;
   thread?: AnnouncementThreadChannelObject | PublicThreadChannelObject | PrivateThreadChannelObject;
-  components?: Record<string, unknown>[];
+  components?: ActionRowComponentObject[];
   sticker_items?: StickerItemObject[];
   stickers?: StickerObject[];
   position?: number;
   role_subscription_data?: RoleSubscriptionDataObject;
-  resolved?: Record<string, unknown>;
+  resolved?: ResolvedDataObject;
   poll?: PollObject;
   call?: MessageCallObject;
 }

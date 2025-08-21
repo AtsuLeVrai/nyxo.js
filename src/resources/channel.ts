@@ -1,4 +1,5 @@
 import type { Snowflake } from "../common/index.js";
+import type { BitwisePermissionFlags } from "../constants/index.js";
 import type { GuildMemberObject } from "./guild.js";
 import type { UserObject } from "./user.js";
 
@@ -48,8 +49,8 @@ export enum OverwriteType {
 export interface OverwriteObject {
   id: Snowflake;
   type: OverwriteType;
-  allow: string;
-  deny: string;
+  allow: `${BitwisePermissionFlags}`;
+  deny: `${BitwisePermissionFlags}`;
 }
 
 export interface ThreadMetadataObject {
@@ -87,137 +88,358 @@ export interface FollowedChannelObject {
   webhook_id: Snowflake;
 }
 
-interface BaseChannelObject {
+export interface ChannelObject {
   id: Snowflake;
-  flags?: number | ChannelFlags;
+  type: ChannelType;
+  guild_id?: Snowflake;
+  position?: number;
+  permission_overwrites?: OverwriteObject[];
+  name?: string | null;
+  topic?: string | null;
+  nsfw?: boolean;
+  last_message_id?: Snowflake | null;
+  bitrate?: number;
+  user_limit?: number;
+  rate_limit_per_user?: number;
+  recipients?: UserObject[];
+  icon?: string | null;
+  owner_id?: Snowflake;
+  application_id?: Snowflake;
+  managed?: boolean;
+  parent_id?: Snowflake | null;
+  last_pin_timestamp?: string | null;
+  rtc_region?: string | null;
+  video_quality_mode?: VideoQualityMode;
+  message_count?: number;
+  member_count?: number;
+  thread_metadata?: ThreadMetadataObject;
+  member?: ThreadMemberObject;
+  default_auto_archive_duration?: number;
   permissions?: string;
+  flags?: number | ChannelFlags;
+  total_message_sent?: number;
+  available_tags?: ForumTagObject[];
+  applied_tags?: Snowflake[];
+  default_reaction_emoji?: DefaultReactionObject | null;
+  default_thread_rate_limit_per_user?: number;
+  default_sort_order?: SortOrderType | null;
+  default_forum_layout?: ForumLayoutType;
 }
 
-interface BaseGuildChannelObject extends BaseChannelObject {
+export interface GuildTextChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "last_pin_timestamp"
+    | "nsfw"
+    | "default_auto_archive_duration"
+    | "parent_id"
+    | "flags"
+    | "permissions"
+  > {
+  type: ChannelType.GuildText;
   guild_id: Snowflake;
   position: number;
   permission_overwrites: OverwriteObject[];
   name: string;
-  parent_id?: Snowflake | null;
 }
 
-interface BaseTextChannelObject extends BaseGuildChannelObject {
-  topic?: string | null;
-  last_message_id?: Snowflake | null;
-  rate_limit_per_user?: number;
-  last_pin_timestamp?: string | null;
-  nsfw?: boolean;
-  default_auto_archive_duration?: number;
+export interface DMChannelObject
+  extends Pick<ChannelObject, "id" | "last_message_id" | "recipients" | "flags" | "permissions"> {
+  type: ChannelType.DM;
+  recipients: UserObject[];
 }
 
-interface BaseVoiceChannelObject extends BaseGuildChannelObject {
+export interface GuildVoiceChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "bitrate"
+    | "user_limit"
+    | "rtc_region"
+    | "video_quality_mode"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "nsfw"
+    | "parent_id"
+    | "flags"
+    | "permissions"
+  > {
+  type: ChannelType.GuildVoice;
+  guild_id: Snowflake;
+  position: number;
+  permission_overwrites: OverwriteObject[];
+  name: string;
   bitrate: number;
   user_limit: number;
-  rtc_region?: string | null;
-  video_quality_mode?: VideoQualityMode;
 }
 
-interface BaseThreadChannelObject extends BaseChannelObject {
+export interface GroupDMChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "name"
+    | "icon"
+    | "recipients"
+    | "last_message_id"
+    | "owner_id"
+    | "application_id"
+    | "managed"
+    | "flags"
+    | "permissions"
+  > {
+  type: ChannelType.GroupDM;
+  recipients: UserObject[];
+  owner_id: Snowflake;
+}
+
+export interface GuildCategoryChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "nsfw"
+    | "parent_id"
+    | "flags"
+    | "permissions"
+  > {
+  type: ChannelType.GuildCategory;
+  guild_id: Snowflake;
+  position: number;
+  permission_overwrites: OverwriteObject[];
+  name: string;
+}
+
+export interface GuildAnnouncementChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "last_pin_timestamp"
+    | "nsfw"
+    | "default_auto_archive_duration"
+    | "parent_id"
+    | "flags"
+    | "permissions"
+  > {
+  type: ChannelType.GuildAnnouncement;
+  guild_id: Snowflake;
+  position: number;
+  permission_overwrites: OverwriteObject[];
+  name: string;
+}
+
+export interface AnnouncementThreadChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "name"
+    | "parent_id"
+    | "owner_id"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "message_count"
+    | "member_count"
+    | "thread_metadata"
+    | "member"
+    | "total_message_sent"
+    | "applied_tags"
+    | "flags"
+    | "permissions"
+  > {
+  type: ChannelType.AnnouncementThread;
   guild_id: Snowflake;
   name: string;
   parent_id: Snowflake;
   owner_id: Snowflake;
-  last_message_id?: Snowflake | null;
-  rate_limit_per_user?: number;
   message_count: number;
   member_count: number;
   thread_metadata: ThreadMetadataObject;
-  member?: ThreadMemberObject;
-  total_message_sent?: number;
 }
 
-export interface GuildTextChannelObject extends BaseTextChannelObject {
-  type: ChannelType.GuildText;
-}
-
-export interface DMChannelObject extends BaseChannelObject {
-  type: ChannelType.DM;
-  last_message_id?: Snowflake | null;
-  recipients: UserObject[];
-}
-
-export interface GuildVoiceChannelObject extends BaseVoiceChannelObject {
-  type: ChannelType.GuildVoice;
-  last_message_id?: Snowflake | null;
-  rate_limit_per_user?: number;
-  nsfw?: boolean;
-}
-
-export interface GroupDMChannelObject extends BaseChannelObject {
-  type: ChannelType.GroupDM;
-  name?: string | null;
-  icon?: string | null;
-  recipients: UserObject[];
-  last_message_id?: Snowflake | null;
-  owner_id: Snowflake;
-  application_id?: Snowflake;
-  managed?: boolean;
-}
-
-export interface GuildCategoryChannelObject extends BaseGuildChannelObject {
-  type: ChannelType.GuildCategory;
-  nsfw?: boolean;
-}
-
-export interface GuildAnnouncementChannelObject extends BaseTextChannelObject {
-  type: ChannelType.GuildAnnouncement;
-}
-
-export interface AnnouncementThreadChannelObject extends BaseThreadChannelObject {
-  type: ChannelType.AnnouncementThread;
-  applied_tags?: Snowflake[];
-}
-
-export interface PublicThreadChannelObject extends BaseThreadChannelObject {
+export interface PublicThreadChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "name"
+    | "parent_id"
+    | "owner_id"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "message_count"
+    | "member_count"
+    | "thread_metadata"
+    | "member"
+    | "total_message_sent"
+    | "applied_tags"
+    | "flags"
+    | "permissions"
+  > {
   type: ChannelType.PublicThread;
-  applied_tags?: Snowflake[];
+  guild_id: Snowflake;
+  name: string;
+  parent_id: Snowflake;
+  owner_id: Snowflake;
+  message_count: number;
+  member_count: number;
+  thread_metadata: ThreadMetadataObject;
 }
 
-export interface PrivateThreadChannelObject extends BaseThreadChannelObject {
+export interface PrivateThreadChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "name"
+    | "parent_id"
+    | "owner_id"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "message_count"
+    | "member_count"
+    | "thread_metadata"
+    | "member"
+    | "total_message_sent"
+    | "flags"
+    | "permissions"
+  > {
   type: ChannelType.PrivateThread;
+  guild_id: Snowflake;
+  name: string;
+  parent_id: Snowflake;
+  owner_id: Snowflake;
+  message_count: number;
+  member_count: number;
+  thread_metadata: ThreadMetadataObject;
 }
 
-export interface GuildStageVoiceChannelObject extends BaseVoiceChannelObject {
+export interface GuildStageVoiceChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "bitrate"
+    | "user_limit"
+    | "rtc_region"
+    | "video_quality_mode"
+    | "parent_id"
+    | "flags"
+    | "permissions"
+  > {
   type: ChannelType.GuildStageVoice;
-  topic?: string | null;
+  guild_id: Snowflake;
+  position: number;
+  permission_overwrites: OverwriteObject[];
+  name: string;
+  bitrate: number;
+  user_limit: number;
 }
 
-export interface GuildDirectoryChannelObject extends BaseGuildChannelObject {
+export interface GuildDirectoryChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "parent_id"
+    | "flags"
+    | "permissions"
+  > {
   type: ChannelType.GuildDirectory;
+  guild_id: Snowflake;
+  position: number;
+  permission_overwrites: OverwriteObject[];
+  name: string;
 }
 
-export interface GuildForumChannelObject extends BaseGuildChannelObject {
+export interface GuildForumChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "nsfw"
+    | "last_pin_timestamp"
+    | "default_auto_archive_duration"
+    | "available_tags"
+    | "default_reaction_emoji"
+    | "default_thread_rate_limit_per_user"
+    | "default_sort_order"
+    | "default_forum_layout"
+    | "parent_id"
+    | "flags"
+    | "permissions"
+  > {
   type: ChannelType.GuildForum;
-  topic?: string | null;
-  last_message_id?: Snowflake | null;
-  rate_limit_per_user?: number;
-  nsfw?: boolean;
-  last_pin_timestamp?: string | null;
-  default_auto_archive_duration?: number;
+  guild_id: Snowflake;
+  position: number;
+  permission_overwrites: OverwriteObject[];
+  name: string;
   available_tags: ForumTagObject[];
-  default_reaction_emoji?: DefaultReactionObject | null;
-  default_thread_rate_limit_per_user?: number;
-  default_sort_order?: SortOrderType | null;
   default_forum_layout: ForumLayoutType;
 }
 
-export interface GuildMediaChannelObject extends BaseGuildChannelObject {
+export interface GuildMediaChannelObject
+  extends Pick<
+    ChannelObject,
+    | "id"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "nsfw"
+    | "last_pin_timestamp"
+    | "default_auto_archive_duration"
+    | "available_tags"
+    | "default_reaction_emoji"
+    | "default_thread_rate_limit_per_user"
+    | "default_sort_order"
+    | "parent_id"
+    | "flags"
+    | "permissions"
+  > {
   type: ChannelType.GuildMedia;
-  topic?: string | null;
-  last_message_id?: Snowflake | null;
-  rate_limit_per_user?: number;
-  nsfw?: boolean;
-  last_pin_timestamp?: string | null;
-  default_auto_archive_duration?: number;
+  guild_id: Snowflake;
+  position: number;
+  permission_overwrites: OverwriteObject[];
+  name: string;
   available_tags: ForumTagObject[];
-  default_reaction_emoji?: DefaultReactionObject | null;
-  default_thread_rate_limit_per_user?: number;
-  default_sort_order?: SortOrderType | null;
 }
 
 export type AnyChannelObject =

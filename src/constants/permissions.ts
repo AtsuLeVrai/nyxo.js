@@ -48,4 +48,5 @@ export enum BitwisePermissionFlags {
   SendVoiceMessages = 0x0000400000000000,
   SendPolls = 0x0002000000000000,
   UseExternalApps = 0x0004000000000000,
+  PinMessages = 0x0008000000000000,
 }

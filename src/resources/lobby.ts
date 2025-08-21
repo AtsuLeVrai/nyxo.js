@@ -8,7 +8,7 @@ export enum LobbyMemberFlags {
 export interface LobbyMemberObject {
   id: Snowflake;
   metadata?: Record<string, string> | null;
-  flags?: number;
+  flags?: LobbyMemberFlags;
 }
 
 export interface LobbyObject {

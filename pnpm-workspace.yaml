@@ -1,3 +1,4 @@
 onlyBuiltDependencies:
   - bufferutil
   - erlpack
+  - esbuild

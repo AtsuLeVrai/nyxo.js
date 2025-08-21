@@ -33,8 +33,32 @@ export interface InviteObject {
   expires_at: string | null;
   stage_instance?: InviteStageInstanceObject;
   guild_scheduled_event?: GuildScheduledEventObject;
-  flags?: number | GuildInviteFlags;
+  flags?: GuildInviteFlags;
 }
+
+export interface GuildInviteObject extends Omit<InviteObject, "type"> {
+  type: InviteType.Guild;
+}
+
+export interface GroupDmInviteObject
+  extends Omit<
+    InviteObject,
+    | "type"
+    | "guild"
+    | "approximate_presence_count"
+    | "approximate_member_count"
+    | "stage_instance"
+    | "guild_scheduled_event"
+    | "flags"
+  > {
+  type: InviteType.GroupDm;
+}
+
+export interface FriendInviteObject extends Pick<InviteObject, "code" | "inviter" | "expires_at"> {
+  type: InviteType.Friend;
+}
+
+export type AnyInviteObject = GuildInviteObject | GroupDmInviteObject | FriendInviteObject;
 
 export interface InviteMetadataObject {
   uses: number;

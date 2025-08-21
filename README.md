@@ -113,17 +113,6 @@ This project is in active development and welcomes contributors! Whether you're:
 git clone https://github.com/nyxo-labs/nyxo.js.git
 cd nyxo.js
 pnpm install
-pnpm run dev
-```
-
-### **Project Structure**
-```
-src/
-├── client/          # Main client implementation
-├── structures/      # Discord data structures  
-├── managers/        # Resource managers
-├── utils/           # Utility functions
-└── types/           # TypeScript type definitions
 ```
 
 ---

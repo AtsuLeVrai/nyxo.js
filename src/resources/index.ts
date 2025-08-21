@@ -4,6 +4,7 @@ export * from "./application-role-connection-metadata.js";
 export * from "./audit-log.js";
 export * from "./auto-moderation.js";
 export * from "./channel.js";
+export * from "./components.js";
 export * from "./emoji.js";
 export * from "./entitlement.js";
 export * from "./guild.js";

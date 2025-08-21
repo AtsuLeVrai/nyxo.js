@@ -32,47 +32,46 @@ export enum VisibilityType {
 }
 
 export enum Services {
-  AmazonMusic = "AmazonMusic",
-  Battlenet = "Battlenet",
-  Bungie = "Bungie",
-  Bluesky = "Bluesky",
-  Crunchyroll = "Crunchyroll",
-  Domain = "Domain",
-  Ebay = "Ebay",
-  EpicGames = "EpicGames",
-  Facebook = "Facebook",
-  Github = "Github",
-  Instagram = "Instagram",
-  // biome-ignore lint/nursery/noSecrets: This is a public enum, not a secret
-  LeagueOfLegends = "LeagueOfLegends",
-  Mastodon = "Mastodon",
-  Paypal = "Paypal",
-  Playstation = "Playstation",
-  Reddit = "Reddit",
-  RiotGames = "RiotGames",
-  Roblox = "Roblox",
-  Spotify = "Spotify",
-  Skype = "Skype",
-  Steam = "Steam",
-  Tiktok = "Tiktok",
-  Twitch = "Twitch",
-  Twitter = "Twitter",
-  Xbox = "Xbox",
-  Youtube = "Youtube",
+  AmazonMusic = "amazon-music",
+  Battlenet = "battlenet",
+  Bungie = "bungie",
+  Bluesky = "bluesky",
+  Crunchyroll = "crunchyroll",
+  Domain = "domain",
+  Ebay = "ebay",
+  EpicGames = "epicgames",
+  Facebook = "facebook",
+  Github = "github",
+  Instagram = "instagram",
+  LeagueOfLegends = "leagueoflegends",
+  Mastodon = "mastodon",
+  Paypal = "paypal",
+  Playstation = "playstation",
+  Reddit = "reddit",
+  RiotGames = "riotgames",
+  Roblox = "roblox",
+  Spotify = "spotify",
+  Skype = "skype",
+  Steam = "steam",
+  Tiktok = "tiktok",
+  Twitch = "twitch",
+  Twitter = "twitter",
+  Xbox = "xbox",
+  Youtube = "youtube",
 }
 
 export enum NameplatePalette {
-  Crimson = "Crimson",
-  Berry = "Berry",
-  Sky = "Sky",
-  Teal = "Teal",
-  Forest = "Forest",
-  BubbleGum = "BubbleGum",
-  Violet = "Violet",
-  Cobalt = "Cobalt",
-  Clover = "Clover",
-  Lemon = "Lemon",
-  White = "White",
+  Crimson = "crimson",
+  Berry = "berry",
+  Sky = "sky",
+  Teal = "teal",
+  Forest = "forest",
+  BubbleGum = "bubble_gum",
+  Violet = "violet",
+  Cobalt = "cobalt",
+  Clover = "clover",
+  Lemon = "lemon",
+  White = "white",
 }
 
 export interface UserObject {
@@ -89,9 +88,9 @@ export interface UserObject {
   locale?: Locale;
   verified?: boolean;
   email?: string | null;
-  flags?: number | UserFlags;
+  flags?: UserFlags;
   premium_type?: PremiumType;
-  public_flags?: number | UserFlags;
+  public_flags?: UserFlags;
   avatar_decoration_data?: AvatarDecorationData | null;
   collectibles?: CollectiblesObject | null;
   primary_guild?: UserPrimaryGuildObject | null;

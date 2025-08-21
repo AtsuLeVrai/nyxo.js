@@ -50,24 +50,21 @@ export function subText<T extends string>(text: T): SubHeader<T> {
   return `-# ${text}`;
 }
 
-export type Link<TText extends string, TUrl extends string> = `[${TText}](${TUrl})`;
-export function link<TText extends string, TUrl extends string>(
-  text: TText,
-  url: TUrl,
-): Link<TText, TUrl> {
+export type Link<T extends string, U extends string> = `[${T}](${U})`;
+export function link<T extends string, U extends string>(text: T, url: U): Link<T, U> {
   return `[${text}](${url})`;
 }
 
 export type MaskedLink<
-  TText extends string,
-  TUrl extends string,
-  THover extends string,
-> = `[${TText}](${TUrl} "${THover}")`;
-export function maskedLink<TText extends string, TUrl extends string, THover extends string>(
-  text: TText,
-  url: TUrl,
-  hover: THover,
-): MaskedLink<TText, TUrl, THover> {
+  T extends string,
+  U extends string,
+  H extends string,
+> = `[${T}](${U} "${H}")`;
+export function maskedLink<T extends string, U extends string, H extends string>(
+  text: T,
+  url: U,
+  hover: H,
+): MaskedLink<T, U, H> {
   return `[${text}](${url} "${hover}")`;
 }
 

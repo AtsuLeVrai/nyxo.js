@@ -1,4 +1,5 @@
 import type { Snowflake } from "../common/index.js";
+import type { AnyApplicationCommandObject } from "./application-commands.js";
 import type { AutoModerationRuleObject } from "./auto-moderation.js";
 import type { AnyChannelObject } from "./channel.js";
 import type { IntegrationObject } from "./guild.js";
@@ -66,7 +67,7 @@ export enum AuditLogEvent {
 }
 
 export interface AuditLogObject {
-  application_commands: ApplicationCommandObject[];
+  application_commands: AnyApplicationCommandObject[];
   audit_log_entries: AuditLogEntryObject[];
   auto_moderation_rules: AutoModerationRuleObject[];
   guild_scheduled_events: GuildScheduledEventObject[];
