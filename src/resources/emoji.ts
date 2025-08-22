@@ -1,4 +1,6 @@
 import type { Snowflake } from "../common/index.js";
+import type { DataUri } from "../core/index.js";
+import type { EndpointFactory } from "../utils/index.js";
 import type { UserObject } from "./user.js";
 
 export interface EmojiObject {
@@ -11,6 +13,90 @@ export interface EmojiObject {
   animated?: boolean;
   available?: boolean;
 }
+
+export interface CreateGuildEmojiRequest {
+  name: string;
+  image: DataUri;
+  roles?: Snowflake[];
+}
+
+export interface ModifyGuildEmojiRequest {
+  name?: string;
+  roles?: Snowflake[] | null;
+}
+
+export interface CreateApplicationEmojiRequest {
+  name: string;
+  image: DataUri;
+}
+
+export interface ModifyApplicationEmojiRequest {
+  name: string;
+}
+
+export interface ListApplicationEmojisResponse {
+  items: EmojiObject[];
+}
+
+export const EmojiRoutes = {
+  // GET /guilds/{guild.id}/emojis - List Guild Emojis
+  listGuildEmojis: ((guildId: Snowflake) => `/guilds/${guildId}/emojis`) as EndpointFactory<
+    `/guilds/${string}/emojis`,
+    ["GET"],
+    EmojiObject[]
+  >,
+
+  // GET /guilds/{guild.id}/emojis/{emoji.id} - Get Guild Emoji
+  getGuildEmoji: ((guildId: Snowflake, emojiId: Snowflake) =>
+    `/guilds/${guildId}/emojis/${emojiId}`) as EndpointFactory<
+    `/guilds/${string}/emojis/${string}`,
+    ["GET", "PATCH", "DELETE"],
+    EmojiObject,
+    true, // reason support
+    false,
+    ModifyGuildEmojiRequest
+  >,
+
+  // POST /guilds/{guild.id}/emojis - Create Guild Emoji
+  createGuildEmoji: ((guildId: Snowflake) => `/guilds/${guildId}/emojis`) as EndpointFactory<
+    `/guilds/${string}/emojis`,
+    ["POST"],
+    EmojiObject,
+    true, // reason support
+    false,
+    CreateGuildEmojiRequest
+  >,
+
+  // GET /applications/{application.id}/emojis - List Application Emojis
+  listApplicationEmojis: ((applicationId: Snowflake) =>
+    `/applications/${applicationId}/emojis`) as EndpointFactory<
+    `/applications/${string}/emojis`,
+    ["GET"],
+    ListApplicationEmojisResponse
+  >,
+
+  // GET /applications/{application.id}/emojis/{emoji.id} - Get Application Emoji
+  getApplicationEmoji: ((applicationId: Snowflake, emojiId: Snowflake) =>
+    `/applications/${applicationId}/emojis/${emojiId}`) as EndpointFactory<
+    `/applications/${string}/emojis/${string}`,
+    ["GET", "PATCH", "DELETE"],
+    EmojiObject,
+    false,
+    false,
+    ModifyApplicationEmojiRequest
+  >,
+
+  // POST /applications/{application.id}/emojis - Create Application Emoji
+  createApplicationEmoji: ((applicationId: Snowflake) =>
+    `/applications/${applicationId}/emojis`) as EndpointFactory<
+    `/applications/${string}/emojis`,
+    ["POST"],
+    EmojiObject,
+    false,
+    false,
+    CreateApplicationEmojiRequest
+  >,
+} as const satisfies Record<string, EndpointFactory<any, any, any, any, any, any, any, any>>;
 
 export type ResolvedEmoji = Pick<EmojiObject, "id" | "name" | "animated">;
 

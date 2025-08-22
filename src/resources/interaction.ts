@@ -1,4 +1,5 @@
 import type { Snowflake } from "../common/index.js";
+import type { EndpointFactory } from "../utils/index.js";
 import type { ApplicationIntegrationType } from "./application.js";
 import type { ApplicationCommandOptionChoiceObject } from "./application-commands.js";
 import type { AnyChannelObject } from "./channel.js";
@@ -8,7 +9,7 @@ import type {
   TextInputComponentObject,
 } from "./components.js";
 import type { EntitlementObject } from "./entitlement.js";
-import type { GuildMemberObject, GuildObject, RoleObject } from "./guild.js";
+import type { GuildMemberObject, GuildObject } from "./guild.js";
 import type {
   AllowedMentionsObject,
   AttachmentObject,
@@ -16,6 +17,7 @@ import type {
   MessageObject,
 } from "./message.js";
 import type { PollCreateRequestObject } from "./poll.js";
+import type { RoleObject } from "./role.js";
 import type { UserObject } from "./user.js";
 
 export enum InteractionType {
@@ -292,3 +294,55 @@ export interface InteractionCallbackResourceObject {
 export interface InteractionCallbackActivityInstanceResource {
   id: string;
 }
+
+// Interaction Request Interfaces
+export interface CreateInteractionResponseQuery {
+  with_response?: boolean;
+}
+
+export const InteractionRoutes = {
+  // POST /interactions/{interaction.id}/{interaction.token}/callback - Create Interaction Response
+  createInteractionResponse: ((interactionId: Snowflake, interactionToken: string) =>
+    `/interactions/${interactionId}/${interactionToken}/callback`) as EndpointFactory<
+    `/interactions/${string}/${string}/callback`,
+    ["POST"],
+    InteractionCallbackResponseObject | undefined,
+    false,
+    true,
+    InteractionResponseObject,
+    CreateInteractionResponseQuery
+  >,
+
+  // GET /webhooks/{application.id}/{interaction.token}/messages/@original - Get Original Interaction Response
+  getOriginalInteractionResponse: ((applicationId: Snowflake, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/@original`) as EndpointFactory<
+    `/webhooks/${string}/${string}/messages/@original`,
+    ["GET", "PATCH", "DELETE"],
+    MessageObject,
+    false,
+    true,
+    InteractionCallbackDataStructure
+  >,
+
+  // POST /webhooks/{application.id}/{interaction.token} - Create Followup Message
+  createFollowupMessage: ((applicationId: Snowflake, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}`) as EndpointFactory<
+    `/webhooks/${string}/${string}`,
+    ["POST"],
+    MessageObject,
+    false,
+    true,
+    InteractionCallbackDataStructure
+  >,
+
+  // GET /webhooks/{application.id}/{interaction.token}/messages/{message.id} - Get/Edit/Delete Followup Message
+  getFollowupMessage: ((applicationId: Snowflake, interactionToken: string, messageId: Snowflake) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}`) as EndpointFactory<
+    `/webhooks/${string}/${string}/messages/${string}`,
+    ["GET", "PATCH", "DELETE"],
+    MessageObject,
+    false,
+    true,
+    InteractionCallbackDataStructure
+  >,
+} as const satisfies Record<string, EndpointFactory<any, any, any, any, any, any, any, any>>;

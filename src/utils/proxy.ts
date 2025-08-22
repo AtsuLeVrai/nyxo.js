@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: This is a utility function that needs to accept any type of constructor */
-
 type ClassConstructor<T = object> = new (...args: never[]) => T;
 
 type OmitFromConstructor<
@@ -11,6 +9,28 @@ type PickFromConstructor<
   T extends ClassConstructor<any>,
   K extends PropertyKey & keyof InstanceType<T>,
 > = new (...args: ConstructorParameters<T>) => Pick<InstanceType<T>, K>;
+
+type CamelCase<S extends string> = S extends `${infer P}_${infer Q}`
+  ? `${P}${Capitalize<CamelCase<Q>>}`
+  : S;
+
+type Capitalize<S extends string> = S extends `${infer P}${infer Q}` ? `${Uppercase<P>}${Q}` : S;
+
+export type PropsToCamel<T> = T extends Array<infer U>
+  ? PropsToCamel<U>[]
+  : T extends object
+    ? {
+        [K in keyof T as CamelCase<K & string>]: PropsToCamel<T[K]>;
+      }
+    : T;
+
+export type Enforce<T extends object, PreserveValueTypes extends boolean = false> = {
+  [K in keyof T]-?: PreserveValueTypes extends true
+    ? T[K] extends null | undefined
+      ? NonNullable<T[K]>
+      : T[K]
+    : any;
+};
 
 export function Pick<
   T extends new (

@@ -1,5 +1,9 @@
 import type { Snowflake } from "../common/index.js";
 import type { Locale } from "../constants/index.js";
+import type { DataUri } from "../core/index.js";
+import type { EndpointFactory } from "../utils/index.js";
+import type { ChannelObject } from "./channel.js";
+import type { GuildMemberObject, GuildObject, IntegrationObject } from "./guild.js";
 
 export enum UserFlags {
   Staff = 1 << 0,
@@ -124,7 +128,7 @@ export interface ConnectionObject {
   name: string;
   type: Services;
   revoked?: boolean;
-  integrations?: unknown[];
+  integrations?: Partial<IntegrationObject>[];
   verified: boolean;
   friend_sync: boolean;
   show_activity: boolean;
@@ -138,54 +142,115 @@ export interface ApplicationRoleConnectionObject {
   metadata: Record<string, string>;
 }
 
-/*
-type CamelCase<S extends string> = S extends `${infer P}_${infer Q}`
-  ? `${P}${Capitalize<CamelCase<Q>>}`
-  : S;
-
-type Capitalize<S extends string> = S extends `${infer P}${infer Q}` ? `${Uppercase<P>}${Q}` : S;
-
-export type PropsToCamel<T> = T extends Array<infer U>
-  ? PropsToCamel<U>[]
-  : T extends object
-    ? {
-        [K in keyof T as CamelCase<K & string>]: PropsToCamel<T[K]>;
-      }
-    : T;
-
-export type Enforce<T extends object, PreserveValueTypes extends boolean = false> = {
-  [K in keyof T]-?: PreserveValueTypes extends true
-    ? T[K] extends null | undefined
-      ? NonNullable<T[K]>
-      : T[K]
-    : // biome-ignore lint/suspicious/noExplicitAny: This is a utility type, so we allow any type here.
-      any;
-};
-
-export class User implements Enforce<PropsToCamel<UserObject>> {
-  readonly #data: UserObject;
-  readonly id = this.#data.id;
-  readonly username = this.#data.username;
-  readonly discriminator = this.#data.discriminator;
-  readonly globalName = this.#data.global_name;
-  readonly avatar = this.#data.avatar;
-  readonly bot = this.#data.bot;
-  readonly system = this.#data.system;
-  readonly mfaEnabled = this.#data.mfa_enabled;
-  readonly banner = this.#data.banner;
-  readonly accentColor = this.#data.accent_color;
-  readonly locale = this.#data.locale;
-  readonly verified = this.#data.verified;
-  readonly email = this.#data.email;
-  readonly flags = this.#data.flags;
-  readonly premiumType = this.#data.premium_type;
-  readonly publicFlags = this.#data.public_flags;
-  readonly avatarDecorationData = this.#data.avatar_decoration_data;
-  readonly collectibles = this.#data.collectibles;
-  readonly primaryGuild = this.#data.primary_guild;
-
-  constructor(data: UserObject) {
-    this.#data = data;
-  }
+// Request/Response interfaces
+export interface ModifyCurrentUserRequest {
+  username?: string;
+  avatar?: DataUri | null;
+  banner?: DataUri | null;
 }
-*/
+
+export interface CreateDMRequest {
+  recipient_id: Snowflake;
+}
+
+export interface CreateGroupDMRequest {
+  access_tokens: string[];
+  nicks: Record<Snowflake, string>;
+}
+
+export interface UpdateApplicationRoleConnectionRequest {
+  platform_name?: string;
+  platform_username?: string;
+  metadata?: Record<string, string>;
+}
+
+// Query parameters interfaces
+export interface GetCurrentUserGuildsQuery {
+  before?: Snowflake;
+  after?: Snowflake;
+  limit?: number;
+  with_counts?: boolean;
+}
+
+export const UserRoutes = {
+  // GET /users/@me - Get Current User
+  currentUser: (() => "/users/@me") as EndpointFactory<
+    "/users/@me",
+    ["GET", "PATCH"],
+    UserObject,
+    false,
+    false,
+    ModifyCurrentUserRequest
+  >,
+
+  // GET /users/{user.id} - Get User
+  user: ((userId: Snowflake) => `/users/${userId}`) as EndpointFactory<
+    `/users/${string}`,
+    ["GET"],
+    UserObject
+  >,
+
+  // GET /users/@me/guilds - Get Current User Guilds
+  currentUserGuilds: (() => "/users/@me/guilds") as EndpointFactory<
+    "/users/@me/guilds",
+    ["GET"],
+    Partial<GuildObject>[],
+    false,
+    false,
+    undefined,
+    GetCurrentUserGuildsQuery
+  >,
+
+  // GET /users/@me/guilds/{guild.id}/member - Get Current User Guild Member
+  currentUserGuildMember: ((guildId: Snowflake) =>
+    `/users/@me/guilds/${guildId}/member`) as EndpointFactory<
+    `/users/@me/guilds/${string}/member`,
+    ["GET"],
+    GuildMemberObject
+  >,
+
+  // DELETE /users/@me/guilds/{guild.id} - Leave Guild
+  leaveGuild: ((guildId: Snowflake) => `/users/@me/guilds/${guildId}`) as EndpointFactory<
+    `/users/@me/guilds/${string}`,
+    ["DELETE"],
+    void
+  >,
+
+  // POST /users/@me/channels - Create DM
+  createDM: (() => "/users/@me/channels") as EndpointFactory<
+    "/users/@me/channels",
+    ["POST"],
+    ChannelObject,
+    false,
+    false,
+    CreateDMRequest
+  >,
+
+  // POST /users/@me/channels - Create Group DM
+  createGroupDM: (() => "/users/@me/channels") as EndpointFactory<
+    "/users/@me/channels",
+    ["POST"],
+    ChannelObject,
+    false,
+    false,
+    CreateGroupDMRequest
+  >,
+
+  // GET /users/@me/connections - Get Current User Connections
+  currentUserConnections: (() => "/users/@me/connections") as EndpointFactory<
+    "/users/@me/connections",
+    ["GET"],
+    ConnectionObject[]
+  >,
+
+  // GET /users/@me/applications/{application.id}/role-connection - Get Current User Application Role Connection
+  currentUserApplicationRoleConnection: ((applicationId: Snowflake) =>
+    `/users/@me/applications/${applicationId}/role-connection`) as EndpointFactory<
+    `/users/@me/applications/${string}/role-connection`,
+    ["GET", "PUT"],
+    ApplicationRoleConnectionObject,
+    false,
+    false,
+    UpdateApplicationRoleConnectionRequest
+  >,
+} as const satisfies Record<string, EndpointFactory<any, any, any, any, any, any, any, any>>;

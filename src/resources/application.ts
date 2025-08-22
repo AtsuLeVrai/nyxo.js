@@ -1,5 +1,7 @@
 import type { Snowflake } from "../common/index.js";
 import type { BitwisePermissionFlags, OAuth2Scope } from "../constants/index.js";
+import type { DataUri } from "../core/index.js";
+import type { EndpointFactory } from "../utils/index.js";
 import type { GuildObject } from "./guild.js";
 import type { TeamObject } from "./teams.js";
 import type { UserObject } from "./user.js";
@@ -94,3 +96,43 @@ export interface ApplicationObject {
   >;
   custom_install_url?: string;
 }
+
+// Request interfaces
+export interface EditCurrentApplicationRequest {
+  custom_install_url?: string;
+  description?: string;
+  role_connections_verification_url?: string;
+  install_params?: InstallParamsObject;
+  integration_types_config?: Record<
+    ApplicationIntegrationType,
+    ApplicationIntegrationTypeConfigurationObject
+  >;
+  flags?: ApplicationFlags;
+  icon?: DataUri | null;
+  cover_image?: DataUri | null;
+  interactions_endpoint_url?: string;
+  tags?: string[];
+  event_webhooks_url?: string;
+  event_webhooks_status?: ApplicationEventWebhookStatus;
+  event_webhooks_types?: string[];
+}
+
+export const ApplicationRoutes = {
+  // GET /applications/@me - Get Current Application
+  getCurrentApplication: (() => "/applications/@me") as EndpointFactory<
+    "/applications/@me",
+    ["GET", "PATCH"],
+    ApplicationObject,
+    false,
+    false,
+    EditCurrentApplicationRequest
+  >,
+
+  // GET /applications/{application.id}/activity-instances/{instance_id} - Get Application Activity Instance
+  getApplicationActivityInstance: ((applicationId: Snowflake, instanceId: string) =>
+    `/applications/${applicationId}/activity-instances/${instanceId}`) as EndpointFactory<
+    `/applications/${string}/activity-instances/${string}`,
+    ["GET"],
+    ActivityInstanceObject
+  >,
+} as const satisfies Record<string, EndpointFactory<any, any, any, any, any, any, any, any>>;

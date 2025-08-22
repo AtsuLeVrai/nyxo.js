@@ -1,4 +1,5 @@
 import type { Snowflake } from "../common/index.js";
+import type { EndpointFactory } from "../utils/index.js";
 import type { ApplicationObject } from "./application.js";
 import type {
   AnnouncementThreadChannelObject,
@@ -8,7 +9,7 @@ import type {
 import type { ActionRowComponentObject } from "./components.js";
 import type { EmojiObject } from "./emoji.js";
 import type { AnyInteractionObject, ResolvedDataObject } from "./interaction.js";
-import type { PollObject } from "./poll.js";
+import type { PollCreateRequestObject, PollObject } from "./poll.js";
 import type { StickerItemObject, StickerObject } from "./sticker.js";
 import type { UserObject } from "./user.js";
 
@@ -279,3 +280,172 @@ export interface MessageObject {
   poll?: PollObject;
   call?: MessageCallObject;
 }
+
+// Message Request Interfaces
+export interface GetChannelMessagesQuery {
+  around?: Snowflake;
+  before?: Snowflake;
+  after?: Snowflake;
+  limit?: number;
+}
+
+export interface CreateMessageRequest {
+  content?: string;
+  nonce?: number | string;
+  tts?: boolean;
+  embeds?: EmbedObject[];
+  allowed_mentions?: AllowedMentionsObject;
+  message_reference?: MessageReferenceObject;
+  components?: ActionRowComponentObject[];
+  sticker_ids?: Snowflake[];
+  files?: File[];
+  payload_json?: string;
+  attachments?: Partial<AttachmentObject>[];
+  flags?: MessageFlags;
+  enforce_nonce?: boolean;
+  poll?: PollCreateRequestObject;
+}
+
+export interface EditMessageRequest {
+  content?: string | null;
+  embeds?: EmbedObject[] | null;
+  flags?: MessageFlags;
+  allowed_mentions?: AllowedMentionsObject | null;
+  components?: ActionRowComponentObject[] | null;
+  files?: File[];
+  payload_json?: string;
+  attachments?: AttachmentObject[] | null;
+}
+
+export interface BulkDeleteMessagesRequest {
+  messages: Snowflake[];
+}
+
+export interface GetReactionsQuery {
+  type?: ReactionType;
+  after?: Snowflake;
+  limit?: number;
+}
+
+export interface GetChannelPinsQuery {
+  before?: string;
+  limit?: number;
+}
+
+export interface GetChannelPinsResponse {
+  items: MessagePinObject[];
+  has_more: boolean;
+}
+
+export const MessageRoutes = {
+  // GET /channels/{channel.id}/messages - Get Channel Messages
+  getChannelMessages: ((channelId: Snowflake) =>
+    `/channels/${channelId}/messages`) as EndpointFactory<
+    `/channels/${string}/messages`,
+    ["GET", "POST"],
+    MessageObject[],
+    false,
+    true,
+    CreateMessageRequest,
+    GetChannelMessagesQuery
+  >,
+
+  // GET /channels/{channel.id}/messages/{message.id} - Get Channel Message
+  getChannelMessage: ((channelId: Snowflake, messageId: Snowflake) =>
+    `/channels/${channelId}/messages/${messageId}`) as EndpointFactory<
+    `/channels/${string}/messages/${string}`,
+    ["GET", "PATCH", "DELETE"],
+    MessageObject,
+    true,
+    false,
+    EditMessageRequest
+  >,
+
+  // POST /channels/{channel.id}/messages/{message.id}/crosspost - Crosspost Message
+  crosspostMessage: ((channelId: Snowflake, messageId: Snowflake) =>
+    `/channels/${channelId}/messages/${messageId}/crosspost`) as EndpointFactory<
+    `/channels/${string}/messages/${string}/crosspost`,
+    ["POST"],
+    MessageObject
+  >,
+
+  // PUT /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/@me - Create Reaction
+  createReaction: ((channelId: Snowflake, messageId: Snowflake, emoji: string) =>
+    `/channels/${channelId}/messages/${messageId}/reactions/${emoji}/@me`) as EndpointFactory<
+    `/channels/${string}/messages/${string}/reactions/${string}/@me`,
+    ["PUT", "DELETE"],
+    void
+  >,
+
+  // DELETE /channels/{channel.id}/messages/{message.id}/reactions/{emoji}/{user.id} - Delete User Reaction
+  deleteUserReaction: ((
+    channelId: Snowflake,
+    messageId: Snowflake,
+    emoji: string,
+    userId: Snowflake,
+  ) =>
+    `/channels/${channelId}/messages/${messageId}/reactions/${emoji}/${userId}`) as EndpointFactory<
+    `/channels/${string}/messages/${string}/reactions/${string}/${string}`,
+    ["DELETE"],
+    void
+  >,
+
+  // GET /channels/{channel.id}/messages/{message.id}/reactions/{emoji} - Get Reactions
+  getReactions: ((channelId: Snowflake, messageId: Snowflake, emoji: string) =>
+    `/channels/${channelId}/messages/${messageId}/reactions/${emoji}`) as EndpointFactory<
+    `/channels/${string}/messages/${string}/reactions/${string}`,
+    ["DELETE", "GET"],
+    UserObject[],
+    false,
+    false,
+    undefined,
+    GetReactionsQuery
+  >,
+
+  // DELETE /channels/{channel.id}/messages/{message.id}/reactions - Delete All Reactions
+  deleteAllReactions: ((channelId: Snowflake, messageId: Snowflake) =>
+    `/channels/${channelId}/messages/${messageId}/reactions`) as EndpointFactory<
+    `/channels/${string}/messages/${string}/reactions`,
+    ["DELETE"],
+    void
+  >,
+
+  // POST /channels/{channel.id}/messages/bulk-delete - Bulk Delete Messages
+  bulkDeleteMessages: ((channelId: Snowflake) =>
+    `/channels/${channelId}/messages/bulk-delete`) as EndpointFactory<
+    `/channels/${string}/messages/bulk-delete`,
+    ["POST"],
+    void,
+    true,
+    false,
+    BulkDeleteMessagesRequest
+  >,
+
+  // GET /channels/{channel.id}/messages/pins - Get Channel Pins
+  getChannelPins: ((channelId: Snowflake) =>
+    `/channels/${channelId}/messages/pins`) as EndpointFactory<
+    `/channels/${string}/messages/pins`,
+    ["GET"],
+    GetChannelPinsResponse,
+    false,
+    false,
+    undefined,
+    GetChannelPinsQuery
+  >,
+
+  // PUT /channels/{channel.id}/messages/pins/{message.id} - Pin Message
+  pinMessage: ((channelId: Snowflake, messageId: Snowflake) =>
+    `/channels/${channelId}/messages/pins/${messageId}`) as EndpointFactory<
+    `/channels/${string}/messages/pins/${string}`,
+    ["PUT", "DELETE"],
+    void,
+    true
+  >,
+
+  // GET /channels/{channel.id}/pins - Get Pinned Messages (deprecated)
+  getPinnedMessages: ((channelId: Snowflake) => `/channels/${channelId}/pins`) as EndpointFactory<
+    `/channels/${string}/pins`,
+    ["GET"],
+    MessageObject[]
+  >,
+} as const satisfies Record<string, EndpointFactory<any, any, any, any, any, any, any, any>>;

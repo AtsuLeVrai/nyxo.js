@@ -2,3 +2,4 @@ onlyBuiltDependencies:
   - bufferutil
   - erlpack
   - esbuild
+  - zlib-sync

@@ -1,3 +1,5 @@
+import type { Snowflake } from "../common/index.js";
+import type { EndpointFactory } from "../utils/index.js";
 import type { ApplicationObject } from "./application.js";
 import type { AnyChannelObject } from "./channel.js";
 import type { GuildMemberObject, GuildObject } from "./guild.js";
@@ -74,3 +76,21 @@ export interface InviteStageInstanceObject {
   speaker_count: number;
   topic: string;
 }
+
+export interface GetInviteQuery {
+  with_counts?: boolean;
+  guild_scheduled_event_id?: Snowflake;
+}
+
+export const InviteRoutes = {
+  // GET /invites/{invite.code} - Get Invite
+  getInvite: ((inviteCode: string) => `/invites/${inviteCode}`) as EndpointFactory<
+    `/invites/${string}`,
+    ["GET", "DELETE"],
+    AnyInviteObject,
+    true,
+    false,
+    undefined,
+    GetInviteQuery
+  >,
+} as const satisfies Record<string, EndpointFactory<any, any, any, any, any, any, any, any>>;
