@@ -1,6 +1,5 @@
-import type { Snowflake } from "../common/index.js";
+import type { EndpointFactory, Snowflake } from "../common/index.js";
 import type { DataUri } from "../core/index.js";
-import type { EndpointFactory } from "../utils/index.js";
 import type { AnyChannelObject } from "./channel.js";
 import type { ActionRowComponentObject } from "./components.js";
 import type { GuildObject } from "./guild.js";
@@ -55,7 +54,6 @@ export type AnyWebhookObject =
   | ChannelFollowerWebhookObject
   | ApplicationWebhookObject;
 
-// Webhook Request/Response Interfaces
 export interface CreateWebhookRequest {
   name: string;
   avatar?: DataUri | null;
@@ -127,7 +125,6 @@ export interface GitHubWebhookQuery {
 }
 
 export const WebhookRoutes = {
-  // POST /channels/{channel.id}/webhooks - Create Webhook
   createWebhook: ((channelId: Snowflake) => `/channels/${channelId}/webhooks`) as EndpointFactory<
     `/channels/${string}/webhooks`,
     ["POST"],
@@ -136,23 +133,17 @@ export const WebhookRoutes = {
     false,
     CreateWebhookRequest
   >,
-
-  // GET /channels/{channel.id}/webhooks - Get Channel Webhooks
   getChannelWebhooks: ((channelId: Snowflake) =>
     `/channels/${channelId}/webhooks`) as EndpointFactory<
     `/channels/${string}/webhooks`,
     ["GET"],
     WebhookObject[]
   >,
-
-  // GET /guilds/{guild.id}/webhooks - Get Guild Webhooks
   getGuildWebhooks: ((guildId: Snowflake) => `/guilds/${guildId}/webhooks`) as EndpointFactory<
     `/guilds/${string}/webhooks`,
     ["GET"],
     WebhookObject[]
   >,
-
-  // GET /webhooks/{webhook.id} - Get Webhook
   getWebhook: ((webhookId: Snowflake) => `/webhooks/${webhookId}`) as EndpointFactory<
     `/webhooks/${string}`,
     ["GET", "PATCH", "DELETE"],
@@ -161,8 +152,6 @@ export const WebhookRoutes = {
     false,
     ModifyWebhookRequest
   >,
-
-  // GET /webhooks/{webhook.id}/{webhook.token} - Get Webhook with Token
   getWebhookWithToken: ((webhookId: Snowflake, webhookToken: string) =>
     `/webhooks/${webhookId}/${webhookToken}`) as EndpointFactory<
     `/webhooks/${string}/${string}`,
@@ -173,8 +162,6 @@ export const WebhookRoutes = {
     ModifyWebhookWithTokenRequest | ExecuteWebhookRequest,
     ExecuteWebhookQuery
   >,
-
-  // GET /webhooks/{webhook.id}/{webhook.token}/messages/{message.id} - Get Webhook Message
   getWebhookMessage: ((webhookId: Snowflake, webhookToken: string, messageId: Snowflake) =>
     `/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`) as EndpointFactory<
     `/webhooks/${string}/${string}/messages/${string}`,
@@ -185,8 +172,6 @@ export const WebhookRoutes = {
     EditWebhookMessageRequest,
     EditWebhookMessageQuery | WebhookMessageQuery
   >,
-
-  // POST /webhooks/{webhook.id}/{webhook.token}/slack - Execute Slack-Compatible Webhook
   executeSlackWebhook: ((webhookId: Snowflake, webhookToken: string) =>
     `/webhooks/${webhookId}/${webhookToken}/slack`) as EndpointFactory<
     `/webhooks/${string}/${string}/slack`,
@@ -197,8 +182,6 @@ export const WebhookRoutes = {
     any, // Slack payload format
     SlackWebhookQuery
   >,
-
-  // POST /webhooks/{webhook.id}/{webhook.token}/github - Execute GitHub-Compatible Webhook
   executeGitHubWebhook: ((webhookId: Snowflake, webhookToken: string) =>
     `/webhooks/${webhookId}/${webhookToken}/github`) as EndpointFactory<
     `/webhooks/${string}/${string}/github`,

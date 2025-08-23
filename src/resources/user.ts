@@ -1,7 +1,7 @@
-import type { Snowflake } from "../common/index.js";
+import type { EndpointFactory, Snowflake } from "../common/index.js";
 import type { Locale } from "../constants/index.js";
-import type { DataUri } from "../core/index.js";
-import type { EndpointFactory } from "../utils/index.js";
+import type { Client, DataUri } from "../core/index.js";
+import type { Enforce, PropsToCamel } from "../utils/index.js";
 import type { ChannelObject } from "./channel.js";
 import type { GuildMemberObject, GuildObject, IntegrationObject } from "./guild.js";
 
@@ -142,7 +142,6 @@ export interface ApplicationRoleConnectionObject {
   metadata: Record<string, string>;
 }
 
-// Request/Response interfaces
 export interface ModifyCurrentUserRequest {
   username?: string;
   avatar?: DataUri | null;
@@ -164,7 +163,6 @@ export interface UpdateApplicationRoleConnectionRequest {
   metadata?: Record<string, string>;
 }
 
-// Query parameters interfaces
 export interface GetCurrentUserGuildsQuery {
   before?: Snowflake;
   after?: Snowflake;
@@ -173,7 +171,6 @@ export interface GetCurrentUserGuildsQuery {
 }
 
 export const UserRoutes = {
-  // GET /users/@me - Get Current User
   currentUser: (() => "/users/@me") as EndpointFactory<
     "/users/@me",
     ["GET", "PATCH"],
@@ -182,15 +179,11 @@ export const UserRoutes = {
     false,
     ModifyCurrentUserRequest
   >,
-
-  // GET /users/{user.id} - Get User
   user: ((userId: Snowflake) => `/users/${userId}`) as EndpointFactory<
     `/users/${string}`,
     ["GET"],
     UserObject
   >,
-
-  // GET /users/@me/guilds - Get Current User Guilds
   currentUserGuilds: (() => "/users/@me/guilds") as EndpointFactory<
     "/users/@me/guilds",
     ["GET"],
@@ -200,23 +193,17 @@ export const UserRoutes = {
     undefined,
     GetCurrentUserGuildsQuery
   >,
-
-  // GET /users/@me/guilds/{guild.id}/member - Get Current User Guild Member
   currentUserGuildMember: ((guildId: Snowflake) =>
     `/users/@me/guilds/${guildId}/member`) as EndpointFactory<
     `/users/@me/guilds/${string}/member`,
     ["GET"],
     GuildMemberObject
   >,
-
-  // DELETE /users/@me/guilds/{guild.id} - Leave Guild
   leaveGuild: ((guildId: Snowflake) => `/users/@me/guilds/${guildId}`) as EndpointFactory<
     `/users/@me/guilds/${string}`,
     ["DELETE"],
     void
   >,
-
-  // POST /users/@me/channels - Create DM
   createDM: (() => "/users/@me/channels") as EndpointFactory<
     "/users/@me/channels",
     ["POST"],
@@ -225,8 +212,6 @@ export const UserRoutes = {
     false,
     CreateDMRequest
   >,
-
-  // POST /users/@me/channels - Create Group DM
   createGroupDM: (() => "/users/@me/channels") as EndpointFactory<
     "/users/@me/channels",
     ["POST"],
@@ -235,15 +220,11 @@ export const UserRoutes = {
     false,
     CreateGroupDMRequest
   >,
-
-  // GET /users/@me/connections - Get Current User Connections
   currentUserConnections: (() => "/users/@me/connections") as EndpointFactory<
     "/users/@me/connections",
     ["GET"],
     ConnectionObject[]
   >,
-
-  // GET /users/@me/applications/{application.id}/role-connection - Get Current User Application Role Connection
   currentUserApplicationRoleConnection: ((applicationId: Snowflake) =>
     `/users/@me/applications/${applicationId}/role-connection`) as EndpointFactory<
     `/users/@me/applications/${string}/role-connection`,
@@ -254,3 +235,39 @@ export const UserRoutes = {
     UpdateApplicationRoleConnectionRequest
   >,
 } as const satisfies Record<string, EndpointFactory<any, any, any, any, any, any, any, any>>;
+
+export abstract class BaseClass<T extends object> {
+  protected readonly client: Client;
+  protected readonly rawData: T;
+
+  constructor(client: Client, data: T) {
+    this.client = client;
+    this.rawData = data;
+  }
+
+  toJson(): Readonly<T> {
+    return Object.freeze({ ...this.rawData });
+  }
+}
+
+export class User extends BaseClass<UserObject> implements Enforce<PropsToCamel<UserObject>> {
+  readonly id = this.rawData.id;
+  readonly username = this.rawData.username;
+  readonly discriminator = this.rawData.discriminator;
+  readonly globalName = this.rawData.global_name;
+  readonly avatar = this.rawData.avatar;
+  readonly bot = Boolean(this.rawData.bot);
+  readonly system = Boolean(this.rawData.system);
+  readonly mfaEnabled = Boolean(this.rawData.mfa_enabled);
+  readonly banner = this.rawData.banner;
+  readonly accentColor = this.rawData.accent_color;
+  readonly locale = this.rawData.locale;
+  readonly verified = Boolean(this.rawData.verified);
+  readonly email = this.rawData.email;
+  readonly flags = this.rawData.flags;
+  readonly premiumType = this.rawData.premium_type;
+  readonly publicFlags = this.rawData.public_flags;
+  readonly avatarDecorationData = this.rawData.avatar_decoration_data;
+  readonly collectibles = this.rawData.collectibles;
+  readonly primaryGuild = this.rawData.primary_guild;
+}

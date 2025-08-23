@@ -1,12 +1,13 @@
-import { createReadStream, existsSync } from "node:fs";
-import { readFile, stat } from "node:fs/promises";
+import { createReadStream, existsSync, type ReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
 import { basename } from "node:path";
 import FormData from "form-data";
 import { extension, lookup } from "mime-types";
 import { type Dispatcher, Pool } from "undici";
 import { z } from "zod";
+import type { APIEndpointDefinition } from "../common/index.js";
 import { ApiVersion } from "../constants/index.js";
-import { type APIEndpointDefinition, sleep } from "../utils/index.js";
+import { sleep } from "../utils/index.js";
 
 type ExtractResponse<T> = T extends APIEndpointDefinition<
   any,
@@ -141,15 +142,14 @@ export interface JsonErrorResponse {
 }
 
 export interface FileAsset {
-  buffer: Buffer;
+  data: Buffer | ReadStream;
   filename: string;
   contentType: string;
-  size: number;
+  size: number | null;
 }
 
 const MAX_FILE_COUNT = 10;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const STREAM_THRESHOLD = 50 * 1024 * 1024;
 const INVALID_STATUSES = [401, 403, 429];
 const GLOBAL_EXEMPT_ROUTES = ["/interactions", "/webhooks"];
 const DATA_URI_REGEX = /^data:(.+);base64,(.*)$/;
@@ -186,23 +186,14 @@ export const RestOptions = z.object({
     .prefault({}),
 });
 
-export type RestOptions = z.infer<typeof RestOptions>;
-
 export class Rest {
   readonly pool: Pool;
-  readonly #options: RestOptions;
+  readonly #options: z.infer<typeof RestOptions>;
 
-  // Buckets par hash
   #buckets = new Map<string, RateLimitBucket>();
-
-  // Mapping route → bucket hash
   #routeBuckets = new Map<string, string>();
-
-  // Global rate limit (50 req/sec)
   #globalRequests = 0;
   #globalWindowStart = Date.now();
-
-  // Cloudflare protection (10k invalid/10min)
   #invalidRequests = 0;
   #invalidWindowStart = Date.now();
 
@@ -291,7 +282,6 @@ export class Rest {
 
     this.#updateRateLimit(path, method, responseHeaders, response.statusCode);
 
-    // Handle 429 specifically
     if (response.statusCode === 429) {
       const retryAfter = Number(responseHeaders[RATE_LIMIT_HEADERS.RETRY_AFTER]) * 1000;
       if (retryAfter > 0) {
@@ -301,7 +291,6 @@ export class Rest {
       }
     }
 
-    // Cleanup expired buckets occasionally (every 100 requests)
     if (this.#globalRequests % 100 === 0) {
       this.#cleanupBuckets();
     }
@@ -323,17 +312,16 @@ export class Rest {
 
     const form = new FormData();
     for (let i = 0; i < filesArray.length; i++) {
-      const processedFile = await this.#processFile(filesArray[i] as FileInput);
-
-      if (processedFile.size > MAX_FILE_SIZE) {
-        throw new Error(`File too large: ${processedFile.size} bytes`);
+      const processed = await this.#processFile(filesArray[i] as FileInput);
+      if (processed.size !== null && processed.size > MAX_FILE_SIZE) {
+        throw new Error(`File too large: ${processed.size} bytes`);
       }
 
       const fieldName = filesArray.length === 1 ? "file" : `files[${i}]`;
-      form.append(fieldName, processedFile.buffer, {
-        filename: processedFile.filename,
-        contentType: processedFile.contentType,
-        knownLength: processedFile.size,
+      form.append(fieldName, processed.data, {
+        filename: processed.filename,
+        contentType: processed.contentType,
+        knownLength: Number(processed.size),
       });
     }
 
@@ -366,7 +354,7 @@ export class Rest {
   }
 
   async #prepareBody(options?: { body?: object; files?: FileInput | FileInput[] }): Promise<{
-    body: string | Buffer | null;
+    body: any; // FormData | string | null
     headers: Record<string, string>;
   }> {
     if (options?.files) {
@@ -376,7 +364,7 @@ export class Rest {
       );
 
       return {
-        body: formData.getBuffer(),
+        body: formData as any,
         headers: formData.getHeaders(),
       };
     }
@@ -388,10 +376,7 @@ export class Rest {
       };
     }
 
-    return {
-      body: null,
-      headers: {},
-    };
+    return { body: null, headers: {} };
   }
 
   async #handleResponse<T>(response: Dispatcher.ResponseData<T>): Promise<T> {
@@ -455,31 +440,26 @@ export class Rest {
   }
 
   async #processFile(input: FileInput): Promise<FileAsset> {
-    let filename = "file";
+    let filename = "file.bin";
     if (typeof input === "string") {
       const dataUriMatch = input.match(DATA_URI_REGEX);
       if (dataUriMatch) {
         const mimeType = dataUriMatch[1] as string;
         filename = `file.${extension(mimeType) || "bin"}`;
       } else {
-        filename = basename(input);
+        filename = basename(input) || filename;
       }
     }
 
     const contentType = lookup(filename) || "application/octet-stream";
-    const buffer = await this.#toBuffer(input);
+    const { data, size } = await this.#toBuffer(input);
 
-    return {
-      buffer,
-      filename,
-      contentType,
-      size: buffer.length,
-    };
+    return { data, filename, contentType, size };
   }
 
-  async #toBuffer(input: FileInput): Promise<Buffer> {
+  async #toBuffer(input: FileInput): Promise<{ data: Buffer | ReadStream; size: number | null }> {
     if (Buffer.isBuffer(input)) {
-      return input;
+      return { data: input, size: input.length };
     }
 
     if (typeof input === "string") {
@@ -487,7 +467,8 @@ export class Rest {
       if (dataUriMatch) {
         try {
           const base64Data = dataUriMatch[2] as string;
-          return Buffer.from(base64Data, "base64");
+          const buf = Buffer.from(base64Data, "base64");
+          return { data: buf, size: buf.length };
         } catch (error) {
           throw new Error(
             `Invalid data URI: ${error instanceof Error ? error.message : String(error)}`,
@@ -501,29 +482,8 @@ export class Rest {
 
       try {
         const fileStats = await stat(input);
-        if (fileStats.size > STREAM_THRESHOLD) {
-          return new Promise((resolve, reject) => {
-            const chunks: Buffer[] = [];
-            const stream = createReadStream(input, {
-              highWaterMark: 64 * 1024, // 64KB chunks for optimal memory usage
-            });
-
-            stream.on("data", (chunk) => {
-              const bufferChunk = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-              chunks.push(bufferChunk);
-            });
-
-            stream.on("end", () => {
-              resolve(Buffer.concat(chunks));
-            });
-
-            stream.on("error", (error) => {
-              reject(new Error(`Stream reading failed for "${input}": ${error.message}`));
-            });
-          });
-        }
-
-        return await readFile(input);
+        const stream = createReadStream(input, { highWaterMark: 64 * 1024 }); // 64KB
+        return { data: stream, size: fileStats.size };
       } catch (error) {
         throw new Error(
           `Failed to read file "${input}": ${error instanceof Error ? error.message : String(error)}`,
@@ -537,10 +497,8 @@ export class Rest {
   #checkRateLimit(path: string, method: HttpMethod): RateLimitResult {
     const now = Date.now();
 
-    // 1. Global rate limit (50 req/sec) - sauf routes exemptées
     const isExempt = GLOBAL_EXEMPT_ROUTES.some((route) => path.includes(route));
     if (!isExempt) {
-      // Reset window si nécessaire
       if (now - this.#globalWindowStart >= 1000) {
         this.#globalRequests = 0;
         this.#globalWindowStart = now;
@@ -552,7 +510,6 @@ export class Rest {
       }
     }
 
-    // 2. Cloudflare protection (10k invalid/10min)
     if (now - this.#invalidWindowStart >= 600_000) {
       this.#invalidRequests = 0;
       this.#invalidWindowStart = now;
@@ -563,7 +520,6 @@ export class Rest {
       return { canProceed: false, retryAfter };
     }
 
-    // 3. Bucket rate limit
     const routeKey = `${method}:${path}`;
     const bucketHash = this.#routeBuckets.get(routeKey);
 
@@ -584,15 +540,12 @@ export class Rest {
     headers: Record<string, string>,
     statusCode: number,
   ): void {
-    // Update global counter
     this.#globalRequests++;
 
-    // Track invalid requests
     if (INVALID_STATUSES.includes(statusCode)) {
       this.#invalidRequests++;
     }
 
-    // Update bucket si présent
     const bucketHash = headers[RATE_LIMIT_HEADERS.BUCKET];
     if (bucketHash) {
       const limit = Number(headers[RATE_LIMIT_HEADERS.LIMIT]);
@@ -606,15 +559,12 @@ export class Rest {
 
   #cleanupBuckets(): void {
     const now = Date.now();
-
-    // Remove expired buckets
     for (const [hash, bucket] of this.#buckets.entries()) {
       if (bucket.reset <= now) {
         this.#buckets.delete(hash);
       }
     }
 
-    // Remove mappings vers buckets inexistants
     for (const [routeKey, bucketHash] of this.#routeBuckets.entries()) {
       if (!this.#buckets.has(bucketHash)) {
         this.#routeBuckets.delete(routeKey);

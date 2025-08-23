@@ -10,11 +10,11 @@ type PickFromConstructor<
   K extends PropertyKey & keyof InstanceType<T>,
 > = new (...args: ConstructorParameters<T>) => Pick<InstanceType<T>, K>;
 
+type Capitalize<S extends string> = S extends `${infer P}${infer Q}` ? `${Uppercase<P>}${Q}` : S;
+
 type CamelCase<S extends string> = S extends `${infer P}_${infer Q}`
   ? `${P}${Capitalize<CamelCase<Q>>}`
   : S;
-
-type Capitalize<S extends string> = S extends `${infer P}${infer Q}` ? `${Uppercase<P>}${Q}` : S;
 
 export type PropsToCamel<T> = T extends Array<infer U>
   ? PropsToCamel<U>[]

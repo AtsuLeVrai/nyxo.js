@@ -26,12 +26,10 @@ export const GatewayOptions = z.object({
   compressionType: z.enum(["zlib-stream"]).optional(),
 });
 
-export type GatewayOptions = z.infer<typeof GatewayOptions>;
-
 export class Gateway {
   #erlpack: typeof import("erlpack") | null = null;
   #zlibInflate: import("zlib-sync").Inflate | null = null;
-  readonly #options: GatewayOptions;
+  readonly #options: z.infer<typeof GatewayOptions>;
 
   constructor(options: z.input<typeof GatewayOptions>) {
     try {
@@ -68,7 +66,8 @@ export class Gateway {
           );
         }
 
-        this.#zlibInflate = new result.data.Inflate();
+        // Configure Inflate with a reasonable chunk size for gateway frames.
+        this.#zlibInflate = new result.data.Inflate({ chunkSize: 128 * 1024 });
       }
     } catch (error) {
       throw new Error(`Failed to initialize ${this.#options.encodingType} encoding service`, {
@@ -132,10 +131,17 @@ export class Gateway {
     }
 
     try {
-      this.#zlibInflate.push(data);
+      // Use Z_SYNC_FLUSH (2) to emit output without ending the stream.
+      this.#zlibInflate.push(data, 2);
       if (this.#zlibInflate.err < 0) {
         const errorMessage = this.#zlibInflate.msg || `Zlib error code: ${this.#zlibInflate.err}`;
         throw new Error(`Native zlib decompression failed: ${errorMessage}`);
+      }
+
+      const hasFlushSuffix = data.length >= 4 && data.readUInt32BE(data.length - 4) === 0x0000ffff;
+
+      if (!hasFlushSuffix) {
+        return Buffer.alloc(0);
       }
 
       return Buffer.isBuffer(this.#zlibInflate.result)

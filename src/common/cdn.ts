@@ -1,4 +1,4 @@
-import type { Snowflake } from "../common/index.js";
+import type { Snowflake } from "./snowflake.js";
 
 export type CdnUrl<T extends string = string> = `https://cdn.discordapp.com/${T}`;
 export type MediaProxyUrl<T extends string = string> = `https://media.discordapp.net/${T}`;

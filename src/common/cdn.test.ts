@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { AttachmentUrl, EmojiUrl, GuildIconUrl, ImageSize, UserAvatarUrl } from "./cdn.js";
-import { Cdn } from "./cdn.js";
+import {
+  type AttachmentUrl,
+  Cdn,
+  type EmojiUrl,
+  type GuildIconUrl,
+  type ImageSize,
+  type UserAvatarUrl,
+} from "./cdn.js";
 
 describe("Cdn", () => {
   describe("constants", () => {
