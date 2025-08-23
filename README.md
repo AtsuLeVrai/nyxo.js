@@ -12,11 +12,33 @@
     <a href="https://www.npmjs.com/package/nyxo">
       <img src="https://img.shields.io/badge/npm-package-CB3837?style=for-the-badge&logo=npm&logoColor=white" alt="npm">
     </a>
+    <a href="https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise">
+      <img src="https://img.shields.io/badge/Status-On%20Hold-orange.svg?style=for-the-badge" alt="Status">
+    </a>
     <a href="https://biomejs.com/">
       <img src="https://img.shields.io/badge/BiomeJS-60A5FA?style=for-the-badge&logo=biome&logoColor=white" alt="Biome">
     </a>
   </p>
 </div>
+
+---
+
+## ⚠️ **IMPORTANT NOTICE - PROJECT ON HOLD**
+
+> [!WARNING]
+> **This project is temporarily suspended.** The current codebase will be removed and replaced by a **complete reconstruction** at a later date.
+
+### 📦 Legacy Code Preserved
+
+All current code has been moved to the **[`legacy-enterprise`](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise)** branch for preservation.
+
+This branch contains:
+- ✅ Complete enterprise architecture
+- ✅ Advanced REST client system
+- ✅ WebSocket Gateway with compression support
+- ✅ Full Discord API type coverage
+- ✅ CDN management and utilities
+- ✅ Tests and documentation
 
 ---
 
@@ -44,15 +66,35 @@ The suffix **-o** adds a modern and dynamic touch, reflecting the library's ambi
 ## ⚠️ Development Status
 
 > [!IMPORTANT]
-> **Currently in active development** - Complete rewrite focusing on simplicity and performance.  
-> This represents a fresh start with lessons learned from complex enterprise architectures.
+> **Currently undergoing major architectural restructuring** - The project is being completely rebuilt from the ground up.  
+> 
+> The previous enterprise-level implementation has been preserved in the [`legacy-enterprise`](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise) branch and will serve as reference for the new simplified architecture.
 
-**Goals for v1.0:**
-- Complete Discord API coverage
-- Intuitive TypeScript API
-- Excellent developer experience
-- Production-ready performance
-- Comprehensive documentation
+### 🔄 Future Reconstruction
+
+When development resumes, Nyxo.js will be **entirely rebuilt** with:
+
+- 🎯 **Simplified Focus** - More intuitive and direct API
+- ⚡ **Optimal Performance** - Architecture redesigned for speed
+- 🛡️ **Modern TypeScript** - Latest TS features utilization
+- 📦 **Minimal Bundle** - Only what you actually need
+- 🚀 **Enhanced DX** - Exceptional developer experience
+
+### 📅 Project Status
+
+| Status | Description |
+|--------|-------------|
+| 🔄 **On Hold** | Development temporarily suspended |
+| 🗃️ **Code Preserved** | Saved in [`legacy-enterprise`](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise) |
+| 🔮 **Reconstruction** | Planned for future |
+| 📝 **Design** | Vision and principles established |
+
+**Goals for the Rebuild:**
+- Complete Discord API coverage with simplified interfaces
+- Intuitive TypeScript API that feels natural to use
+- Excellent developer experience with comprehensive IntelliSense
+- Production-ready performance without configuration complexity
+- Clear, actionable documentation with practical examples
 
 ---
 
@@ -82,11 +124,15 @@ The suffix **-o** adds a modern and dynamic touch, reflecting the library's ambi
 
 ## 🛠️ Installation
 
+> [!NOTE]
+> Package installation is currently unavailable during the rebuild phase.
+
 ```bash
+# Coming soon
 npm install nyxo.js
 # or
 yarn add nyxo.js
-# or
+# or  
 pnpm add nyxo.js
 # or
 bun add nyxo.js
@@ -100,20 +146,19 @@ bun add nyxo.js
 
 ## 🤝 Contributing
 
-This project is in active development and welcomes contributors! Whether you're:
+This project is currently in **active restructuring phase**. Contributions are not being accepted at this time.
 
-- 🐛 **Finding bugs** - Help us identify and fix issues
-- 💡 **Suggesting features** - Share ideas for improvements  
-- 📝 **Writing code** - Contribute to the core library
-- 📖 **Improving docs** - Help make documentation clearer
+**However, you can:**
+- ⭐ **Star the repository** - Show your interest in the project
+- 👁️ **Watch the repository** - Be notified when development resumes
+- 💬 **Open discussions** - Share your ideas about the future API
+- 📖 **Review legacy code** - Check the [`legacy-enterprise`](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise) branch
 
-### **Development Setup**
-
-```bash
-git clone https://github.com/nyxo-labs/nyxo.js.git
-cd nyxo.js
-pnpm install
-```
+**Development will resume with:**
+- Clear contribution guidelines
+- Simplified codebase structure  
+- Beginner-friendly setup process
+- Comprehensive development documentation
 
 ---
 
@@ -126,6 +171,7 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 ## 🔗 Links
 
 - **🏠 Nyxo Labs** - [github.com/nyxo-labs](https://github.com/nyxo-labs)
+- **📚 Legacy Code** - [legacy-enterprise branch](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise)
 
 ---
 
@@ -134,5 +180,7 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 ### **Built with ❤️ for modern Discord development**
 
 *Simple. Fast. Powerful.*
+
+**🌙 The renaissance will come...**
 
 </div>
