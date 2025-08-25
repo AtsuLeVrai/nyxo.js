@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json.schemastore.org/package",
+  "name": "nyxo.js",
+  "packageManager": "pnpm@10.15.0+sha512.486ebc259d3e999a4e8691ce03b5cac4a71cbeca39372a9b762cb500cfdf0873e2cb16abe3d951b1ee2cf012503f027b98b6584e4df22524e0c7450d9ec7aa7b",
+  "homepage": "https://github.com/nyxo-labs/nyxo.js",
+  "readme": "README.md",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nyxo-labs/nyxo.js"
+  },
+  "bugs": {
+    "url": "https://github.com/nyxo-labs/nyxo.js/issues"
+  },
+  "author": {
+    "name": "AtsuLeVrai",
+    "url": "https://github.com/AtsuLeVrai"
+  },
+  "scripts": {
+    "biome:check": "biome check --unsafe --write",
+    "build:dev": "tsc -p tsconfig.json",
+    "build:prod": "tsdown",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1",
+    "form-data": "^4.0.4",
+    "undici": "^7.15.0",
+    "ws": "^8.18.3",
+    "zod": "^4.1.1"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.9",
+    "erlpack": "^0.1.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.2",
+    "@types/node": "^24.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.5",
+    "tsdown": "^0.14.1",
+    "typescript": "^5.9.2"
+  },
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --unsafe --write"
+    ]
+  }
+}
