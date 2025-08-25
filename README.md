@@ -26,13 +26,16 @@
 ## ⚠️ **IMPORTANT NOTICE - COMPLETE RECONSTRUCTION**
 
 > [!WARNING]
-> **This project is undergoing a complete architectural rebuild.** The current enterprise codebase has been preserved and will be replaced by a revolutionary zero-cache, ultra-performance implementation.
+> **This project is undergoing a complete architectural rebuild.** The current enterprise codebase has been preserved
+> and will be replaced by a revolutionary zero-cache, ultra-performance implementation.
 
 ### 📦 Legacy Preservation
 
-All previous enterprise code is preserved in **[`legacy-enterprise`](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise)** branch.
+All previous enterprise code is preserved in *
+*[`legacy-enterprise`](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise)** branch.
 
 **Legacy Issues Resolved:**
+
 - ❌ Complex monorepo/turborepo architecture (too complex for solo development)
 - ❌ Node-addon-api/C++ bindings maintenance hell
 - ❌ Over-engineered enterprise patterns
@@ -42,17 +45,20 @@ All previous enterprise code is preserved in **[`legacy-enterprise`](https://git
 
 ## 🎯 Revolutionary Philosophy
 
-**Discord libraries are fundamentally broken.** Discord.js uses 500MB+ RAM for 100 guilds. Enterprise bots crash from memory leaks. Rate limiting is an afterthought.
+**Discord libraries are fundamentally broken.** Discord.js uses 500MB+ RAM for 100 guilds. Enterprise bots crash from
+memory leaks. Rate limiting is an afterthought.
 
 **Nyxo.js changes everything:**
 
 ### **🚀 Impossible Performance Goals**
+
 - **<10MB RAM** for 1000+ guilds
 - **Zero cache, always fresh** data
-- **Ultra-intelligent rate limiting** 
+- **Ultra-intelligent rate limiting**
 - **Enterprise-grade reliability**
 
 ### **🛡️ Technical Excellence**
+
 - **Complete Discord API coverage** with pristine TypeScript
 - **Advanced OOP design** for intuitive development
 - **ES2024 + strict TypeScript** for maximum type safety
@@ -62,13 +68,15 @@ All previous enterprise code is preserved in **[`legacy-enterprise`](https://git
 
 ## 🌙 Why "Nyxo"?
 
-**Nyx**, the Greek goddess of night, represents the **power that emerges from darkness** - just like how Nyxo.js emerges from the darkness of current Discord library limitations to bring unprecedented performance and clarity.
+**Nyx**, the Greek goddess of night, represents the **power that emerges from darkness** - just like how Nyxo.js emerges
+from the darkness of current Discord library limitations to bring unprecedented performance and clarity.
 
 ---
 
 ## ⚡ Revolutionary Architecture
 
 ### **🔥 Zero-Cache Design**
+
 ```typescript
 // Traditional Discord.js: Caches everything, memory nightmare
 const guild = client.guilds.cache.get(id); // 500MB+ RAM
@@ -78,6 +86,7 @@ const guild = await client.guilds.fetch(id); // <10KB memory impact
 ```
 
 ### **🎯 Intelligent Rate Limiting**
+
 ```typescript
 // Predictive rate limiting prevents Discord bans before they happen
 await channel.send("Message 1"); // Automatically queued and optimized
@@ -86,17 +95,18 @@ await channel.send("Message 3"); // Never hits rate limits
 ```
 
 ### **🛡️ Enterprise-Ready Error Handling**
+
 ```typescript
 try {
-  await member.ban("Spam");
+    await member.ban("Spam");
 } catch (error) {
-  // Custom error types with auto-retry logic
-  if (error instanceof RateLimitError) {
-    // Automatically retried with intelligent backoff
-  }
-  if (error instanceof PermissionError) {
-    // Fail fast with clear actionable message
-  }
+    // Custom error types with auto-retry logic
+    if (error instanceof RateLimitError) {
+        // Automatically retried with intelligent backoff
+    }
+    if (error instanceof PermissionError) {
+        // Fail fast with clear actionable message
+    }
 }
 ```
 
@@ -105,8 +115,9 @@ try {
 ## 🎯 Target: Performance-Obsessed Developers
 
 **Not for beginners. Built for developers who demand:**
+
 - 🚀 **Maximum performance** in production environments
-- 🛡️ **Enterprise reliability** for critical applications  
+- 🛡️ **Enterprise reliability** for critical applications
 - ⚡ **Latest TypeScript** features and strict type safety
 - 🎮 **Complex bot architectures** with advanced Discord features
 - 🔧 **Clean, intuitive APIs** without sacrificing power
@@ -116,19 +127,23 @@ try {
 ## 🏆 Killer Features
 
 ### **🎯 Complete API Coverage**
+
 Every Discord feature supported with **pristine TypeScript definitions** and **comprehensive TSDoc**.
 
-### **⚡ Memory Revolution** 
+### **⚡ Memory Revolution**
+
 - Traditional: **500MB+** for 100 guilds
 - Nyxo.js: **<10MB** for 1000+ guilds
 - **Zero memory leaks** by design
 
 ### **🛡️ Intelligent Request Management**
+
 - **Smart deduplication** - Multiple identical requests = single API call
 - **Predictive rate limiting** - Prevents Discord bans before they occur
 - **Advanced queuing** with priority-based request handling
 
 ### **🔧 Developer Experience Excellence**
+
 - **100% TypeScript strict mode** with ES2024 features
 - **Rich IntelliSense** with detailed TSDoc everywhere
 - **Custom error types** with actionable error messages
@@ -139,11 +154,13 @@ Every Discord feature supported with **pristine TypeScript definitions** and **c
 ## 🛠️ Technical Specifications
 
 ### **Requirements**
+
 - **Node.js 24+** (latest stable for maximum reliability)
 - **TypeScript 5.9+** (strict mode required)
 - **ESM modules** (no CommonJS compatibility)
 
 ### **Architecture Principles**
+
 - **Zero-cache, always fresh** data strategy
 - **Monolithic package** for simplified dependency management
 - **OOP-first design** for intuitive API (`channel.send()` not `sendMessage()`)
@@ -168,29 +185,34 @@ npm install nyxo.js
 ## 🎯 Design Philosophy
 
 ### **Performance First**
-Every architectural decision prioritizes performance over convenience. Memory usage, request efficiency, and execution speed are the primary metrics.
 
-### **Enterprise Reliability**  
+Every architectural decision prioritizes performance over convenience. Memory usage, request efficiency, and execution
+speed are the primary metrics.
+
+### **Enterprise Reliability**
+
 Built for complex production environments handling thousands of guilds with demanding uptime requirements.
 
 ### **Zero Bloat**
+
 Only essential features. No unused dependencies. No feature creep. Every byte serves a purpose.
 
 ### **TypeScript Excellence**
+
 Leverage the full power of modern TypeScript for unparalleled type safety and developer experience.
 
 ---
 
 ## 📊 Performance Targets
 
-| Metric | Discord.js | Nyxo.js Goal |
-|--------|------------|--------------|
-| Memory (100 guilds) | 500MB+ | <1MB |
-| Memory (1000 guilds) | 5GB+ | <10MB |
-| Rate limit accuracy | ~90% | 99.9% |
-| Bundle size | 500KB+ | Not a concern |
-| TypeScript support | Partial | Complete |
-| Enterprise features | Basic | Advanced |
+| Metric               | Discord.js | Nyxo.js Goal  |
+|----------------------|------------|---------------|
+| Memory (100 guilds)  | 500MB+     | <1MB          |
+| Memory (1000 guilds) | 5GB+       | <10MB         |
+| Rate limit accuracy  | ~90%       | 99.9%         |
+| Bundle size          | 500KB+     | Not a concern |
+| TypeScript support   | Partial    | Complete      |
+| Enterprise features  | Basic      | Advanced      |
 
 ---
 
@@ -198,10 +220,12 @@ Leverage the full power of modern TypeScript for unparalleled type safety and de
 
 > [!IMPORTANT]
 > **Complete architectural reconstruction in progress**
-> 
-> The legacy enterprise implementation has been **completely discarded** in favor of a revolutionary zero-cache, ultra-performance approach.
+>
+> The legacy enterprise implementation has been **completely discarded** in favor of a revolutionary zero-cache,
+> ultra-performance approach.
 
 ### **🎯 Reconstruction Goals**
+
 - ⚡ **Ultra-performance architecture** with <10MB memory footprint
 - 🛡️ **Zero-cache design** with always-fresh data
 - 🚀 **Complete Discord API coverage** with pristine TypeScript
@@ -209,26 +233,30 @@ Leverage the full power of modern TypeScript for unparalleled type safety and de
 - 🔧 **Intuitive OOP API** design throughout
 
 ### **📅 Current Focus**
-| Phase | Status | Description |
-|-------|--------|-------------|
-| 🔄 **Architecture** | In Progress | Zero-cache, ultra-performance foundation |
-| 📋 **Planning** | Complete | Technical specifications finalized |
-| 🛠️ **Core Systems** | Next | Rate limiting, REST, WebSocket managers |
-| 🎯 **API Design** | Planned | Resource-based OOP architecture |
+
+| Phase                | Status      | Description                              |
+|----------------------|-------------|------------------------------------------|
+| 🔄 **Architecture**  | In Progress | Zero-cache, ultra-performance foundation |
+| 📋 **Planning**      | Complete    | Technical specifications finalized       |
+| 🛠️ **Core Systems** | Next        | Rate limiting, REST, WebSocket managers  |
+| 🎯 **API Design**    | Planned     | Resource-based OOP architecture          |
 
 ---
 
 ## 🤝 Contributing
 
-This project is currently in **active reconstruction phase**. 
+This project is currently in **active reconstruction phase**.
 
-**Solo Development:** This is a single-developer project focused on achieving impossible performance goals that require deep architectural control.
+**Solo Development:** This is a single-developer project focused on achieving impossible performance goals that require
+deep architectural control.
 
 **You can:**
+
 - ⭐ **Star the repository** - Show support for ultra-performance Discord libraries
 - 👁️ **Watch for updates** - Be notified when the revolution begins
 - 💬 **Open discussions** - Share your enterprise Discord bot challenges
-- 📖 **Study legacy code** - Examine the [`legacy-enterprise`](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise) branch
+- 📖 **Study legacy code** - Examine the [
+  `legacy-enterprise`](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise) branch
 
 ---
 

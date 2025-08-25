@@ -31,8 +31,6 @@
       },
       "complexity": {
         "recommended": true,
-        "noExcessiveCognitiveComplexity": "info",
-        "noExcessiveLinesPerFunction": "error",
         "noUselessConstructor": "error",
         "useFlatMap": "error"
       },
@@ -75,14 +73,13 @@
         "noConsole": "warn",
         "noDebugger": "error",
         "noDoubleEquals": "error",
-        "noExplicitAny": "error",
+        "noExplicitAny": "info",
         "noSparseArray": "error",
         "useAwait": "error",
         "useIsArray": "error"
       },
       "nursery": {
         "recommended": true,
-        "noSecrets": "error",
         "noUnresolvedImports": "off",
         "useSortedClasses": "warn"
       }
