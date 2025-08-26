@@ -33,7 +33,6 @@ export enum GatewayConnectionState {
 }
 
 export interface GatewayEvents {
-  error: [error: Error];
   resumed: [];
   stateChange: [oldState: GatewayConnectionState, newState: GatewayConnectionState];
   dispatch: [
@@ -57,10 +56,10 @@ export const GatewayOptions = z.object({
     z
       .array(z.enum(GatewayIntentBits))
       .transform((value) => Number(BitField.combine(value).valueOf())),
-    z.number().int().min(0),
+    z.int().min(0),
   ]),
   version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
-  largeThreshold: z.number().int().min(50).max(250).default(50),
+  largeThreshold: z.int().min(50).max(250).default(50),
   encodingType: z.enum(["json", "etf"]).default("json"),
   compressionType: z.enum(["zlib-stream"]).optional(),
   shard: z.tuple([z.int().nonnegative(), z.int().nonnegative()]).optional(),
@@ -207,7 +206,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     const now = Date.now();
-
     if (now >= this.#rateLimitBucket.resetAt) {
       this.#rateLimitBucket.count = 0;
       this.#rateLimitBucket.resetAt = now + 60000; // 60 secondes
@@ -341,7 +339,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     this.#ws.on("message", this.#handleMessage.bind(this));
     this.#ws.on("close", this.#handleClose.bind(this));
-    this.#ws.on("error", (error) => this.emit("error", error));
+    this.#ws.on("open", () => this.emit("wsOpen"));
+    this.#ws.on("error", (error) => this.emit("wsError", error));
 
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error("Connection timeout")), 15000);
@@ -527,7 +526,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
   }
 
-  async #handleClose(code: number): Promise<void> {
+  async #handleClose(code: number, reason: string): Promise<void> {
+    this.emit("wsClose", code, reason);
     this.heartbeat.destroy();
 
     if (code === 1000 || code === 1001 || [4004, 4010, 4011, 4012, 4013, 4014].includes(code)) {

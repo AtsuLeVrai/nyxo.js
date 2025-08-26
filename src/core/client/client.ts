@@ -40,4 +40,9 @@ export class Client extends EventEmitter {
 
     this.user = new User(this, user);
   }
+
+  async destroy(): Promise<void> {
+    this.gateway.destroy();
+    await this.rest.destroy();
+  }
 }

@@ -43,11 +43,11 @@ export interface ShardManagerEvents {
 }
 
 export const ShardManagerOptions = z.object({
-  totalShards: z.union([z.number().int().positive(), z.literal("auto")]).default("auto"),
-  shardList: z.array(z.number().int().nonnegative()).optional(),
-  spawnDelay: z.number().int().positive().default(5000),
+  totalShards: z.union([z.int().positive(), z.literal("auto")]).default("auto"),
+  shardList: z.array(z.int().nonnegative()).optional(),
+  spawnDelay: z.int().positive().default(5000),
   autoReconnect: z.boolean().default(true),
-  maxReconnectAttempts: z.number().int().positive().default(5),
+  maxReconnectAttempts: z.int().positive().default(5),
 });
 
 export class ShardManager extends EventEmitter<ShardManagerEvents> {
@@ -231,9 +231,10 @@ export class ShardManager extends EventEmitter<ShardManagerEvents> {
   }
 
   async destroy(): Promise<void> {
-    const destroyPromises = Array.from(this.#shards.values()).map((shard) =>
-      shard.gateway.destroy(),
-    );
+    const destroyPromises = Array.from(this.#shards.values()).map((shard) => {
+      shard.gateway.removeAllListeners();
+      return shard.gateway.destroy();
+    });
 
     await Promise.allSettled(destroyPromises);
     this.#shards.clear();
@@ -263,7 +264,7 @@ export class ShardManager extends EventEmitter<ShardManagerEvents> {
       this.emit("shardResumed", shardId);
     });
 
-    gateway.on("error", async (error) => {
+    gateway.on("wsError", async (error) => {
       shardInfo.status = GatewayConnectionState.Disconnected;
       this.emit("shardError", shardId, error);
 
@@ -326,10 +327,14 @@ export class ShardManager extends EventEmitter<ShardManagerEvents> {
     const sortedBuckets = Array.from(buckets.entries()).sort(([a], [b]) => a - b);
     for (let i = 0; i < sortedBuckets.length; i++) {
       const [_bucketId, bucketShards] = sortedBuckets[i] as [number, number[]];
+      const gatewayInfo = await this.#rest.gateway.fetchBotGatewayInfo();
+      if (gatewayInfo.session_start_limit.remaining === 0) {
+        const waitTime = gatewayInfo.session_start_limit.reset_after;
+        await sleep(waitTime);
+      }
 
       const connectPromises = bucketShards.map(async (shardId) => {
         const shard = this.#shards.get(shardId) as ShardInfo;
-
         try {
           shard.gateway.setShard(shardId, shard.totalShards);
           shard.status = GatewayConnectionState.Connecting;

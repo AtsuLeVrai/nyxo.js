@@ -8,6 +8,7 @@ import type {
   AutoModerationRuleEntity,
   ChannelPinsUpdateEntity,
   EntitlementEntity,
+  GatewayWebhooksUpdateEntity,
   GuildApplicationCommandPermissionEntity,
   GuildAuditLogEntryCreateEntity,
   GuildBanEntity,
@@ -54,7 +55,6 @@ import type {
   VoiceChannelEffectSendEntity,
   VoiceServerUpdateEntity,
   VoiceStateEntity,
-  WebhooksUpdateEntity,
 } from "../../resources/index.js";
 
 export interface PayloadEntity {
@@ -191,7 +191,7 @@ export interface GatewayReceiveEvents {
   VOICE_CHANNEL_EFFECT_SEND: VoiceChannelEffectSendEntity;
   VOICE_STATE_UPDATE: VoiceStateEntity;
   VOICE_SERVER_UPDATE: VoiceServerUpdateEntity;
-  WEBHOOKS_UPDATE: WebhooksUpdateEntity;
+  WEBHOOKS_UPDATE: GatewayWebhooksUpdateEntity;
   INTERACTION_CREATE: AnyInteractionEntity;
   STAGE_INSTANCE_CREATE: StageInstanceEntity;
   STAGE_INSTANCE_UPDATE: StageInstanceEntity;

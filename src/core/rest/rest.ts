@@ -35,50 +35,14 @@ import {
   WebhookRouter,
 } from "../../resources/index.js";
 import { RateLimitManager, RateLimitOptions } from "./rate-limit.manager.js";
-
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-export type DataUri = `data:${string};base64,${string}`;
-export type FileInput = string | Buffer | DataUri;
-
-export interface FileAsset {
-  data: Buffer | ReadStream;
-  filename: string;
-  contentType: string;
-  size: number | null;
-}
-
-export interface HttpRequestOptions {
-  path: string;
-  method: HttpMethod;
-  body?: string | Buffer;
-  headers?: Record<string, string>;
-  query?: object;
-  files?: FileInput | FileInput[];
-  reason?: string;
-}
-
-export interface HttpResponse<T> {
-  statusCode: number;
-  headers: Record<string, string>;
-  data: T;
-  reason?: string;
-}
-
-export interface ApiErrorDetail {
-  code: string;
-  message: string;
-}
-
-export interface ApiErrorStructure {
-  _errors?: ApiErrorDetail[];
-  [key: string]: ApiErrorStructure | ApiErrorDetail[] | undefined;
-}
-
-export interface ApiErrorResponse {
-  code: number;
-  message: string;
-  errors?: ApiErrorStructure;
-}
+import type {
+  ApiErrorResponse,
+  DataUri,
+  FileAsset,
+  FileInput,
+  HttpRequestOptions,
+  HttpResponse,
+} from "./rest.types.js";
 
 const MAX_FILE_COUNT = 10 as const;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -245,7 +209,15 @@ export class Rest {
 
       try {
         const fileStats = await stat(input);
-        const stream = createReadStream(input, { highWaterMark: 64 * 1024 });
+        const stream = createReadStream(input, {
+          highWaterMark: 64 * 1024,
+          autoClose: true,
+        });
+
+        stream.on("error", () => {
+          stream.destroy();
+        });
+
         return { data: stream, size: fileStats.size };
       } catch (error) {
         throw new Error(
