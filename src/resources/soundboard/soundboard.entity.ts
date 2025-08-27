@@ -11,12 +11,11 @@ export interface SoundboardSoundEntity {
   user?: UserEntity;
 }
 
-export interface SoundboardSoundsEntity {
+export interface GatewaySoundboardSoundsEntity
+  extends Required<Pick<SoundboardSoundEntity, "guild_id">> {
   soundboard_sounds: SoundboardSoundEntity[];
-  guild_id: string;
 }
 
-export interface GuildSoundboardSoundDeleteEntity {
-  sound_id: string;
-  guild_id: string;
-}
+export type GatewayGuildSoundboardSoundDeleteEntity = Required<
+  Pick<SoundboardSoundEntity, "guild_id" | "sound_id">
+>;

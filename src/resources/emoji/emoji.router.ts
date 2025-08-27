@@ -1,110 +1,109 @@
-import type { FileInput, Rest } from "../../core/index.js";
+import { BaseRouter } from "../../bases/index.js";
+import type { FileInput, RouteBuilder } from "../../core/index.js";
+import type { Nullable, StripNull } from "../../utils/index.js";
 import type { EmojiEntity } from "./emoji.entity.js";
 
-export interface GuildEmojiCreateOptions {
-  name: string;
+export interface RESTCreateGuildEmojiJSONParams
+  extends StripNull<Pick<EmojiEntity, "name">>,
+    Pick<EmojiEntity, "roles"> {
   image: FileInput;
-  roles?: string[];
 }
 
-export interface GuildEmojiUpdateOptions {
-  name?: string;
-  roles?: string[] | null;
-}
+export type RESTModifyGuildEmojiJSONParams = Partial<
+  Pick<RESTCreateGuildEmojiJSONParams, "name"> &
+    Nullable<Pick<RESTCreateGuildEmojiJSONParams, "roles">>
+>;
 
-export interface ApplicationEmojisResponse {
-  items: EmojiEntity[];
-}
+export type RESTCreateApplicationEmojiJSONParams = Omit<RESTCreateGuildEmojiJSONParams, "roles">;
 
-export type ApplicationEmojiCreateOptions = Omit<GuildEmojiCreateOptions, "roles">;
+export type RESTModifyApplicationEmojiJSONParams = Pick<RESTCreateGuildEmojiJSONParams, "name">;
 
-export type ApplicationEmojiUpdateOptions = Pick<GuildEmojiUpdateOptions, "name">;
+export const EmojiRoutes = {
+  listGuildEmojis: (guildId: string) => `/guilds/${guildId}/emojis` as const,
+  getGuildEmoji: (guildId: string, emojiId: string) =>
+    `/guilds/${guildId}/emojis/${emojiId}` as const,
+  listApplicationEmojis: (applicationId: string) =>
+    `/applications/${applicationId}/emojis` as const,
+  getApplicationEmoji: (applicationId: string, emojiId: string) =>
+    `/applications/${applicationId}/emojis/${emojiId}` as const,
+} as const satisfies RouteBuilder;
 
-export class EmojiRouter {
-  static readonly Routes = {
-    guildEmojisEndpoint: (guildId: string) => `/guilds/${guildId}/emojis` as const,
-    guildEmojiByIdEndpoint: (guildId: string, emojiId: string) =>
-      `/guilds/${guildId}/emojis/${emojiId}` as const,
-    applicationEmojisEndpoint: (applicationId: string) =>
-      `/applications/${applicationId}/emojis` as const,
-    applicationEmojiByIdEndpoint: (applicationId: string, emojiId: string) =>
-      `/applications/${applicationId}/emojis/${emojiId}` as const,
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
+export class EmojiRouter extends BaseRouter {
+  listGuildEmojis(guildId: string): Promise<EmojiEntity[]> {
+    return this.rest.get(EmojiRoutes.listGuildEmojis(guildId));
   }
-  fetchGuildEmojis(guildId: string): Promise<EmojiEntity[]> {
-    return this.#rest.get(EmojiRouter.Routes.guildEmojisEndpoint(guildId));
+
+  getGuildEmoji(guildId: string, emojiId: string): Promise<EmojiEntity> {
+    return this.rest.get(EmojiRoutes.getGuildEmoji(guildId, emojiId));
   }
-  fetchGuildEmoji(guildId: string, emojiId: string): Promise<EmojiEntity> {
-    return this.#rest.get(EmojiRouter.Routes.guildEmojiByIdEndpoint(guildId, emojiId));
-  }
+
   async createGuildEmoji(
     guildId: string,
-    options: GuildEmojiCreateOptions,
+    options: RESTCreateGuildEmojiJSONParams,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const processedOptions = { ...options };
-    if (processedOptions.image) {
-      processedOptions.image = await this.#rest.toDataUri(processedOptions.image);
-    }
-    return this.#rest.post(EmojiRouter.Routes.guildEmojisEndpoint(guildId), {
+    const processedOptions = await this.processFileOptions(options, ["image"]);
+    return this.rest.post(EmojiRoutes.listGuildEmojis(guildId), {
       body: JSON.stringify(processedOptions),
       reason,
     });
   }
-  updateGuildEmoji(
+
+  modifyGuildEmoji(
     guildId: string,
     emojiId: string,
-    options: GuildEmojiUpdateOptions,
+    options: RESTModifyGuildEmojiJSONParams,
     reason?: string,
   ): Promise<EmojiEntity> {
-    return this.#rest.patch(EmojiRouter.Routes.guildEmojiByIdEndpoint(guildId, emojiId), {
+    return this.rest.patch(EmojiRoutes.getGuildEmoji(guildId, emojiId), {
       body: JSON.stringify(options),
       reason,
     });
   }
+
   deleteGuildEmoji(guildId: string, emojiId: string, reason?: string): Promise<void> {
-    return this.#rest.delete(EmojiRouter.Routes.guildEmojiByIdEndpoint(guildId, emojiId), {
+    return this.rest.delete(EmojiRoutes.getGuildEmoji(guildId, emojiId), {
       reason,
     });
   }
-  fetchApplicationEmojis(applicationId: string): Promise<ApplicationEmojisResponse> {
-    return this.#rest.get(EmojiRouter.Routes.applicationEmojisEndpoint(applicationId));
+
+  listApplicationEmojis(applicationId: string): Promise<{
+    items: EmojiEntity[];
+  }> {
+    return this.rest.get(EmojiRoutes.listApplicationEmojis(applicationId));
   }
-  fetchApplicationEmoji(applicationId: string, emojiId: string): Promise<EmojiEntity> {
-    return this.#rest.get(EmojiRouter.Routes.applicationEmojiByIdEndpoint(applicationId, emojiId));
+
+  getApplicationEmoji(applicationId: string, emojiId: string): Promise<EmojiEntity> {
+    return this.rest.get(EmojiRoutes.getApplicationEmoji(applicationId, emojiId));
   }
+
   async createApplicationEmoji(
     applicationId: string,
-    options: ApplicationEmojiCreateOptions,
+    options: RESTCreateApplicationEmojiJSONParams,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const processedOptions = { ...options };
-    if (processedOptions.image) {
-      processedOptions.image = await this.#rest.toDataUri(processedOptions.image);
-    }
-    return this.#rest.post(EmojiRouter.Routes.applicationEmojisEndpoint(applicationId), {
+    const processedOptions = await this.processFileOptions(options, ["image"]);
+    return this.rest.post(EmojiRoutes.listApplicationEmojis(applicationId), {
       body: JSON.stringify(processedOptions),
       reason,
     });
   }
-  updateApplicationEmoji(
+
+  modifyApplicationEmoji(
     applicationId: string,
     emojiId: string,
-    options: ApplicationEmojiUpdateOptions,
+    options: RESTModifyApplicationEmojiJSONParams,
     reason?: string,
   ): Promise<EmojiEntity> {
-    return this.#rest.patch(
-      EmojiRouter.Routes.applicationEmojiByIdEndpoint(applicationId, emojiId),
-      { body: JSON.stringify(options), reason },
-    );
+    return this.rest.patch(EmojiRoutes.getApplicationEmoji(applicationId, emojiId), {
+      body: JSON.stringify(options),
+      reason,
+    });
   }
+
   deleteApplicationEmoji(applicationId: string, emojiId: string, reason?: string): Promise<void> {
-    return this.#rest.delete(
-      EmojiRouter.Routes.applicationEmojiByIdEndpoint(applicationId, emojiId),
-      { reason },
-    );
+    return this.rest.delete(EmojiRoutes.getApplicationEmoji(applicationId, emojiId), {
+      reason,
+    });
   }
 }

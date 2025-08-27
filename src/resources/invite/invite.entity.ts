@@ -1,7 +1,7 @@
 import type { ApplicationEntity } from "../application/index.js";
 import type { AnyChannelEntity } from "../channel/index.js";
 import type { GuildEntity, GuildMemberEntity } from "../guild/index.js";
-import type { GuildScheduledEventEntity } from "../scheduled-event/index.js";
+import type { GuildScheduledEventEntity } from "../guild-scheduled-event/index.js";
 import type { UserEntity } from "../user/index.js";
 
 export enum InviteTargetType {

@@ -1,28 +1,27 @@
-import type { Rest } from "../../core/index.js";
+import { BaseRouter } from "../../bases/index.js";
+import type { RouteBuilder } from "../../core/index.js";
 import type { OAuth2Scope } from "../../enum/index.js";
 import type { ApplicationEntity } from "../application/index.js";
 import type { UserEntity } from "../user/index.js";
 
-export interface AuthorizationResponse {
+export interface RESTGetCurrentAuthorizationInformationResponseEntity {
   application: Partial<ApplicationEntity>;
   scopes: OAuth2Scope[];
   expires: string;
   user?: UserEntity;
 }
 
-export class OAuth2Router {
-  static readonly Routes = {
-    currentApplicationEndpoint: () => "/oauth2/applications/@me",
-    currentAuthorizationEndpoint: () => "/oauth2/@me",
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
+export const OAuth2Routes = {
+  getCurrentBotApplicationInformation: () => "/oauth2/applications/@me",
+  getCurrentAuthorizationInformation: () => "/oauth2/@me",
+} as const satisfies RouteBuilder;
+
+export class OAuth2Router extends BaseRouter {
+  getCurrentBotApplicationInformation(): Promise<ApplicationEntity> {
+    return this.rest.get(OAuth2Routes.getCurrentBotApplicationInformation());
   }
-  fetchCurrentApplication(): Promise<ApplicationEntity> {
-    return this.#rest.get(OAuth2Router.Routes.currentApplicationEndpoint());
-  }
-  fetchCurrentAuthorization(): Promise<AuthorizationResponse> {
-    return this.#rest.get(OAuth2Router.Routes.currentAuthorizationEndpoint());
+
+  getCurrentAuthorizationInformation(): Promise<RESTGetCurrentAuthorizationInformationResponseEntity> {
+    return this.rest.get(OAuth2Routes.getCurrentAuthorizationInformation());
   }
 }

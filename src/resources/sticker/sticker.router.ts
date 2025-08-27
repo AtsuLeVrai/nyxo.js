@@ -1,76 +1,76 @@
-import type { FileInput, Rest } from "../../core/index.js";
+import { BaseRouter } from "../../bases/index.js";
+import type { FileInput, RouteBuilder } from "../../core/index.js";
+import type { StripNull } from "../../utils/index.js";
 import type { StickerEntity, StickerPackEntity } from "./sticker.entity.js";
 
-export interface StickerPacksResponse {
+export interface RESTStickerPacksResponseEntity {
   sticker_packs: StickerPackEntity[];
 }
 
-export interface GuildStickerCreateOptions {
-  name: string;
-  description: string;
-  tags: string;
+export interface RESTCreateGuildStickerFormParams
+  extends StripNull<Pick<StickerEntity, "name" | "description" | "tags">> {
   file: FileInput;
 }
 
-export interface GuildStickerUpdateOptions {
-  name?: string;
-  description?: string | null;
-  tags?: string;
-}
+export type RESTModifyGuildStickerJSONParams = Partial<Omit<StickerEntity, "file">>;
 
-export class StickerRouter {
-  static readonly Routes = {
-    stickerPacksEndpoint: () => "/sticker-packs",
-    stickerByIdEndpoint: (stickerId: string) => `/stickers/${stickerId}` as const,
-    stickerPackByIdEndpoint: (packId: string) => `/sticker-packs/${packId}` as const,
-    guildStickersEndpoint: (guildId: string) => `/guilds/${guildId}/stickers` as const,
-    guildStickerByIdEndpoint: (guildId: string, stickerId: string) =>
-      `/guilds/${guildId}/stickers/${stickerId}` as const,
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
+export const StickerRoutes = {
+  getSticker: (stickerId: string) => `/stickers/${stickerId}` as const,
+  listStickerPacks: () => "/sticker-packs",
+  getStickerPack: (packId: string) => `/sticker-packs/${packId}` as const,
+  listGuildStickers: (guildId: string) => `/guilds/${guildId}/stickers` as const,
+  getGuildSticker: (guildId: string, stickerId: string) =>
+    `/guilds/${guildId}/stickers/${stickerId}` as const,
+} as const satisfies RouteBuilder;
+
+export class StickerRouter extends BaseRouter {
+  getSticker(stickerId: string): Promise<StickerEntity> {
+    return this.rest.get(StickerRoutes.getSticker(stickerId));
   }
-  fetchSticker(stickerId: string): Promise<StickerEntity> {
-    return this.#rest.get(StickerRouter.Routes.stickerByIdEndpoint(stickerId));
+
+  listStickerPacks(): Promise<RESTStickerPacksResponseEntity> {
+    return this.rest.get(StickerRoutes.listStickerPacks());
   }
-  fetchStickerPacks(): Promise<StickerPacksResponse> {
-    return this.#rest.get(StickerRouter.Routes.stickerPacksEndpoint());
+
+  getStickerPack(packId: string): Promise<StickerPackEntity> {
+    return this.rest.get(StickerRoutes.getStickerPack(packId));
   }
-  fetchStickerPack(packId: string): Promise<StickerPackEntity> {
-    return this.#rest.get(StickerRouter.Routes.stickerPackByIdEndpoint(packId));
+
+  listGuildStickers(guildId: string): Promise<StickerEntity[]> {
+    return this.rest.get(StickerRoutes.listGuildStickers(guildId));
   }
-  fetchGuildStickers(guildId: string): Promise<StickerEntity[]> {
-    return this.#rest.get(StickerRouter.Routes.guildStickersEndpoint(guildId));
+
+  getGuildSticker(guildId: string, stickerId: string): Promise<StickerEntity> {
+    return this.rest.get(StickerRoutes.getGuildSticker(guildId, stickerId));
   }
-  fetchGuildSticker(guildId: string, stickerId: string): Promise<StickerEntity> {
-    return this.#rest.get(StickerRouter.Routes.guildStickerByIdEndpoint(guildId, stickerId));
-  }
+
   createGuildSticker(
     guildId: string,
-    options: GuildStickerCreateOptions,
+    options: RESTCreateGuildStickerFormParams,
     reason?: string,
   ): Promise<StickerEntity> {
     const { file, ...rest } = options;
-    return this.#rest.post(StickerRouter.Routes.guildStickersEndpoint(guildId), {
+    return this.rest.post(StickerRoutes.listGuildStickers(guildId), {
       body: JSON.stringify(rest),
       files: file,
       reason,
     });
   }
-  updateGuildSticker(
+
+  modifyGuildSticker(
     guildId: string,
     stickerId: string,
-    options: GuildStickerUpdateOptions,
+    options: RESTModifyGuildStickerJSONParams,
     reason?: string,
   ): Promise<StickerEntity> {
-    return this.#rest.patch(StickerRouter.Routes.guildStickerByIdEndpoint(guildId, stickerId), {
+    return this.rest.patch(StickerRoutes.getGuildSticker(guildId, stickerId), {
       body: JSON.stringify(options),
       reason,
     });
   }
+
   deleteGuildSticker(guildId: string, stickerId: string, reason?: string): Promise<void> {
-    return this.#rest.delete(StickerRouter.Routes.guildStickerByIdEndpoint(guildId, stickerId), {
+    return this.rest.delete(StickerRoutes.getGuildSticker(guildId, stickerId), {
       reason,
     });
   }

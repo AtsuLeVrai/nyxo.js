@@ -1,84 +1,82 @@
-import type { FileInput, Rest } from "../../core/index.js";
+import { BaseRouter } from "../../bases/index.js";
+import type { FileInput, RouteBuilder } from "../../core/index.js";
+import type { Nullable } from "../../utils/index.js";
 import type { SoundboardSoundEntity } from "./soundboard.entity.js";
 
-export interface SoundboardSendOptions {
-  sound_id: string;
+export interface RESTSendSoundboardSoundJSONParams extends Pick<SoundboardSoundEntity, "sound_id"> {
   source_guild_id?: string;
 }
 
-export interface GuildSoundsResponse {
-  items: SoundboardSoundEntity[];
-}
-
-export interface GuildSoundCreateOptions {
-  name: string;
+export interface RESTCreateGuildSoundboardSoundJSONParams
+  extends Pick<SoundboardSoundEntity, "name">,
+    Partial<Nullable<Pick<SoundboardSoundEntity, "volume" | "emoji_id" | "emoji_name">>> {
   sound: FileInput;
-  volume?: number | null;
-  emoji_id?: string | null;
-  emoji_name?: string | null;
 }
 
-export interface GuildSoundUpdateOptions {
-  name?: string;
-  volume?: number | null;
-  emoji_id?: string | null;
-  emoji_name?: string | null;
-}
+export type RESTModifyGuildSoundboardSoundJSONParams = Omit<
+  RESTCreateGuildSoundboardSoundJSONParams,
+  "sound"
+>;
 
-export class SoundboardRouter {
-  static readonly Routes = {
-    defaultSoundsEndpoint: () => "/soundboard-default-sounds",
-    guildSoundsEndpoint: (guildId: string) => `/guilds/${guildId}/soundboard-sounds` as const,
-    guildSoundByIdEndpoint: (guildId: string, soundId: string) =>
-      `/guilds/${guildId}/soundboard-sounds/${soundId}` as const,
-    playSoundInChannelEndpoint: (channelId: string) =>
-      `/channels/${channelId}/send-soundboard-sound` as const,
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-  sendSound(channelId: string, options: SoundboardSendOptions): Promise<void> {
-    return this.#rest.post(SoundboardRouter.Routes.playSoundInChannelEndpoint(channelId), {
+export const SoundboardRoutes = {
+  sendSoundboardSound: (channelId: string) =>
+    `/channels/${channelId}/send-soundboard-sound` as const,
+  listDefaultSoundboardSounds: () => "/soundboard-default-sounds",
+  listGuildSoundboardSounds: (guildId: string) => `/guilds/${guildId}/soundboard-sounds` as const,
+  getGuildSoundboardSound: (guildId: string, soundId: string) =>
+    `/guilds/${guildId}/soundboard-sounds/${soundId}` as const,
+} as const satisfies RouteBuilder;
+
+export class SoundboardRouter extends BaseRouter {
+  sendSoundboardSound(
+    channelId: string,
+    options: RESTSendSoundboardSoundJSONParams,
+  ): Promise<void> {
+    return this.rest.post(SoundboardRoutes.sendSoundboardSound(channelId), {
       body: JSON.stringify(options),
     });
   }
-  fetchDefaultSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.#rest.get(SoundboardRouter.Routes.defaultSoundsEndpoint());
+
+  listDefaultSoundboardSounds(): Promise<SoundboardSoundEntity[]> {
+    return this.rest.get(SoundboardRoutes.listDefaultSoundboardSounds());
   }
-  fetchSounds(guildId: string): Promise<GuildSoundsResponse> {
-    return this.#rest.get(SoundboardRouter.Routes.guildSoundsEndpoint(guildId));
+
+  listGuildSoundboardSounds(guildId: string): Promise<{
+    items: SoundboardSoundEntity[];
+  }> {
+    return this.rest.get(SoundboardRoutes.listGuildSoundboardSounds(guildId));
   }
-  fetchGuildSound(guildId: string, soundId: string): Promise<SoundboardSoundEntity> {
-    return this.#rest.get(SoundboardRouter.Routes.guildSoundByIdEndpoint(guildId, soundId));
+
+  getGuildSoundboardSound(guildId: string, soundId: string): Promise<SoundboardSoundEntity> {
+    return this.rest.get(SoundboardRoutes.getGuildSoundboardSound(guildId, soundId));
   }
-  async createSound(
+
+  async createGuildSoundboardSound(
     guildId: string,
-    options: GuildSoundCreateOptions,
+    options: RESTCreateGuildSoundboardSoundJSONParams,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    const processedOptions = { ...options };
-    if (processedOptions.sound) {
-      processedOptions.sound = await this.#rest.toDataUri(processedOptions.sound);
-    }
-    return this.#rest.post(SoundboardRouter.Routes.guildSoundsEndpoint(guildId), {
+    const processedOptions = await this.processFileOptions(options, ["sound"]);
+    return this.rest.post(SoundboardRoutes.listGuildSoundboardSounds(guildId), {
       body: JSON.stringify(processedOptions),
       reason,
     });
   }
-  updateSound(
+
+  modifyGuildSoundboardSound(
     guildId: string,
     soundId: string,
-    options: GuildSoundUpdateOptions,
+    options: RESTModifyGuildSoundboardSoundJSONParams,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    return this.#rest.patch(SoundboardRouter.Routes.guildSoundByIdEndpoint(guildId, soundId), {
+    return this.rest.patch(SoundboardRoutes.getGuildSoundboardSound(guildId, soundId), {
       body: JSON.stringify(options),
       reason,
     });
   }
-  deleteSound(guildId: string, soundId: string, reason?: string): Promise<void> {
-    return this.#rest.delete(SoundboardRouter.Routes.guildSoundByIdEndpoint(guildId, soundId), {
+
+  deleteGuildSoundboardSound(guildId: string, soundId: string, reason?: string): Promise<void> {
+    return this.rest.delete(SoundboardRoutes.getGuildSoundboardSound(guildId, soundId), {
       reason,
     });
   }

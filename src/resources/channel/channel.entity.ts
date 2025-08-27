@@ -179,7 +179,7 @@ export interface GuildTextChannelEntity
   guild_id: string;
 }
 
-export interface DmChannelEntity
+export interface DMChannelEntity
   extends Omit<
     ChannelEntity,
     | "guild_id"
@@ -225,7 +225,7 @@ export interface GuildVoiceChannelEntity
   user_limit: number;
 }
 
-export interface GroupDmChannelEntity
+export interface GroupDMChannelEntity
   extends Omit<
     ChannelEntity,
     | "guild_id"
@@ -490,7 +490,7 @@ export type AnyGuildBasedChannelEntity =
   | GuildMediaChannelEntity
   | GuildDirectoryChannelEntity;
 
-export type AnyDmBasedChannelEntity = DmChannelEntity | GroupDmChannelEntity;
+export type AnyDmBasedChannelEntity = DMChannelEntity | GroupDMChannelEntity;
 
 export type AnyChannelEntity =
   | AnyDmBasedChannelEntity

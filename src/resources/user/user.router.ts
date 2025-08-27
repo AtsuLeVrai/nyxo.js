@@ -1,5 +1,6 @@
-import type { FileInput, Rest } from "../../core/index.js";
-import type { DmChannelEntity } from "../channel/index.js";
+import { BaseRouter } from "../../bases/index.js";
+import type { FileInput, RouteBuilder } from "../../core/index.js";
+import type { DMChannelEntity, GroupDMChannelEntity } from "../channel/index.js";
 import type { GuildEntity, GuildMemberEntity } from "../guild/index.js";
 import type {
   ApplicationRoleConnectionEntity,
@@ -7,100 +8,96 @@ import type {
   UserEntity,
 } from "./user.entity.js";
 
-export interface UserUpdateOptions {
-  username?: string;
+export interface RESTModifyCurrentUserJSONParams extends Partial<Pick<UserEntity, "username">> {
   avatar?: FileInput | null;
   banner?: FileInput | null;
 }
 
-export interface UserGuildsFetchParams {
+export interface RESTGetCurrentUserGuildsQueryStringParams {
   before?: string;
   after?: string;
   limit?: number;
   with_counts?: boolean;
 }
 
-export interface GroupDmCreateOptions {
+export interface RESTCreateGroupDMJSONParams {
   access_tokens: string[];
   nicks: Record<string, string>;
 }
 
-export interface UserRoleConnectionUpdateOptions {
-  platform_name?: string | null;
-  platform_username?: string | null;
-  metadata?: Record<string, string>;
-}
+export const UserRoutes = {
+  getCurrentUser: () => "/user/@me",
+  getUser: (userId: string) => `/users/${userId}` as const,
+  getCurrentUserGuilds: () => "/user/@me/guilds",
+  getCurrentUserGuildMember: (guildId: string) => `/users/@me/guilds/${guildId}/member` as const,
+  leaveGuild: (guildId: string) => `/users/@me/guilds/${guildId}` as const,
+  createDM: () => "/user/@me/channels",
+  getCurrentUserConnections: () => "/user/@me/connections",
+  getCurrentUserApplicationRoleConnection: (applicationId: string) =>
+    `/users/@me/applications/${applicationId}/role-connection` as const,
+} as const satisfies RouteBuilder;
 
-export class UserRouter {
-  static readonly Routes = {
-    usersBaseEndpoint: () => "/user",
-    currentUserEndpoint: () => "/user/@me",
-    currentUserGuildsEndpoint: () => "/user/@me/guilds",
-    currentUserChannelsEndpoint: () => "/user/@me/channels",
-    currentUserConnectionsEndpoint: () => "/user/@me/connections",
-    userByIdEndpoint: (userId: string) => `/users/${userId}` as const,
-    currentUserGuildMemberEndpoint: (guildId: string) =>
-      `/users/@me/guilds/${guildId}/member` as const,
-    leaveGuildEndpoint: (guildId: string) => `/users/@me/guilds/${guildId}` as const,
-    applicationRoleConnectionEndpoint: (applicationId: string) =>
-      `/users/@me/applications/${applicationId}/role-connection` as const,
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
+export class UserRouter extends BaseRouter {
+  getCurrentUser(): Promise<UserEntity> {
+    return this.rest.get(UserRoutes.getCurrentUser());
   }
-  fetchCurrentUser(): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.Routes.currentUserEndpoint());
+
+  getUser(userId: string): Promise<UserEntity> {
+    return this.rest.get(UserRoutes.getUser(userId));
   }
-  fetchUser(userId: string): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.Routes.userByIdEndpoint(userId));
-  }
-  async updateCurrentUser(options: UserUpdateOptions): Promise<UserEntity> {
-    const processedOptions = { ...options };
-    if (processedOptions.avatar) {
-      processedOptions.avatar = await this.#rest.toDataUri(processedOptions.avatar);
-    }
-    if (processedOptions.banner) {
-      processedOptions.banner = await this.#rest.toDataUri(processedOptions.banner);
-    }
-    return this.#rest.patch(UserRouter.Routes.currentUserEndpoint(), {
+
+  async modifyCurrentUser(options: RESTModifyCurrentUserJSONParams): Promise<UserEntity> {
+    const processedOptions = await this.processFileOptions(options, ["avatar", "banner"]);
+    return this.rest.patch(UserRoutes.getCurrentUser(), {
       body: JSON.stringify(processedOptions),
     });
   }
-  fetchCurrentGuilds(query?: UserGuildsFetchParams): Promise<GuildEntity[]> {
-    return this.#rest.get(UserRouter.Routes.currentUserGuildsEndpoint(), {
+
+  getCurrentUserGuilds(
+    query?: RESTGetCurrentUserGuildsQueryStringParams,
+  ): Promise<Partial<GuildEntity>[]> {
+    return this.rest.get(UserRoutes.getCurrentUserGuilds(), {
       query,
     });
   }
-  fetchCurrentUserGuildMember(guildId: string): Promise<GuildMemberEntity> {
-    return this.#rest.get(UserRouter.Routes.currentUserGuildMemberEndpoint(guildId));
+
+  getCurrentUserGuildMember(guildId: string): Promise<GuildMemberEntity> {
+    return this.rest.get(UserRoutes.getCurrentUserGuildMember(guildId));
   }
+
   leaveGuild(guildId: string): Promise<void> {
-    return this.#rest.delete(UserRouter.Routes.leaveGuildEndpoint(guildId));
+    return this.rest.delete(UserRoutes.leaveGuild(guildId));
   }
-  createDmChannel(recipientId: string): Promise<DmChannelEntity> {
-    return this.#rest.post(UserRouter.Routes.currentUserChannelsEndpoint(), {
+
+  createDM(recipientId: string): Promise<DMChannelEntity> {
+    return this.rest.post(UserRoutes.createDM(), {
       body: JSON.stringify({
         recipient_id: recipientId,
       }),
     });
   }
-  createGroupDmChannel(options: GroupDmCreateOptions): Promise<DmChannelEntity> {
-    return this.#rest.post(UserRouter.Routes.currentUserChannelsEndpoint(), {
+
+  createGroupDM(options: RESTCreateGroupDMJSONParams): Promise<GroupDMChannelEntity> {
+    return this.rest.post(UserRoutes.createDM(), {
       body: JSON.stringify(options),
     });
   }
-  fetchCurrentConnections(): Promise<ConnectionEntity[]> {
-    return this.#rest.get(UserRouter.Routes.currentUserConnectionsEndpoint());
+
+  getCurrentUserConnections(): Promise<ConnectionEntity[]> {
+    return this.rest.get(UserRoutes.getCurrentUserConnections());
   }
-  fetchApplicationRoleConnection(applicationId: string): Promise<ApplicationRoleConnectionEntity> {
-    return this.#rest.get(UserRouter.Routes.applicationRoleConnectionEndpoint(applicationId));
-  }
-  updateApplicationRoleConnection(
+
+  getCurrentUserApplicationRoleConnection(
     applicationId: string,
-    connection: UserRoleConnectionUpdateOptions,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.#rest.put(UserRouter.Routes.applicationRoleConnectionEndpoint(applicationId), {
+    return this.rest.get(UserRoutes.getCurrentUserApplicationRoleConnection(applicationId));
+  }
+
+  updateCurrentUserApplicationRoleConnection(
+    applicationId: string,
+    connection: Partial<ApplicationRoleConnectionEntity>,
+  ): Promise<ApplicationRoleConnectionEntity> {
+    return this.rest.put(UserRoutes.getCurrentUserApplicationRoleConnection(applicationId), {
       body: JSON.stringify(connection),
     });
   }

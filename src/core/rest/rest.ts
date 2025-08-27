@@ -14,24 +14,37 @@ import {
   AutoModerationRouter,
   ChannelRouter,
   EmojiRouter,
+  EmojiRoutes,
   EntitlementRouter,
+  EntitlementRoutes,
   GatewayRouter,
   GuildRouter,
+  GuildScheduledEventRouter,
+  GuildScheduledEventRoutes,
   GuildTemplateRouter,
   InteractionRouter,
   InviteRouter,
   LobbyRouter,
+  LobbyRoutes,
   MessageRouter,
   OAuth2Router,
+  OAuth2Routes,
   PollRouter,
-  ScheduledEventRouter,
-  SkuRouter,
+  PollRoutes,
+  SKURouter,
+  SKURoutes,
   SoundboardRouter,
+  SoundboardRoutes,
   StageInstanceRouter,
+  StageInstanceRoutes,
   StickerRouter,
+  StickerRoutes,
   SubscriptionRouter,
+  SubscriptionRoutes,
   UserRouter,
+  UserRoutes,
   VoiceRouter,
+  VoiceRoutes,
   WebhookRouter,
 } from "../../resources/index.js";
 import { RateLimitManager, RateLimitOptions } from "./rate-limit.manager.js";
@@ -74,6 +87,56 @@ export const RestOptions = z.object({
   rateLimit: RateLimitOptions.prefault({}),
 });
 
+export type RouteBuilder = Record<string, (...args: string[]) => string>;
+
+export const Routes = {
+  emoji: EmojiRoutes,
+  guildScheduledEvent: GuildScheduledEventRoutes,
+  entitlement: EntitlementRoutes,
+  lobby: LobbyRoutes,
+  oauth2: OAuth2Routes,
+  poll: PollRoutes,
+  sku: SKURoutes,
+  soundboard: SoundboardRoutes,
+  stageInstance: StageInstanceRoutes,
+  sticker: StickerRoutes,
+  subscription: SubscriptionRoutes,
+  user: UserRoutes,
+  voice: VoiceRoutes,
+  // webhook: WebhookRoutes, TODO: Uncomment when WebhookRoutes are implemented, need to be checked
+} as const satisfies Record<
+  keyof Pick<
+    Rest,
+    | "application"
+    | "applicationCommand"
+    | "applicationConnection"
+    | "auditLog"
+    | "autoModeration"
+    | "channel"
+    | "emoji"
+    | "entitlement"
+    | "gateway"
+    | "guild"
+    | "guildScheduledEvent"
+    | "guildTemplate"
+    | "interaction"
+    | "invite"
+    | "lobby"
+    | "message"
+    | "oauth2"
+    | "poll"
+    | "sku"
+    | "soundboard"
+    | "stageInstance"
+    | "sticker"
+    | "subscription"
+    | "user"
+    | "voice"
+    | "webhook"
+  >,
+  RouteBuilder
+>;
+
 export class Rest {
   readonly application = new ApplicationRouter(this);
   readonly applicationCommand = new ApplicationCommandRouter(this);
@@ -85,6 +148,7 @@ export class Rest {
   readonly entitlement = new EntitlementRouter(this);
   readonly gateway = new GatewayRouter(this);
   readonly guild = new GuildRouter(this);
+  readonly guildScheduledEvent = new GuildScheduledEventRouter(this);
   readonly guildTemplate = new GuildTemplateRouter(this);
   readonly interaction = new InteractionRouter(this);
   readonly invite = new InviteRouter(this);
@@ -92,10 +156,9 @@ export class Rest {
   readonly message = new MessageRouter(this);
   readonly oauth2 = new OAuth2Router(this);
   readonly poll = new PollRouter(this);
-  readonly scheduledEvent = new ScheduledEventRouter(this);
-  readonly sku = new SkuRouter(this);
+  readonly sku = new SKURouter(this);
   readonly soundboard = new SoundboardRouter(this);
-  readonly stage = new StageInstanceRouter(this);
+  readonly stageInstance = new StageInstanceRouter(this);
   readonly sticker = new StickerRouter(this);
   readonly subscription = new SubscriptionRouter(this);
   readonly user = new UserRouter(this);

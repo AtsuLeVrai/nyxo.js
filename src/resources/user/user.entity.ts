@@ -35,6 +35,20 @@ export enum ConnectionService {
   Mastodon = "mastodon",
 }
 
+export enum NameplatePalette {
+  Crimson = "crimson",
+  Berry = "berry",
+  Sky = "sky",
+  Teal = "teal",
+  Forest = "forest",
+  BubbleGum = "bubble_gum",
+  Violet = "violet",
+  Cobalt = "cobalt",
+  Clover = "clover",
+  Lemon = "lemon",
+  White = "white",
+}
+
 export enum PremiumType {
   None = 0,
   NitroClassic = 1,
@@ -81,17 +95,6 @@ export enum ActivityType {
   Competing = 5,
 }
 
-export function isValidUsername(username: string): boolean {
-  const forbiddenSubstrings = ["@", "#", ":", "```", "discord"];
-  const forbiddenNames = ["everyone", "here"];
-  for (const substring of forbiddenSubstrings) {
-    if (username.includes(substring)) {
-      return false;
-    }
-  }
-  return !forbiddenNames.includes(username);
-}
-
 export interface ApplicationRoleConnectionEntity {
   platform_name: string | null;
   platform_username: string | null;
@@ -127,18 +130,7 @@ export interface NameplateEntity {
   sku_id: string;
   asset: string;
   label: string;
-  palette:
-    | "crimson"
-    | "berry"
-    | "sky"
-    | "teal"
-    | "forest"
-    | "bubble_gum"
-    | "violet"
-    | "cobalt"
-    | "clover"
-    | "lemon"
-    | "white";
+  palette: NameplatePalette;
 }
 
 export interface CollectiblesEntity {
@@ -241,4 +233,15 @@ export interface PresenceEntity {
   status: Omit<UpdatePresenceStatusType, "invisible">;
   activities: ActivityEntity[];
   client_status: ClientStatusEntity;
+}
+
+export function isValidUsername(username: string): boolean {
+  const forbiddenSubstrings = ["@", "#", ":", "```", "discord"];
+  const forbiddenNames = ["everyone", "here"];
+  for (const substring of forbiddenSubstrings) {
+    if (username.includes(substring)) {
+      return false;
+    }
+  }
+  return !forbiddenNames.includes(username);
 }

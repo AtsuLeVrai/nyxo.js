@@ -2,7 +2,7 @@ import type { AnyApplicationCommandEntity } from "../application-commands/index.
 import type { AutoModerationRuleEntity } from "../auto-moderation/index.js";
 import type { AnyThreadBasedChannelEntity } from "../channel/index.js";
 import type { IntegrationEntity } from "../guild/index.js";
-import type { GuildScheduledEventEntity } from "../scheduled-event/index.js";
+import type { GuildScheduledEventEntity } from "../guild-scheduled-event/index.js";
 import type { UserEntity } from "../user/index.js";
 import type { WebhookEntity } from "../webhook/index.js";
 

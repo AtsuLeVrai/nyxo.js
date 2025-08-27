@@ -19,6 +19,7 @@ export class Client extends EventEmitter {
 
   constructor(options: z.input<typeof ClientOptions>) {
     super();
+
     try {
       this.#options = ClientOptions.parse(options);
     } catch (error) {

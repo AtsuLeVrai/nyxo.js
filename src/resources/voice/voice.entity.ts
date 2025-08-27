@@ -30,13 +30,13 @@ export interface VoiceStateEntity {
   request_to_speak_timestamp: string | null;
 }
 
-export interface VoiceServerUpdateEntity {
+export interface GatewayVoiceServerUpdateEntity {
   token: string;
   guild_id: string;
   endpoint: string | null;
 }
 
-export interface VoiceChannelEffectSendEntity {
+export interface GatewayVoiceChannelEffectSendEntity {
   channel_id: string;
   guild_id: string;
   user_id: string;

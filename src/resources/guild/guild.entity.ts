@@ -6,8 +6,8 @@ import type {
   GuildVoiceChannelEntity,
 } from "../channel/index.js";
 import type { EmojiEntity } from "../emoji/index.js";
+import type { GuildScheduledEventEntity } from "../guild-scheduled-event/index.js";
 import type { RoleEntity } from "../role/index.js";
-import type { GuildScheduledEventEntity } from "../scheduled-event/index.js";
 import type { SoundboardSoundEntity } from "../soundboard/index.js";
 import type { StageInstanceEntity } from "../stage-instance/index.js";
 import type { StickerEntity } from "../sticker/index.js";

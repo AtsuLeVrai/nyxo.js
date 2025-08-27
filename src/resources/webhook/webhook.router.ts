@@ -1,22 +1,25 @@
 import { BaseRouter } from "../../bases/index.js";
-import type { FileInput } from "../../core/index.js";
+import type { FileInput, RouteBuilder } from "../../core/index.js";
+import type { StripNull } from "../../utils/index.js";
 import type {
   MessageCreateV1Options,
   MessageCreateV2Options,
   MessageEntity,
 } from "../message/index.js";
-import type { AnyWebhookEntity, IncomingWebhookEntity } from "./webhook.entity.js";
+import type {
+  AnyWebhookEntity,
+  ChannelFollowerWebhookEntity,
+  IncomingWebhookEntity,
+} from "./webhook.entity.js";
 
-export interface RestWebhookCreateOptions {
-  name: string;
+export interface RESTCreateWebhookJSONParams
+  extends Required<StripNull<Pick<AnyWebhookEntity, "name">>> {
   avatar?: FileInput | null;
 }
 
-export interface RestWebhookUpdateOptions {
-  name?: string;
-  avatar?: FileInput | null;
-  channel_id?: string | null;
-}
+export type RESTWebhookUpdateJSONParams = Partial<
+  RESTCreateWebhookJSONParams & Pick<ChannelFollowerWebhookEntity, "channel_id">
+>;
 
 export interface RestWebhookExecuteParams {
   wait?: boolean;
@@ -66,10 +69,10 @@ export type RestWebhookMessageEditOptions =
     >;
 
 export const WebhookRoutes = {
-  channelWebhooksEndpoint: (channelId: string) => `/channels/${channelId}/webhooks` as const,
-  guildWebhooksEndpoint: (guildId: string) => `/guilds/${guildId}/webhooks` as const,
-  webhookByIdEndpoint: (webhookId: string) => `/webhooks/${webhookId}` as const,
-  webhookWithTokenEndpoint: (webhookId: string, token: string) =>
+  getChannelWebhooks: (channelId: string) => `/channels/${channelId}/webhooks` as const,
+  getGuildWebhooks: (guildId: string) => `/guilds/${guildId}/webhooks` as const,
+  getWebhook: (webhookId: string) => `/webhooks/${webhookId}` as const,
+  getWebhookWithToken: (webhookId: string, token: string) =>
     `/webhooks/${webhookId}/${token}` as const,
   slackWebhookEndpoint: (webhookId: string, token: string) =>
     `/webhooks/${webhookId}/${token}/slack` as const,
@@ -77,82 +80,82 @@ export const WebhookRoutes = {
     `/webhooks/${webhookId}/${token}/github` as const,
   webhookMessageEndpoint: (webhookId: string, token: string, messageId: string) =>
     `/webhooks/${webhookId}/${token}/messages/${messageId}` as const,
-} as const satisfies Record<string, (...args: any[]) => string>;
+} as const satisfies RouteBuilder;
 
 export class WebhookRouter extends BaseRouter {
   async createWebhook(
     channelId: string,
-    options: RestWebhookCreateOptions,
+    options: RESTCreateWebhookJSONParams,
     reason?: string,
   ): Promise<IncomingWebhookEntity> {
     const processedOptions = await this.processFileOptions(options, ["avatar"]);
-    return this.rest.post(WebhookRoutes.channelWebhooksEndpoint(channelId), {
+    return this.rest.post(WebhookRoutes.getChannelWebhooks(channelId), {
       body: JSON.stringify(processedOptions),
       reason,
     });
   }
 
-  fetchChannelWebhooks(channelId: string): Promise<AnyWebhookEntity[]> {
-    return this.rest.get(WebhookRoutes.channelWebhooksEndpoint(channelId));
+  getChannelWebhooks(channelId: string): Promise<AnyWebhookEntity[]> {
+    return this.rest.get(WebhookRoutes.getChannelWebhooks(channelId));
   }
 
-  fetchGuildWebhooks(guildId: string): Promise<AnyWebhookEntity[]> {
-    return this.rest.get(WebhookRoutes.guildWebhooksEndpoint(guildId));
+  getGuildWebhooks(guildId: string): Promise<AnyWebhookEntity[]> {
+    return this.rest.get(WebhookRoutes.getGuildWebhooks(guildId));
   }
 
-  fetchWebhook(webhookId: string): Promise<AnyWebhookEntity> {
-    return this.rest.get(WebhookRoutes.webhookByIdEndpoint(webhookId));
+  getWebhook(webhookId: string): Promise<AnyWebhookEntity> {
+    return this.rest.get(WebhookRoutes.getWebhook(webhookId));
   }
 
-  fetchWebhookWithToken(webhookId: string, token: string): Promise<IncomingWebhookEntity> {
-    return this.rest.get(WebhookRoutes.webhookWithTokenEndpoint(webhookId, token));
+  getWebhookWithToken(webhookId: string, token: string): Promise<IncomingWebhookEntity> {
+    return this.rest.get(WebhookRoutes.getWebhookWithToken(webhookId, token));
   }
 
-  async updateWebhook(
+  async modifyWebhook(
     webhookId: string,
-    options: RestWebhookUpdateOptions,
+    options: RESTWebhookUpdateJSONParams,
     reason?: string,
   ): Promise<AnyWebhookEntity> {
     const processedOptions = await this.processFileOptions(options, ["avatar"]);
-    return this.rest.patch(WebhookRoutes.webhookByIdEndpoint(webhookId), {
+    return this.rest.patch(WebhookRoutes.getWebhook(webhookId), {
       body: JSON.stringify(processedOptions),
       reason,
     });
   }
 
-  async updateWebhookWithToken(
+  async modifyWebhookWithToken(
     webhookId: string,
     token: string,
-    options: Omit<RestWebhookUpdateOptions, "channel_id">,
+    options: Omit<RESTWebhookUpdateJSONParams, "channel_id">,
     reason?: string,
   ): Promise<IncomingWebhookEntity> {
     const processedOptions = await this.processFileOptions(options, ["avatar"]);
-    return this.rest.patch(WebhookRoutes.webhookWithTokenEndpoint(webhookId, token), {
+    return this.rest.patch(WebhookRoutes.getWebhookWithToken(webhookId, token), {
       body: JSON.stringify(processedOptions),
       reason,
     });
   }
 
   deleteWebhook(webhookId: string, reason?: string): Promise<void> {
-    return this.rest.delete(WebhookRoutes.webhookByIdEndpoint(webhookId), {
+    return this.rest.delete(WebhookRoutes.getWebhook(webhookId), {
       reason,
     });
   }
 
   deleteWebhookWithToken(webhookId: string, token: string, reason?: string): Promise<void> {
-    return this.rest.delete(WebhookRoutes.webhookWithTokenEndpoint(webhookId, token), {
+    return this.rest.delete(WebhookRoutes.getWebhookWithToken(webhookId, token), {
       reason,
     });
   }
 
-  sendWebhook(
+  executeWebhook(
     webhookId: string,
     token: string,
     options: RestWebhookExecuteOptions,
     query?: RestWebhookExecuteParams,
   ): Promise<MessageEntity | undefined> {
     const { files, ...rest } = options;
-    return this.rest.post(WebhookRoutes.webhookWithTokenEndpoint(webhookId, token), {
+    return this.rest.post(WebhookRoutes.getWebhookWithToken(webhookId, token), {
       body: JSON.stringify(rest),
       files,
       query,

@@ -1,49 +1,51 @@
-import type { Rest } from "../../core/index.js";
+import { BaseRouter } from "../../bases/index.js";
+import type { RouteBuilder } from "../../core/index.js";
 import type { VoiceRegionEntity, VoiceStateEntity } from "./voice.entity.js";
 
-export interface VoiceStateUpdateOptions {
-  channel_id?: string | null;
-  suppress?: boolean;
-  request_to_speak_timestamp?: string | null;
-}
+export type RESTModifyCurrentUserVoiceStateJSONParams = Partial<
+  Pick<VoiceStateEntity, "channel_id" | "suppress" | "request_to_speak_timestamp">
+>;
 
-export interface OtherVoiceStateUpdateOptions {
-  channel_id: string | null;
-  suppress?: boolean;
-}
+export type RESTModifyUserVoiceStateJSONParams = Omit<
+  RESTModifyCurrentUserVoiceStateJSONParams,
+  "request_to_speak_timestamp"
+>;
 
-export class VoiceRouter {
-  static readonly Routes = {
-    voiceRegionsEndpoint: () => "/voice/regions",
-    currentUserVoiceStateEndpoint: (guildId: string) =>
-      `/guilds/${guildId}/voice-states/@me` as const,
-    userVoiceStateEndpoint: (guildId: string, userId: string) =>
-      `/guilds/${guildId}/voice-states/${userId}` as const,
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
+export const VoiceRoutes = {
+  listVoiceRegions: () => "/voice/regions",
+  getCurrentUserVoiceState: (guildId: string) => `/guilds/${guildId}/voice-states/@me` as const,
+  getUserVoiceState: (guildId: string, userId: string) =>
+    `/guilds/${guildId}/voice-states/${userId}` as const,
+} as const satisfies RouteBuilder;
+
+export class VoiceRouter extends BaseRouter {
+  listVoiceRegions(): Promise<VoiceRegionEntity[]> {
+    return this.rest.get(VoiceRoutes.listVoiceRegions());
   }
-  fetchVoiceRegions(): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(VoiceRouter.Routes.voiceRegionsEndpoint());
+
+  getCurrentUserVoiceState(guildId: string): Promise<VoiceStateEntity> {
+    return this.rest.get(VoiceRoutes.getCurrentUserVoiceState(guildId));
   }
-  fetchCurrentVoiceState(guildId: string): Promise<VoiceStateEntity> {
-    return this.#rest.get(VoiceRouter.Routes.currentUserVoiceStateEndpoint(guildId));
+
+  getUserVoiceState(guildId: string, userId: string): Promise<VoiceStateEntity> {
+    return this.rest.get(VoiceRoutes.getUserVoiceState(guildId, userId));
   }
-  fetchUserVoiceState(guildId: string, userId: string): Promise<VoiceStateEntity> {
-    return this.#rest.get(VoiceRouter.Routes.userVoiceStateEndpoint(guildId, userId));
-  }
-  updateCurrentVoiceState(guildId: string, options: VoiceStateUpdateOptions): Promise<void> {
-    return this.#rest.patch(VoiceRouter.Routes.currentUserVoiceStateEndpoint(guildId), {
+
+  modifyCurrentUserVoiceState(
+    guildId: string,
+    options: RESTModifyCurrentUserVoiceStateJSONParams,
+  ): Promise<void> {
+    return this.rest.patch(VoiceRoutes.getCurrentUserVoiceState(guildId), {
       body: JSON.stringify(options),
     });
   }
-  updateUserVoiceState(
+
+  modifyUserVoiceState(
     guildId: string,
     userId: string,
-    options: OtherVoiceStateUpdateOptions,
+    options: RESTModifyUserVoiceStateJSONParams,
   ): Promise<void> {
-    return this.#rest.patch(VoiceRouter.Routes.userVoiceStateEndpoint(guildId, userId), {
+    return this.rest.patch(VoiceRoutes.getUserVoiceState(guildId, userId), {
       body: JSON.stringify(options),
     });
   }

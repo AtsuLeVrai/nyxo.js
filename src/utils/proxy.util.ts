@@ -32,7 +32,13 @@ export type StripNull<T> = T extends (infer U)[]
     ? { [K in keyof T]: StripNull<T[K]> }
     : Exclude<T, null>;
 
-export function Pick<
+export type Nullable<T> = T extends (infer U)[]
+  ? Nullable<U>[]
+  : T extends Record<string, any>
+    ? { [K in keyof T]: Nullable<T[K]> }
+    : T | null;
+
+export function PickBy<
   T extends new (
     ...args: any[]
   ) => any,
@@ -71,7 +77,7 @@ export function Pick<
   };
 }
 
-export function Omit<
+export function OmitBy<
   T extends new (
     ...args: any[]
   ) => any,
