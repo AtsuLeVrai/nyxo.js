@@ -1,9 +1,14 @@
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { z } from "zod";
-import { ApiVersion, GatewayIntentBits, GatewayOpcodes } from "../../enum/index.js";
+import {
+  ApiVersion,
+  type GatewayCloseEventCodes,
+  GatewayIntentBits,
+  GatewayOpcodes,
+} from "../../enum/index.js";
 import type { HelloEntity, ReadyEntity } from "../../resources/index.js";
-import { BitField, safeImport, sleep } from "../../utils/index.js";
+import { BitField, safeModuleImport, sleep } from "../../utils/index.js";
 import type { Rest } from "../rest/index.js";
 import type {
   GatewayReceiveEvents,
@@ -40,7 +45,7 @@ export interface GatewayEvents {
     data: GatewayReceiveEvents[keyof GatewayReceiveEvents],
   ];
   wsOpen: [];
-  wsClose: [code: number, reason: string];
+  wsClose: [code: GatewayCloseEventCodes, reason: string];
   wsError: [error: Error];
   wsMessage: [data: Buffer];
   heartbeatSent: [timestamp: number, sequence: number];
@@ -55,7 +60,7 @@ export const GatewayOptions = z.object({
   intents: z.union([
     z
       .array(z.enum(GatewayIntentBits))
-      .transform((value) => Number(BitField.combine(value).valueOf())),
+      .transform((value) => Number(BitField.combine(...value).valueOf())),
     z.int().min(0),
   ]),
   version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
@@ -181,22 +186,23 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   async setupCodecs(): Promise<void> {
     if (this.#options.encodingType === "etf") {
-      const result = await safeImport<typeof import("erlpack")>("erlpack");
+      const result = await safeModuleImport<typeof import("erlpack")>("erlpack");
       if (!result.success) {
         throw new Error("erlpack is required for ETF encoding. Install with: npm install erlpack");
       }
-      this.#erlpack = result.data;
+
+      this.#erlpack = result.module;
     }
 
     if (this.#options.compressionType === "zlib-stream") {
-      const result = await safeImport<typeof import("zlib-sync")>("zlib-sync");
+      const result = await safeModuleImport<typeof import("zlib-sync")>("zlib-sync");
       if (!result.success) {
         throw new Error(
           "zlib-sync is required for zlib-stream compression. Install with: npm install zlib-sync",
         );
       }
 
-      this.#zlibInflate = new result.data.Inflate();
+      this.#zlibInflate = new result.module.Inflate();
     }
   }
 

@@ -1,6 +1,6 @@
 import { BaseRouter } from "../../bases/index.js";
 import type { FileInput, RouteBuilder } from "../../core/index.js";
-import type { StripNull } from "../../utils/index.js";
+import type { DeepNonNullable } from "../../utils/index.js";
 import type {
   MessageCreateV1Options,
   MessageCreateV2Options,
@@ -13,7 +13,7 @@ import type {
 } from "./webhook.entity.js";
 
 export interface RESTCreateWebhookJSONParams
-  extends Required<StripNull<Pick<AnyWebhookEntity, "name">>> {
+  extends Required<DeepNonNullable<Pick<AnyWebhookEntity, "name">>> {
   avatar?: FileInput | null;
 }
 

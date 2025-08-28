@@ -3,7 +3,6 @@ export * from "./cdn.util.js";
 export * from "./colors.util.js";
 export * from "./emoji.util.js";
 export * from "./import.util.js";
-export * from "./limits.util.js";
 export * from "./markdown.util.js";
 export * from "./proxy.util.js";
 export * from "./sleep.util.js";

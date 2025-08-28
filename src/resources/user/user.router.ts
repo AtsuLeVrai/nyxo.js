@@ -26,13 +26,13 @@ export interface RESTCreateGroupDMJSONParams {
 }
 
 export const UserRoutes = {
-  getCurrentUser: () => "/user/@me",
+  getCurrentUser: () => "/users/@me",
   getUser: (userId: string) => `/users/${userId}` as const,
-  getCurrentUserGuilds: () => "/user/@me/guilds",
+  getCurrentUserGuilds: () => "/users/@me/guilds",
   getCurrentUserGuildMember: (guildId: string) => `/users/@me/guilds/${guildId}/member` as const,
   leaveGuild: (guildId: string) => `/users/@me/guilds/${guildId}` as const,
-  createDM: () => "/user/@me/channels",
-  getCurrentUserConnections: () => "/user/@me/connections",
+  createDM: () => "/users/@me/channels",
+  getCurrentUserConnections: () => "/users/@me/connections",
   getCurrentUserApplicationRoleConnection: (applicationId: string) =>
     `/users/@me/applications/${applicationId}/role-connection` as const,
 } as const satisfies RouteBuilder;

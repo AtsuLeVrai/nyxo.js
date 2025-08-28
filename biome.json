@@ -66,14 +66,15 @@
         "useNodejsImportProtocol": "error",
         "useNumberNamespace": "error",
         "useShorthandAssign": "error",
-        "useTemplate": "error"
+        "useTemplate": "error",
+        "useConsistentMemberAccessibility": "error"
       },
       "suspicious": {
         "recommended": true,
         "noConsole": "warn",
         "noDebugger": "error",
         "noDoubleEquals": "error",
-        "noExplicitAny": "info",
+        "noExplicitAny": "off",
         "noSparseArray": "error",
         "useAwait": "error",
         "useIsArray": "error"

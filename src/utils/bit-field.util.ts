@@ -1,156 +1,162 @@
-export type BitFieldValue = bigint | number | string;
-
-export type BitFieldResolvable<T = unknown> =
-  | BitFieldValue
-  | T
-  | BitField<T>
-  | BitFieldResolvable<T>[];
-
+/**
+ * @description Maximum allowed value for Discord bitfield operations (64-bit unsigned integer limit).
+ */
 const MAX_BIT_VALUE = (1n << 64n) - 1n;
 
-export class BitField<T> {
+/**
+ * @description Safely converts number or bigint values to bigint with Discord-compatible range validation.
+ *
+ * @param value - Number or bigint to convert
+ * @returns Validated bigint within Discord's acceptable range
+ * @throws {Error} When value is negative, exceeds safe limits, or non-integer number
+ */
+function safeBigInt(value: bigint | number): bigint {
+  if (typeof value === "bigint") {
+    if (value < 0n || value > MAX_BIT_VALUE) {
+      throw new Error("BitField value must be a non-negative bigint within 64-bit range");
+    }
+    return value;
+  }
+
+  if (typeof value === "number") {
+    if (!Number.isInteger(value) || value < 0 || value > Number.MAX_SAFE_INTEGER) {
+      throw new Error("BitField value must be a non-negative integer within safe integer range");
+    }
+    return BigInt(value);
+  }
+
+  throw new Error("Value must be a bigint or number");
+}
+
+/**
+ * @description Resolves multiple bitfield values into a single combined bigint using bitwise OR operations.
+ *
+ * @param bits - Array of number or bigint values to combine
+ * @returns Combined bitfield value as bigint
+ */
+const resolve = <F extends number | bigint>(...bits: F[]): bigint =>
+  bits.reduce((acc, bit) => {
+    if (bit == null) return acc;
+
+    return acc | safeBigInt(bit);
+  }, 0n);
+
+/**
+ * @description High-performance bitfield implementation for Discord permissions, intents, and flags with zero-cache design.
+ * @see {@link https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags}
+ */
+export class BitField<T extends number | bigint> {
   #bitfield: bigint;
-  constructor(...bits: BitFieldResolvable<T>[]) {
-    this.#bitfield = bits.length > 0 ? BitField.resolve<T>(...bits) : 0n;
+
+  /**
+   * @description Creates new BitField instance with combined bit values.
+   *
+   * @param bits - Array of bit values to combine (undefined values are ignored)
+   */
+  constructor(...bits: (T | undefined)[]) {
+    this.#bitfield = bits.length > 0 ? resolve(...bits.filter((bit): bit is T => bit != null)) : 0n;
   }
-  static from<F>(...bits: BitFieldResolvable<F>[]): BitField<F> {
-    return new BitField<F>(...bits);
+
+  /**
+   * @description Combines multiple bit values into a new BitField instance.
+   *
+   * @param bitfields - Bit values to combine
+   * @returns New BitField with combined values
+   */
+  static combine<F extends number | bigint>(...bitfields: F[]): BitField<F> {
+    return new BitField(resolve(...bitfields)) as BitField<F>;
   }
-  static safeBigInt(value: unknown): bigint {
-    if (typeof value === "bigint") {
-      if (value < 0n || value > MAX_BIT_VALUE) {
-        throw new Error("BitField value must be a non-negative bigint within 64-bit range");
-      }
-      return value;
-    }
-    if (typeof value === "number") {
-      if (!Number.isInteger(value) || value < 0 || value > Number.MAX_SAFE_INTEGER) {
-        throw new Error("BitField value must be a non-negative integer within safe integer range");
-      }
-      return BigInt(value);
-    }
-    if (typeof value === "string") {
-      let bigintValue: bigint;
-      try {
-        bigintValue = BigInt(value);
-      } catch {
-        throw new Error("BitField string must be convertible to a valid bigint");
-      }
-      if (bigintValue < 0n || bigintValue > MAX_BIT_VALUE) {
-        throw new Error("BitField value must be within 64-bit range");
-      }
-      return bigintValue;
-    }
-    throw new Error("Value must be a bigint, number, or string");
-  }
-  static resolve<F>(...bits: BitFieldResolvable<F>[]): bigint {
-    return bits.reduce<bigint>((acc, bit) => {
-      if (bit == null) {
-        return acc;
-      }
-      if (bit instanceof BitField) {
-        return acc | bit.valueOf();
-      }
-      if (Array.isArray(bit)) {
-        return acc | BitField.resolve<F>(...bit);
-      }
-      try {
-        return acc | BitField.safeBigInt(bit);
-      } catch (error) {
-        throw new Error(`Could not resolve ${String(bit)} to a BitField value: ${String(error)}`);
-      }
-    }, 0n);
-  }
-  static isValid(value: unknown): value is BitFieldValue {
-    if (value == null) {
-      return false;
-    }
-    if (typeof value === "bigint") {
-      return value >= 0n && value <= MAX_BIT_VALUE;
-    }
-    if (typeof value === "number") {
-      return Number.isInteger(value) && value >= 0 && value <= Number.MAX_SAFE_INTEGER;
-    }
-    if (typeof value === "string") {
-      try {
-        const bigintValue = BigInt(value);
-        return bigintValue >= 0n && bigintValue <= MAX_BIT_VALUE;
-      } catch {
-        return false;
-      }
-    }
-    if (Array.isArray(value)) {
-      return value.every((item) => BitField.isValid(item));
-    }
-    return false;
-  }
-  static combine<F>(...bitfields: BitFieldResolvable<F>[]): BitField<F> {
-    return new BitField<F>(
-      bitfields.reduce<bigint>((acc, bf) => acc | BitField.resolve<F>(bf), 0n),
-    );
-  }
-  static intersection<F>(...bitfields: BitFieldResolvable<F>[]): BitField<F> {
-    if (bitfields.length === 0) {
-      return new BitField<F>();
-    }
-    const first = BitField.resolve<F>(bitfields[0] ?? 0n);
-    return new BitField<F>(
-      bitfields.slice(1).reduce<bigint>((acc, bf) => acc & BitField.resolve<F>(bf), first),
-    );
-  }
-  has(bits: BitFieldResolvable<T>): boolean {
-    const bitsToCheck = BitField.resolve<T>(bits);
+
+  /**
+   * @description Checks if this BitField contains all specified bits.
+   *
+   * @param bits - Bit value(s) to check for
+   * @returns True if all specified bits are present
+   */
+  has(bits: T): boolean {
+    const bitsToCheck = resolve(bits);
     return (this.#bitfield & bitsToCheck) === bitsToCheck;
   }
-  hasAny(...bits: BitFieldResolvable<T>[]): boolean {
-    const bitsToCheck = BitField.resolve<T>(...bits);
+
+  /**
+   * @description Checks if this BitField contains any of the specified bits.
+   *
+   * @param bits - Bit values to check for
+   * @returns True if any specified bits are present
+   */
+  hasAny(...bits: T[]): boolean {
+    const bitsToCheck = resolve(...bits);
     return (this.#bitfield & bitsToCheck) !== 0n;
   }
-  isEmpty(): boolean {
-    return this.#bitfield === 0n;
+
+  /**
+   * @description Checks if this BitField exactly equals another bit value.
+   *
+   * @param other - Bit value to compare against
+   * @returns True if values are identical
+   */
+  equals(other: T): boolean {
+    return this.#bitfield === resolve(other);
   }
-  equals(other: BitFieldResolvable<T>): boolean {
-    return this.#bitfield === BitField.resolve<T>(other);
-  }
-  add(...bits: BitFieldResolvable<T>[]): this {
-    this.#bitfield |= BitField.resolve<T>(...bits);
+
+  /**
+   * @description Adds specified bits to this BitField (mutating operation).
+   *
+   * @param bits - Bit values to add
+   * @returns This BitField instance for chaining
+   */
+  add(...bits: T[]): this {
+    this.#bitfield |= resolve(...bits);
     return this;
   }
-  remove(...bits: BitFieldResolvable<T>[]): this {
-    this.#bitfield &= ~BitField.resolve<T>(...bits);
+
+  /**
+   * @description Removes specified bits from this BitField (mutating operation).
+   *
+   * @param bits - Bit values to remove
+   * @returns This BitField instance for chaining
+   */
+  remove(...bits: T[]): this {
+    this.#bitfield &= ~resolve(...bits);
     return this;
   }
-  toggle(...bits: BitFieldResolvable<T>[]): this {
-    this.#bitfield ^= BitField.resolve<T>(...bits);
+
+  /**
+   * @description Toggles specified bits in this BitField (mutating operation).
+   *
+   * @param bits - Bit values to toggle
+   * @returns This BitField instance for chaining
+   */
+  toggle(...bits: T[]): this {
+    this.#bitfield ^= resolve(...bits);
     return this;
   }
-  clear(): this {
-    this.#bitfield = 0n;
-    return this;
-  }
+
+  /**
+   * @description Creates a copy of this BitField with identical bit values.
+   *
+   * @returns New BitField instance with same values
+   */
   clone(): BitField<T> {
-    return new BitField<T>(this.#bitfield);
+    return new BitField(this.#bitfield) as BitField<T>;
   }
-  toArray(): bigint[] {
-    const result: bigint[] = [];
-    let value = this.#bitfield;
-    let position = 0n;
-    while (value > 0n) {
-      if ((value & 1n) === 1n) {
-        result.push(1n << position);
-      }
-      value >>= 1n;
-      position++;
-    }
-    return result;
-  }
+
+  /**
+   * @description Converts BitField value to string representation.
+   *
+   * @param radix - Numeric base for string conversion (default: 10)
+   * @returns String representation of the bitfield value
+   */
   toString(radix = 10): string {
     return this.#bitfield.toString(radix);
   }
+
+  /**
+   * @description Returns the raw bigint value of this BitField.
+   *
+   * @returns Raw bitfield value as bigint
+   */
   valueOf(): bigint {
     return this.#bitfield;
-  }
-  *[Symbol.iterator](): Iterator<bigint> {
-    yield* this.toArray();
   }
 }

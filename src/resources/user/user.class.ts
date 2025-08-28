@@ -1,8 +1,8 @@
 import { BaseClass } from "../../bases/index.js";
-import { BitField, type TransformToCamelCase } from "../../utils/index.js";
-import type { UserEntity, UserFlags } from "./user.entity.js";
+import { BitField, type CamelCaseKeys } from "../../utils/index.js";
+import type { UserEntity } from "./user.entity.js";
 
-export class User extends BaseClass<UserEntity> implements TransformToCamelCase<UserEntity> {
+export class User extends BaseClass<UserEntity> implements CamelCaseKeys<UserEntity> {
   readonly id = this.rawData.id;
   readonly username = this.rawData.username;
   readonly discriminator = this.rawData.discriminator;
@@ -16,9 +16,9 @@ export class User extends BaseClass<UserEntity> implements TransformToCamelCase<
   readonly locale = this.rawData.locale;
   readonly verified = Boolean(this.rawData.verified);
   readonly email = this.rawData.email;
-  readonly flags = new BitField<UserFlags>(this.rawData.flags ?? 0n);
+  readonly flags = new BitField(this.rawData.flags);
   readonly premiumType = this.rawData.premium_type;
-  readonly publicFlags = new BitField<UserFlags>(this.rawData.public_flags ?? 0n);
+  readonly publicFlags = new BitField(this.rawData.public_flags);
   readonly avatarDecorationData = this.rawData.avatar_decoration_data;
   readonly primaryGuild = this.rawData.primary_guild;
   readonly collectibles = this.rawData.collectibles;

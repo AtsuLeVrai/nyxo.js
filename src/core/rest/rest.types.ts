@@ -1,4 +1,5 @@
 import type { ReadStream } from "node:fs";
+import type { HttpResponseCodes, JsonErrorCodes } from "../../enum/index.js";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type DataUri = `data:${string};base64,${string}`;
@@ -22,14 +23,14 @@ export interface HttpRequestOptions {
 }
 
 export interface HttpResponse<T> {
-  statusCode: number;
+  statusCode: HttpResponseCodes;
   headers: Record<string, string>;
   data: T;
   reason?: string;
 }
 
 export interface ApiErrorDetail {
-  code: string;
+  code: JsonErrorCodes;
   message: string;
 }
 
@@ -39,7 +40,7 @@ export interface ApiErrorStructure {
 }
 
 export interface ApiErrorResponse {
-  code: number;
+  code: JsonErrorCodes;
   message: string;
   errors?: ApiErrorStructure;
 }

@@ -57,6 +57,8 @@ import type {
   HttpResponse,
 } from "./rest.types.js";
 
+export type RouteBuilder = Record<string, (...args: string[]) => string>;
+
 const MAX_FILE_COUNT = 10 as const;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const DATA_URI_REGEX = /^data:(.+);base64,(.*)$/;
@@ -86,8 +88,6 @@ export const RestOptions = z.object({
   pool: PoolOptions.prefault({}),
   rateLimit: RateLimitOptions.prefault({}),
 });
-
-export type RouteBuilder = Record<string, (...args: string[]) => string>;
 
 export const Routes = {
   emoji: EmojiRoutes,
@@ -232,6 +232,7 @@ export class Rest {
       if (processed.size !== null && processed.size > MAX_FILE_SIZE) {
         throw new Error(`File too large: ${processed.size} bytes`);
       }
+
       const fieldName = filesArray.length === 1 ? "file" : `files[${i}]`;
       form.append(fieldName, processed.data, {
         filename: processed.filename,
@@ -331,17 +332,7 @@ export class Rest {
       headers: headers,
     });
 
-    const responseBody = Buffer.from(await response.body.arrayBuffer());
-
-    if (response.statusCode === 204 || responseBody.length === 0) {
-      return {
-        data: {} as T,
-        statusCode: response.statusCode,
-        headers: response.headers as Record<string, string>,
-      };
-    }
-
-    const result: T = JSON.parse(responseBody.toString());
+    const result = (await response.body.json()) as T;
 
     let reason = "";
     if (response.statusCode >= 400 && this.#isJsonErrorEntity(result)) {
