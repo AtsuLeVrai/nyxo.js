@@ -14,40 +14,28 @@ import {
   AutoModerationRouter,
   ChannelRouter,
   EmojiRouter,
-  EmojiRoutes,
   EntitlementRouter,
-  EntitlementRoutes,
   GatewayRouter,
   GuildRouter,
   GuildScheduledEventRouter,
-  GuildScheduledEventRoutes,
   GuildTemplateRouter,
   InteractionRouter,
   InviteRouter,
   LobbyRouter,
-  LobbyRoutes,
   MessageRouter,
   OAuth2Router,
-  OAuth2Routes,
   PollRouter,
-  PollRoutes,
   SKURouter,
-  SKURoutes,
   SoundboardRouter,
-  SoundboardRoutes,
   StageInstanceRouter,
-  StageInstanceRoutes,
   StickerRouter,
-  StickerRoutes,
   SubscriptionRouter,
-  SubscriptionRoutes,
   UserRouter,
-  UserRoutes,
   VoiceRouter,
-  VoiceRoutes,
   WebhookRouter,
 } from "../../resources/index.js";
 import { RateLimitManager, RateLimitOptions } from "./rate-limit.manager.js";
+import { ResilienceManager, ResilienceOptions } from "./resilience.manager.js";
 import type {
   ApiErrorResponse,
   DataUri,
@@ -87,55 +75,8 @@ export const RestOptions = z.object({
   baseUrl: z.url().default("https://discord.com"),
   pool: PoolOptions.prefault({}),
   rateLimit: RateLimitOptions.prefault({}),
+  resilience: ResilienceOptions.prefault({}),
 });
-
-export const Routes = {
-  emoji: EmojiRoutes,
-  guildScheduledEvent: GuildScheduledEventRoutes,
-  entitlement: EntitlementRoutes,
-  lobby: LobbyRoutes,
-  oauth2: OAuth2Routes,
-  poll: PollRoutes,
-  sku: SKURoutes,
-  soundboard: SoundboardRoutes,
-  stageInstance: StageInstanceRoutes,
-  sticker: StickerRoutes,
-  subscription: SubscriptionRoutes,
-  user: UserRoutes,
-  voice: VoiceRoutes,
-  // webhook: WebhookRoutes, TODO: Uncomment when WebhookRoutes are implemented, need to be checked
-} as const satisfies Record<
-  keyof Pick<
-    Rest,
-    | "application"
-    | "applicationCommand"
-    | "applicationConnection"
-    | "auditLog"
-    | "autoModeration"
-    | "channel"
-    | "emoji"
-    | "entitlement"
-    | "gateway"
-    | "guild"
-    | "guildScheduledEvent"
-    | "guildTemplate"
-    | "interaction"
-    | "invite"
-    | "lobby"
-    | "message"
-    | "oauth2"
-    | "poll"
-    | "sku"
-    | "soundboard"
-    | "stageInstance"
-    | "sticker"
-    | "subscription"
-    | "user"
-    | "voice"
-    | "webhook"
-  >,
-  RouteBuilder
->;
 
 export class Rest {
   readonly application = new ApplicationRouter(this);
@@ -167,6 +108,7 @@ export class Rest {
 
   readonly pool: Pool;
   readonly rateLimit: RateLimitManager;
+  readonly resilience: ResilienceManager;
   readonly #options: z.infer<typeof RestOptions>;
 
   constructor(options: z.input<typeof RestOptions>) {
@@ -181,16 +123,23 @@ export class Rest {
 
     this.pool = new Pool(this.#options.baseUrl, this.#options.pool);
     this.rateLimit = new RateLimitManager(this.#options.rateLimit);
+    this.resilience = new ResilienceManager(this.#options.resilience);
   }
 
-  async request<T>(options: HttpRequestOptions): Promise<T> {
-    const rateLimitCheck = await this.rateLimit.checkAndWaitIfNeeded(options.path);
-    if (!rateLimitCheck.canProceed) {
-      throw new Error(`Rate limit exceeded: ${rateLimitCheck.reason}`);
-    }
-    const response = await this.#makeHttpRequest<T>(options);
-    await this.rateLimit.updateRateLimitAndWaitIfNeeded(response.headers, response.statusCode);
-    return response.data as T;
+  request<T>(options: HttpRequestOptions): Promise<T> {
+    return this.resilience.executeWithResilience(
+      async () => {
+        const rateLimitCheck = await this.rateLimit.checkRateLimit(options.path);
+        if (!rateLimitCheck.canProceed) {
+          throw new Error(`Rate limit exceeded: ${rateLimitCheck.reason}`);
+        }
+
+        const response = await this.#makeHttpRequest<T>(options);
+        await this.rateLimit.updateRateLimit(response.headers, response.statusCode);
+        return response.data as T;
+      },
+      `${options.method}:${options.path.split("/")[1] || "root"}`,
+    );
   }
 
   get<T>(path: string, options: Omit<HttpRequestOptions, "method" | "path"> = {}): Promise<T> {
@@ -215,6 +164,7 @@ export class Rest {
 
   async destroy(): Promise<void> {
     await this.pool.close();
+    this.resilience.clear();
   }
 
   async createFormData(

@@ -64,29 +64,31 @@ export class RateLimitManager {
     }
   }
 
-  async checkAndWaitIfNeeded(path: string): Promise<RateLimitResult> {
-    const result = this.checkRateLimit(path);
-    if (!result.canProceed && result.retryAfter && result.retryAfter > 0) {
-      await sleep(result.retryAfter);
-      return { canProceed: true };
-    }
-
-    return result;
-  }
-
-  checkRateLimit(path: string): RateLimitResult {
+  async checkRateLimit(path: string): Promise<RateLimitResult> {
     const now = Date.now();
+
+    // Check Cloudflare limits first
     const cloudflareCheck = this.#checkCloudflareLimit(now);
     if (!cloudflareCheck.canProceed) {
+      if (cloudflareCheck.retryAfter && cloudflareCheck.retryAfter > 0) {
+        await sleep(cloudflareCheck.retryAfter);
+        return { canProceed: true };
+      }
       return cloudflareCheck;
     }
 
+    // Check global limits for non-exempt routes
     const isGlobalExempt = RATE_LIMIT_CONSTANTS.GLOBAL_EXEMPT_ROUTES.some((route) =>
       path.startsWith(route),
     );
+
     if (!isGlobalExempt) {
       const globalCheck = this.#checkGlobalLimit(now);
       if (!globalCheck.canProceed) {
+        if (globalCheck.retryAfter && globalCheck.retryAfter > 0) {
+          await sleep(globalCheck.retryAfter);
+          return { canProceed: true };
+        }
         return globalCheck;
       }
     }
@@ -94,7 +96,7 @@ export class RateLimitManager {
     return { canProceed: true };
   }
 
-  async updateRateLimitAndWaitIfNeeded(
+  async updateRateLimit(
     headers: Record<string, string>,
     statusCode: number,
   ): Promise<RateLimitResult> {

@@ -184,28 +184,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
   }
 
-  async setupCodecs(): Promise<void> {
-    if (this.#options.encodingType === "etf") {
-      const result = await safeModuleImport<typeof import("erlpack")>("erlpack");
-      if (!result.success) {
-        throw new Error("erlpack is required for ETF encoding. Install with: npm install erlpack");
-      }
-
-      this.#erlpack = result.module;
-    }
-
-    if (this.#options.compressionType === "zlib-stream") {
-      const result = await safeModuleImport<typeof import("zlib-sync")>("zlib-sync");
-      if (!result.success) {
-        throw new Error(
-          "zlib-sync is required for zlib-stream compression. Install with: npm install zlib-sync",
-        );
-      }
-
-      this.#zlibInflate = new result.module.Inflate();
-    }
-  }
-
   send<T extends keyof GatewaySendEvents>(opcode: T, data: GatewaySendEvents[T]): void {
     if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
       throw new Error("WebSocket not open");
@@ -221,7 +199,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       throw new Error("Rate limit exceeded: 120 events per minute");
     }
 
-    const encoded = this.encodePayload({
+    const encoded = this.#encodePayload({
       op: opcode,
       d: data,
       s: null,
@@ -269,76 +247,30 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.#setState(GatewayConnectionState.Disconnected);
   }
 
-  decompressZlib(data: Buffer): Buffer | null {
-    if (!this.#zlibInflate) {
-      throw new Error("Zlib not initialized");
-    }
-
-    this.#zlibBuffer = Buffer.concat([this.#zlibBuffer, data]);
-
-    if (!this.#hasZlibSyncFlush(this.#zlibBuffer)) {
-      return null;
-    }
-
-    try {
-      this.#zlibInflate.push(this.#zlibBuffer, 2);
-
-      if (this.#zlibInflate.err < 0) {
-        this.#zlibBuffer = Buffer.alloc(0);
-        const errorMessage = this.#zlibInflate.msg || `Zlib error code: ${this.#zlibInflate.err}`;
-        throw new Error(`Zlib decompression failed: ${errorMessage}`);
+  async #setupCodecs(): Promise<void> {
+    if (this.#options.encodingType === "etf") {
+      const result = await safeModuleImport<typeof import("erlpack")>("erlpack");
+      if (!result.success) {
+        throw new Error("erlpack is required for ETF encoding. Install with: npm install erlpack");
       }
 
-      const decompressed = Buffer.from(this.#zlibInflate.result || []);
-      this.#zlibBuffer = Buffer.alloc(0);
-      return decompressed;
-    } catch (error) {
-      this.#zlibBuffer = Buffer.alloc(0);
-      throw error;
-    }
-  }
-
-  encodePayload(data: PayloadEntity): Buffer | string {
-    let result: Buffer | string;
-
-    switch (this.#options.encodingType) {
-      case "etf":
-        if (!this.#erlpack) {
-          throw new Error("Erlpack not initialized");
-        }
-        result = this.#erlpack.pack(data);
-        break;
-      case "json":
-        result = JSON.stringify(data);
-        break;
-      default:
-        throw new Error(`Unsupported encoding type: ${this.#options.encodingType}`);
+      this.#erlpack = result.module;
     }
 
-    const size = Buffer.isBuffer(result) ? result.length : Buffer.byteLength(result);
-    if (size > MAX_PAYLOAD_SIZE) {
-      throw new Error(`Payload exceeds maximum size of ${MAX_PAYLOAD_SIZE} bytes`);
-    }
+    if (this.#options.compressionType === "zlib-stream") {
+      const result = await safeModuleImport<typeof import("zlib-sync")>("zlib-sync");
+      if (!result.success) {
+        throw new Error(
+          "zlib-sync is required for zlib-stream compression. Install with: npm install zlib-sync",
+        );
+      }
 
-    return result;
-  }
-
-  decodePayload(data: Buffer | string): PayloadEntity {
-    switch (this.#options.encodingType) {
-      case "etf":
-        if (!this.#erlpack) {
-          throw new Error("Erlpack not initialized");
-        }
-        return this.#erlpack.unpack(Buffer.isBuffer(data) ? data : Buffer.from(data));
-      case "json":
-        return JSON.parse(typeof data === "string" ? data : data.toString("utf-8"));
-      default:
-        throw new Error(`Unsupported encoding type: ${this.#options.encodingType}`);
+      this.#zlibInflate = new result.module.Inflate();
     }
   }
 
   async #connectToGateway(): Promise<void> {
-    await this.setupCodecs();
+    await this.#setupCodecs();
 
     const wsUrl = this.#buildGatewayUrl();
     this.#ws = new WebSocket(wsUrl);
@@ -378,17 +310,85 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     return `${this.#gatewayUrl}?${params}`;
   }
 
+  #decompressZlib(data: Buffer): Buffer | null {
+    if (!this.#zlibInflate) {
+      throw new Error("Zlib not initialized");
+    }
+
+    this.#zlibBuffer = Buffer.concat([this.#zlibBuffer, data]);
+
+    if (!this.#hasZlibSyncFlush(this.#zlibBuffer)) {
+      return null;
+    }
+
+    try {
+      this.#zlibInflate.push(this.#zlibBuffer, 2);
+
+      if (this.#zlibInflate.err < 0) {
+        this.#zlibBuffer = Buffer.alloc(0);
+        const errorMessage = this.#zlibInflate.msg || `Zlib error code: ${this.#zlibInflate.err}`;
+        throw new Error(`Zlib decompression failed: ${errorMessage}`);
+      }
+
+      const decompressed = Buffer.from(this.#zlibInflate.result || []);
+      this.#zlibBuffer = Buffer.alloc(0);
+      return decompressed;
+    } catch (error) {
+      this.#zlibBuffer = Buffer.alloc(0);
+      throw error;
+    }
+  }
+
+  #encodePayload(data: PayloadEntity): Buffer | string {
+    let result: Buffer | string;
+
+    switch (this.#options.encodingType) {
+      case "etf":
+        if (!this.#erlpack) {
+          throw new Error("Erlpack not initialized");
+        }
+        result = this.#erlpack.pack(data);
+        break;
+      case "json":
+        result = JSON.stringify(data);
+        break;
+      default:
+        throw new Error(`Unsupported encoding type: ${this.#options.encodingType}`);
+    }
+
+    const size = Buffer.isBuffer(result) ? result.length : Buffer.byteLength(result);
+    if (size > MAX_PAYLOAD_SIZE) {
+      throw new Error(`Payload exceeds maximum size of ${MAX_PAYLOAD_SIZE} bytes`);
+    }
+
+    return result;
+  }
+
+  #decodePayload(data: Buffer | string): PayloadEntity {
+    switch (this.#options.encodingType) {
+      case "etf":
+        if (!this.#erlpack) {
+          throw new Error("Erlpack not initialized");
+        }
+        return this.#erlpack.unpack(Buffer.isBuffer(data) ? data : Buffer.from(data));
+      case "json":
+        return JSON.parse(typeof data === "string" ? data : data.toString("utf-8"));
+      default:
+        throw new Error(`Unsupported encoding type: ${this.#options.encodingType}`);
+    }
+  }
+
   async #handleMessage(data: Buffer): Promise<void> {
     this.emit("wsMessage", data);
     let processedData = data;
 
     if (this.#options.compressionType === "zlib-stream") {
-      const decompressed = this.decompressZlib(data);
+      const decompressed = this.#decompressZlib(data);
       if (!decompressed) return;
       processedData = decompressed;
     }
 
-    const payload = this.decodePayload(processedData);
+    const payload = this.#decodePayload(processedData);
 
     if (payload.s !== null && payload.s > this.sequence) {
       this.sequence = payload.s;

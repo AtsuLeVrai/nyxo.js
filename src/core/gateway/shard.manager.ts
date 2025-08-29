@@ -1,4 +1,5 @@
 import { EventEmitter } from "eventemitter3";
+import QuickLRU from "quick-lru";
 import { z } from "zod";
 import type {
   GuildCreateEntity,
@@ -55,7 +56,7 @@ export class ShardManager extends EventEmitter<ShardManagerEvents> {
   readonly #gatewayOptions: z.input<typeof GatewayOptions>;
   readonly #shardOptions: z.infer<typeof ShardManagerOptions>;
 
-  #shards = new Map<number, ShardInfo>();
+  #shards = new QuickLRU<number, ShardInfo>({ maxSize: 16 });
   #maxConcurrency = 1;
   #isSpawning = false;
 
@@ -78,7 +79,7 @@ export class ShardManager extends EventEmitter<ShardManagerEvents> {
     }
   }
 
-  get shards(): ReadonlyMap<number, ShardInfo> {
+  get shards(): QuickLRU<number, ShardInfo> {
     return this.#shards;
   }
 
