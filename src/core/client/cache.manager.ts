@@ -1,4 +1,3 @@
-import { deepmerge } from "deepmerge-ts";
 import QuickLRU from "quick-lru";
 import { z } from "zod";
 import type { GuildEntity } from "../../resources/index.js";
@@ -64,16 +63,13 @@ export class CacheManager {
     return cache?.get(id);
   }
 
-  set<K extends CacheKey>(cacheKey: K, id: string, value: Partial<CacheEntity<K>>): void {
+  set<K extends CacheKey>(cacheKey: K, id: string, value: CacheEntity<K>): void {
     const cache = this.#caches.get(cacheKey);
-    if (!cache) return;
+    if (!cache) {
+      return;
+    }
 
-    const existing = cache.get(id);
-    const merged = existing
-      ? (deepmerge(existing, value) as CacheEntity<K>)
-      : (value as CacheEntity<K>);
-
-    cache.set(id, merged);
+    cache.set(id, value);
   }
 
   delete(cacheKey: CacheKey, id: string): boolean {
@@ -116,7 +112,9 @@ export class CacheManager {
 
   async #preFetchGuilds(): Promise<void> {
     const guildsCache = this.#caches.get("guilds");
-    if (!guildsCache) return;
+    if (!guildsCache) {
+      return;
+    }
 
     try {
       const guilds = await this.#rest.user.getCurrentUserGuilds();

@@ -176,21 +176,6 @@ export interface MessageOptions {
      */
     reply?: MessageReference;
 }
-
-/**
- * @description Represents a Discord user's membership in a specific guild.
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object}
- */
-export interface GuildMember {
-    /** User object for this member */
-    user: User;
-    /** Member's guild nickname */
-    nick?: string;
-    /** Array of role IDs assigned to member */
-    roles: Snowflake[];
-    /** ISO8601 timestamp of when member joined guild */
-    joined_at: string;
-}
 ```
 
 ### **Utility Objects**
