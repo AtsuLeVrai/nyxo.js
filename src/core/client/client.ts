@@ -1,19 +1,19 @@
 import { EventEmitter } from "eventemitter3";
 import { z } from "zod";
-import { User } from "../../resources/index.js";
 import { Gateway, GatewayOptions } from "../gateway/index.js";
 import { Rest, RestOptions } from "../rest/index.js";
+import { CacheManager, CacheOptions } from "./cache.manager.js";
 
 export const ClientOptions = z.object({
+  cache: CacheOptions.prefault({}),
   ...RestOptions.shape,
   ...GatewayOptions.shape,
 });
 
 export class Client extends EventEmitter {
-  // @ts-expect-error - will be initialized after `connect` is called
-  user: User;
   readonly rest: Rest;
   readonly gateway: Gateway;
+  readonly cache: CacheManager;
 
   readonly #options: z.infer<typeof ClientOptions>;
 
@@ -31,15 +31,11 @@ export class Client extends EventEmitter {
 
     this.rest = new Rest(this.#options);
     this.gateway = new Gateway(this.rest, this.#options);
+    this.cache = new CacheManager(this.rest, this.#options.cache);
   }
 
   async connect(): Promise<void> {
-    const [_, user] = await Promise.all([
-      this.gateway.connect(),
-      this.rest.user.fetchCurrentUser(),
-    ]);
-
-    this.user = new User(this, user);
+    await Promise.all([this.gateway.connect(), this.cache.initialize()]);
   }
 
   async destroy(): Promise<void> {

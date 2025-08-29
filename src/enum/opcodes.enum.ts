@@ -190,8 +190,6 @@ export enum HttpResponseCodes {
 export enum JsonErrorCodes {
   /** General error (such as a malformed request body, amongst other things) */
   GeneralError = 0,
-
-  // General errors (10001-10003)
   /** Unknown account */
   UnknownAccount = 10001,
   /** Unknown application */
@@ -278,8 +276,6 @@ export enum JsonErrorCodes {
   UnknownGuildScheduledEventUser = 10071,
   /** Unknown Tag */
   UnknownTag = 10087,
-
-  // Bot/Application errors (20001-20028)
   /** Bots cannot use this endpoint */
   BotsCannotUse = 20001,
   /** Only bots can use this endpoint */
@@ -304,8 +300,6 @@ export enum JsonErrorCodes {
   StageTopicContainsNotAllowedWords = 20031,
   /** Guild premium subscription level too low */
   GuildPremiumSubscriptionLevelTooLow = 20035,
-
-  // Resource limit errors (30001-30040)
   /** Maximum number of guilds reached (100) */
   MaximumGuildsReached = 30001,
   /** Maximum number of friends reached (1000) */
@@ -354,8 +348,6 @@ export enum JsonErrorCodes {
   MaximumStickersReached = 30039,
   /** Maximum number of prune requests has been reached. Try again later */
   MaximumPruneRequestsReached = 30040,
-
-  // Access/Permission errors (40001-40013)
   /** Unauthorized. Provide a valid token and try again */
   Unauthorized = 40001,
   /** You need to verify your account in order to perform this action */
@@ -394,8 +386,6 @@ export enum JsonErrorCodes {
   TagRequiredToCreateForumPost = 40067,
   /** An entitlement has already been granted for this resource */
   EntitlementAlreadyGranted = 40074,
-
-  // MFA/2FA errors (50001-50010)
   /** Missing access */
   MissingAccess = 50001,
   /** Invalid account type */
@@ -452,4 +442,34 @@ export enum JsonErrorCodes {
   MessageTooOldToBulkDelete = 50034,
   /** Invalid form body (returned for both application/json and multipart/form-data bodies) */
   InvalidFormBody = 50035,
+  /** An invite was accepted to a guild the application's bot is not in */
+  InviteAcceptedToGuildBotNotIn = 50036,
+  /** Invalid Activity Action */
+  InvalidActivityAction = 50039,
+  /** Invalid API version provided */
+  InvalidApiVersionProvided = 50041,
+  /** File uploaded exceeds the maximum size */
+  FileUploadedExceedsMaximumSize = 50045,
+  /** Invalid file uploaded */
+  InvalidFileUploaded = 50046,
+  /** Two factor is required for this operation */
+  TwoFactorRequired = 60003,
+  /** No users with DiscordTag exist */
+  NoUsersWithDiscordTagExist = 80004,
+  /** Reaction was blocked */
+  ReactionWasBlocked = 90001,
+  /** Application not yet available. Try again later */
+  ApplicationNotYetAvailable = 110001,
+  /** Cannot reply without permission to read message history */
+  CannotReplyWithoutReadMessageHistoryPermission = 160002,
+  /** Invalid JSON for uploaded Lottie file */
+  InvalidJsonForUploadedLottieFile = 170001,
+  /** Sticker maximum framerate exceeded */
+  StickerMaximumFramerateExceeded = 170003,
+  /** Failed to create stage needed for stage event */
+  FailedToCreateStageForStageEvent = 180002,
+  /** Title was blocked by automatic moderation */
+  TitleBlockedByAutoModeration = 200001,
+  /** Webhooks can only create threads in forum channels */
+  WebhooksCanOnlyCreateThreadsInForumChannels = 220003,
 }

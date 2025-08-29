@@ -44,13 +44,15 @@
     "test": "vitest run",
     "submodules:init": "git submodule update --init --recursive",
     "submodules:update": "git submodule update --force --remote",
-    "submodules:stable": "git submodule foreach 'git fetch --tags && git checkout $(git describe --tags $(git rev-list --tags --max-count=1))'",
     "prepare": "husky"
   },
   "dependencies": {
+    "deepmerge-ts": "^7.1.5",
     "eventemitter3": "^5.0.1",
     "form-data": "^4.0.4",
     "mime-types": "^3.0.1",
+    "quick-lru": "^7.1.0",
+    "reflect-metadata": "^0.2.2",
     "undici": "^7.15.0",
     "ws": "^8.18.3",
     "zod": "^4.1.4"

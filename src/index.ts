@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 export * from "./bases/index.js";
 export * from "./core/index.js";
 export * from "./enum/index.js";

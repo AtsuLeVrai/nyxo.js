@@ -15,17 +15,15 @@ function safeBigInt(value: bigint | number): bigint {
     if (value < 0n || value > MAX_BIT_VALUE) {
       throw new Error("BitField value must be a non-negative bigint within 64-bit range");
     }
+
     return value;
   }
 
-  if (typeof value === "number") {
-    if (!Number.isInteger(value) || value < 0 || value > Number.MAX_SAFE_INTEGER) {
-      throw new Error("BitField value must be a non-negative integer within safe integer range");
-    }
-    return BigInt(value);
+  if (!Number.isInteger(value) || value < 0 || value > Number.MAX_SAFE_INTEGER) {
+    throw new Error("BitField value must be a non-negative integer within safe integer range");
   }
 
-  throw new Error("Value must be a bigint or number");
+  return BigInt(value);
 }
 
 /**
