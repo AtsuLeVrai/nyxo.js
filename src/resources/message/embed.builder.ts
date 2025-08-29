@@ -1,3 +1,4 @@
+import { BaseBuilder } from "../../bases/index.js";
 import { type ColorResolvable, resolveColor } from "../../utils/index.js";
 import type {
   EmbedAuthorEntity,
@@ -11,92 +12,84 @@ import type {
   EmbedVideoEntity,
 } from "./message.entity.js";
 
-export class EmbedBuilder {
-  readonly #data: Partial<EmbedEntity> = {};
-  constructor(data?: EmbedEntity) {
-    if (data) {
-      this.#data = { ...data };
-    }
-  }
-  static from(data: EmbedEntity): EmbedBuilder {
-    return new EmbedBuilder(data);
-  }
+export class EmbedBuilder extends BaseBuilder<EmbedEntity> {
   setTitle(title: string): this {
-    this.#data.title = title;
-    return this;
+    return this.set("title", title);
   }
+
   setDescription(description: string): this {
-    this.#data.description = description;
-    return this;
+    return this.set("description", description);
   }
+
   setUrl(url: string): this {
-    this.#data.url = url;
-    return this;
+    return this.set("url", url);
   }
+
   setTimestamp(timestamp: Date | number | string = new Date()): this {
-    this.#data.timestamp = new Date(timestamp).toISOString();
-    return this;
+    return this.set("timestamp", new Date(timestamp).toISOString());
   }
+
   setColor(color: ColorResolvable): this {
-    this.#data.color = resolveColor(color);
-    return this;
+    return this.set("color", resolveColor(color));
   }
+
   setType(type: EmbedType): this {
-    this.#data.type = type;
-    return this;
+    return this.set("type", type);
   }
+
   setFooter(footer: EmbedFooterEntity): this {
-    this.#data.footer = footer;
-    return this;
+    return this.set("footer", footer);
   }
+
   setImage(image: EmbedImageEntity): this {
-    this.#data.image = image;
-    return this;
+    return this.set("image", image);
   }
+
   setThumbnail(thumbnail: EmbedThumbnailEntity): this {
-    this.#data.thumbnail = thumbnail;
-    return this;
+    return this.set("thumbnail", thumbnail);
   }
+
   setAuthor(author: EmbedAuthorEntity): this {
-    this.#data.author = author;
-    return this;
+    return this.set("author", author);
   }
+
   setProvider(provider: EmbedProviderEntity): this {
-    this.#data.provider = provider;
-    return this;
+    return this.set("provider", provider);
   }
+
   setVideo(video: EmbedVideoEntity): this {
-    this.#data.video = video;
-    return this;
+    return this.set("video", video);
   }
+
   addField(field: EmbedFieldEntity): this {
-    if (!this.#data.fields) {
-      this.#data.fields = [];
-    }
-    this.#data.fields.push(field);
-    return this;
+    return this.pushToArray("fields", field);
   }
+
   addFields(...fields: EmbedFieldEntity[]): this {
-    for (const field of fields) {
-      this.addField(field);
-    }
-    return this;
+    return this.pushToArray("fields", ...fields);
   }
+
   setFields(fields: EmbedFieldEntity[]): this {
-    this.#data.fields = [];
-    return this.addFields(...fields);
+    return this.setArray("fields", fields);
   }
+
   spliceFields(index: number, deleteCount: number, ...fields: EmbedFieldEntity[]): this {
-    if (!this.#data.fields) {
-      this.#data.fields = [];
-    }
-    this.#data.fields.splice(index, deleteCount, ...fields);
-    return this;
+    const currentFields = this.get("fields") || [];
+    currentFields.splice(index, deleteCount, ...fields);
+    return this.set("fields", currentFields);
   }
-  build(): EmbedEntity {
-    return this.#data as EmbedEntity;
-  }
-  toJson(): Readonly<EmbedEntity> {
-    return Object.freeze({ ...this.#data }) as EmbedEntity;
+
+  getTotalLength(): number {
+    const title = this.get("title")?.length ?? 0;
+    const description = this.get("description")?.length ?? 0;
+    const footer = this.get("footer")?.text?.length ?? 0;
+    const author = this.get("author")?.name?.length ?? 0;
+    const fields =
+      this.get("fields")?.reduce(
+        (total, field) => total + field.name.length + field.value.length,
+        0,
+      ) ?? 0;
+
+    return title + description + footer + author + fields;
   }
 }
