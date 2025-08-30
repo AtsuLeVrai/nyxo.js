@@ -727,28 +727,85 @@ export interface GatewayMessageReactionAddEntity {
   type: ReactionType;
 }
 
+/**
+ * @description Gateway event data when a user adds a reaction to a message.
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-add}
+ */
+export interface GatewayMessageReactionAddEntity {
+  /** Snowflake ID of the user */
+  user_id: string;
+  /** Snowflake ID of the channel */
+  channel_id: string;
+  /** Snowflake ID of the message */
+  message_id: string;
+  /** Snowflake ID of the guild */
+  guild_id?: string;
+  /** Member who reacted if this happened in a guild */
+  member?: GuildMemberEntity;
+  /** Emoji used to react */
+  emoji: Pick<EmojiEntity, "id" | "name" | "animated">;
+  /** Snowflake ID of the user who authored the message being reacted to */
+  message_author_id?: string;
+  /** Whether it was a super-reaction */
+  burst: boolean;
+  /** HEX colors used for super-reaction */
+  burst_colors?: string[];
+  /** Type of reaction */
+  type: ReactionType;
+}
+
+/**
+ * @description Gateway event data when multiple messages are deleted at once.
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-delete-bulk}
+ */
 export interface GatewayMessageDeleteBulkEntity {
+  /** Array of message Snowflake IDs that were deleted */
   ids: string[];
+  /** Snowflake ID of the channel */
   channel_id: string;
+  /** Snowflake ID of the guild */
   guild_id?: string;
 }
 
+/**
+ * @description Gateway event data when a message is deleted.
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-delete}
+ */
 export interface GatewayMessageDeleteEntity {
+  /** Snowflake ID of the deleted message */
   id: string;
+  /** Snowflake ID of the channel */
   channel_id: string;
+  /** Snowflake ID of the guild */
   guild_id?: string;
 }
 
+/**
+ * @description Gateway event data when a message is sent in a channel.
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-create}
+ */
 export interface GatewayMessageCreateEntity extends Omit<MessageEntity, "mentions"> {
+  /** Array of users mentioned in the message with partial member data */
   mentions?: (UserEntity & Partial<GuildMemberEntity>)[];
+  /** Snowflake ID of the guild where the message was sent */
   guild_id?: string;
+  /** Partial member data for the message author if sent in a guild */
   member?: Partial<GuildMemberEntity>;
 }
 
+/**
+ * @description Gateway event data when a user votes on a message poll.
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-add}
+ */
 export interface GatewayMessagePollVoteEntity {
+  /** Snowflake ID of the user who voted */
   user_id: string;
+  /** Snowflake ID of the channel containing the poll */
   channel_id: string;
+  /** Snowflake ID of the message containing the poll */
   message_id: string;
+  /** Snowflake ID of the guild */
   guild_id?: string;
+  /** ID of the answer the user voted for */
   answer_id: number;
 }

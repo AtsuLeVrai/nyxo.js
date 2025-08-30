@@ -38,7 +38,6 @@ export enum GatewayConnectionState {
 }
 
 export interface GatewayEvents {
-  resumed: [];
   stateChange: [oldState: GatewayConnectionState, newState: GatewayConnectionState];
   dispatch: [
     event: keyof GatewayReceiveEvents,
@@ -51,6 +50,17 @@ export interface GatewayEvents {
   heartbeatSent: [timestamp: number, sequence: number];
   heartbeatAck: [timestamp: number, latency: number];
 }
+
+export const gatewayEventKeys = [
+  "stateChange",
+  "dispatch",
+  "wsOpen",
+  "wsClose",
+  "wsError",
+  "wsMessage",
+  "heartbeatSent",
+  "heartbeatAck",
+] as const satisfies (keyof GatewayEvents)[];
 
 const MAX_PAYLOAD_SIZE = 4096;
 const ZLIB_SYNC_FLUSH_SUFFIX = Buffer.from([0x00, 0x00, 0xff, 0xff]);
@@ -451,7 +461,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.#reconnectCount = 0;
 
     this.#setState(GatewayConnectionState.Ready);
-    this.emit("resumed");
   }
 
   #handleHello(data: HelloEntity): void {

@@ -1,437 +1,343 @@
 # TSDoc Documentation Guidelines
 
-> **Official documentation standards for Nyxo.js**  
-> Ultra-performance TypeScript Discord library
+> **Clean, focused documentation standards for production npm packages**  
+> Using essential TSDoc tags for maximum clarity and tool compatibility
 
-## 📋 General Pattern
+## 🎯 Core Documentation Tags
 
-All TypeScript elements must follow this structure:
+We use **only** these TSDoc tags for consistency and maintainability:
+
+- **@param** - Parameter descriptions
+- **@returns** - Return value descriptions
+- **@see @link** - Cross-references and external links
+- **@throws** - Error conditions
+- **@private** - Internal implementation details
+- **@deprecated** - Legacy features and migration paths
+- **@typeParam** - Generic type parameter descriptions
+
+---
+
+## 📋 Standard Documentation Pattern
 
 ```typescript
 /**
- * @description 1-2 sentences maximum. Focus on purpose and context.
- * @see {@link https://discord.com/developers/docs/...} - Link to Discord docs when relevant
+ * Clear, concise description of the function's purpose and behavior.
  *
- * @param paramName - Brief parameter description
- * @returns Clear description of return value
- * @throws {ErrorType} Only document important/common errors
+ * @typeParam T - Description of generic type parameter
+ * @param paramName - Parameter description with constraints
+ * @param optionalParam - Optional parameter with default behavior
+ * @returns Description of return value and possible states
+ * @throws {ErrorType} Condition that triggers this error
+ * @see {@link RelatedFunction} for similar functionality
+ * @see {@link https://example.com/docs} for detailed documentation
  */
 ```
 
-## 🎯 Documentation Standards by Type
+---
 
-### **Type Definitions**
+## 🏗️ Documentation by Element Type
 
-```typescript
-/**
- * @description Unique 64-bit identifier used throughout Discord API for all entities.
- * @see {@link https://discord.com/developers/docs/reference#snowflakes}
- */
-export type Snowflake = string;
+### 🔧 Functions
 
-/**
- * @description Supported content formats for Discord messages.
- * @see {@link https://discord.com/developers/docs/resources/channel#message-object}
- */
-export type MessageContent = string | MessageEmbed | MessagePayload;
-```
-
-### **Constants**
+**Standard Functions**
 
 ```typescript
 /**
- * @description Core API endpoints for REST requests and WebSocket connections.
- * @see {@link https://discord.com/developers/docs/reference#api-reference}
- */
-export const API_ENDPOINTS = {
-        BASE: "https://discord.com/api/v10",
-        GATEWAY: "wss://gateway.discord.gg",
-        CDN: "https://cdn.discordapp.com"
-    } as const;
-
-/**
- * @description Base timestamp for Discord snowflake calculations (January 1, 2015, 00:00:00 UTC). All Discord snowflakes are calculated relative to this epoch using bitwise operations.
- * @see {@link https://discord.com/developers/docs/reference#snowflakes}
- */
-export const DISCORD_EPOCH = 1420070400000n as const;
-
-/**
- * @description Bitwise permission constants for Discord guild and channel permissions.
- * @see {@link https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags}
- */
-export const PERMISSIONS = {
-    VIEW_CHANNEL: 1n << 10n,
-    SEND_MESSAGES: 1n << 11n,
-    MANAGE_MESSAGES: 1n << 13n
-} as const;
-```
-
-### **Functions**
-
-```typescript
-/**
- * @description Dispatches message with intelligent rate limiting and zero-cache design.
- * @see {@link https://discord.com/developers/docs/resources/channel#create-message}
+ * Validates email address format according to RFC 5322 specification.
+ * Performs both syntax and domain validation for production use.
  *
- * @param channelId - Target channel snowflake ID
- * @param content - Message content (max 2000 characters)
- * @param options - Optional message configuration
- * @returns Promise resolving to created message object
- * @throws {RateLimitError} When hitting Discord rate limits
- * @throws {PermissionError} When lacking SEND_MESSAGES permission
- * @throws {ValidationError} When content exceeds character limits
+ * @param email - Email address string to validate
+ * @param options - Validation configuration options
+ * @returns True if email is valid, false otherwise
+ * @throws {ValidationError} When email contains malicious content
+ * @see {@link https://tools.ietf.org/html/rfc5322} for email format specification
  */
-export async function sendMessage(
-    channelId: Snowflake,
-    content: string,
-    options?: MessageOptions
-): Promise<Message> {
+export function validateEmail(email: string, options?: ValidationOptions): boolean {
     // Implementation
 }
 
 /**
- * @description Checks if member has required permissions in specific context.
+ * Transforms array elements using provided mapper function with type safety.
  *
- * @param memberPermissions - Member's current permission bitfield
- * @param requiredPermissions - Required permission flags
- * @returns True if member has all required permissions
+ * @typeParam T - Input array element type
+ * @typeParam U - Output array element type after transformation
+ * @param items - Array of items to transform
+ * @param mapper - Function to transform each element
+ * @returns New array with transformed elements
  */
-export function hasPermissions(
-    memberPermissions: bigint,
-    requiredPermissions: bigint
-): boolean {
-    return (memberPermissions & requiredPermissions) === requiredPermissions;
+export function mapArray<T, U>(items: T[], mapper: (item: T) => U): U[] {
+    // Implementation
 }
 ```
 
-### **Classes**
+**Async Functions**
 
 ```typescript
 /**
- * @description Represents a Discord guild with zero-cache, always-fresh data approach.
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object}
+ * Fetches user data from remote API with automatic retry and caching.
+ * Uses exponential backoff for transient failures.
+ *
+ * @param userId - Unique identifier for the user
+ * @param options - Request configuration and caching options
+ * @returns Promise resolving to user data object
+ * @throws {NetworkError} When API is unreachable after retries
+ * @throws {NotFoundError} When user ID doesn't exist
+ * @see {@link UserCache} for caching implementation details
  */
-export class Guild {
+export async function fetchUser(userId: string, options?: FetchOptions): Promise<User> {
+    // Implementation
+}
+```
+
+### 🏛️ Classes
+
+```typescript
+/**
+ * Thread-safe event emitter with typed event handling and memory leak protection.
+ * Automatically removes listeners when max listener count is exceeded.
+ */
+export class TypedEventEmitter<T extends EventMap> {
     /**
-     * @description Unique identifier for this Discord guild.
+     * @private
+     * Internal map of event listeners for memory management
      */
-    public readonly id: Snowflake;
+    private listeners = new Map<keyof T, Set<Function>>();
 
     /**
-     * @description Retrieves member data directly from Discord API without caching.
-     * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-member}
+     * Registers event listener with automatic cleanup capabilities.
      *
-     * @param memberId - Member snowflake ID to fetch
-     * @returns Promise resolving to guild member object
-     * @throws {NotFoundError} When member doesn't exist in guild
-     * @throws {PermissionError} When lacking access to member data
+     * @typeParam K - Event name type constraint
+     * @param event - Event name to listen for
+     * @param listener - Callback function to handle event
+     * @returns Cleanup function to remove listener
+     * @throws {MaxListenersError} When listener limit exceeded
      */
-    async fetchMember(memberId: Snowflake): Promise<GuildMember> {
+    on<K extends keyof T>(event: K, listener: (data: T[K]) => void): () => void {
         // Implementation
     }
 
     /**
-     * @description Creates channel with specified configuration and permissions.
-     * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel}
+     * Emits event to all registered listeners with error isolation.
      *
-     * @param options - Channel creation configuration
-     * @returns Promise resolving to created channel object
-     * @throws {PermissionError} When lacking MANAGE_CHANNELS permission
-     * @throws {ValidationError} When channel configuration is invalid
+     * @typeParam K - Event name type constraint
+     * @param event - Event name to emit
+     * @param data - Event payload data
+     * @returns Number of listeners that received the event
      */
-    async createChannel(options: CreateChannelOptions): Promise<Channel> {
+    emit<K extends keyof T>(event: K, data: T[K]): number {
         // Implementation
+    }
+
+    /**
+     * @deprecated Use `removeAllListeners()` instead. Will be removed in v3.0.0.
+     * @see {@link removeAllListeners}
+     */
+    clear(): void {
+        this.removeAllListeners();
     }
 }
 ```
 
-### **Interfaces**
+### 🏷️ Type Definitions
 
 ```typescript
 /**
- * @description Configuration for creating Discord messages with embeds and components.
- * @see {@link https://discord.com/developers/docs/resources/channel#create-message-jsonform-params}
- */
-export interface MessageOptions {
-    /**
-     * @description Array of embed objects to include (max 10 embeds).
-     * @see {@link https://discord.com/developers/docs/resources/channel#embed-object}
-     */
-    embeds?: MessageEmbed[];
-
-    /**
-     * @description Button and select menu components (max 5 action rows).
-     * @see {@link https://discord.com/developers/docs/interactions/message-components}
-     */
-    components?: ActionRow[];
-
-    /**
-     * @description Files to attach to message (max 10 files, 25MB total).
-     */
-    files?: MessageFile[];
-
-    /**
-     * @description Reference to another message for reply functionality.
-     * @see {@link https://discord.com/developers/docs/resources/channel#message-reference-object-message-reference-structure}
-     */
-    reply?: MessageReference;
-}
-```
-
-### **Utility Objects**
-
-```typescript
-/**
- * @description Essential utilities for working with Discord snowflake identifiers. Snowflakes are unique 64-bit identifiers used throughout Discord API for all entities.
- * @see {@link https://discord.com/developers/docs/reference#snowflakes}
- */
-export const SnowflakeUtil = {
-        /**
-         * @description Checks if string matches valid Discord snowflake pattern (17-20 digits).
-         * @param id - String to validate as Discord snowflake
-         * @returns True if valid snowflake format
-         */
-        isValid: (id: string): boolean => /^\d{17,20}$/.test(id),
-
-        /**
-         * @description Converts Discord snowflake to Unix timestamp in milliseconds using bitwise operations.
-         * @see {@link https://discord.com/developers/docs/reference#convert-snowflake-to-datetime}
-         * @param id - Discord snowflake ID
-         * @returns Unix timestamp when the snowflake was created
-         * @throws {TypeError} When ID cannot be converted to BigInt
-         */
-        toTimestamp: (id: string): number => Number((BigInt(id) >> 22n) + 1420070400000n),
-    } as const;
-```
-
-## 📝 Documentation Rules
-
-### **Required Elements**
-
-- ✅ **@description** - 1-2 sentences explaining purpose and context
-- ✅ **@param** - For all function/method parameters
-- ✅ **@returns** - For all functions that return values
-
-### **Conditional Elements**
-
-- 🔗 **@see {@link}** - When Discord API documentation exists
-- ⚠️ **@throws** - Only for common/important errors
-- 📅 **@deprecated** - When marking legacy features
-
-### **Forbidden Elements**
-
-- ❌ **Title lines** - Name should be self-explanatory, start with @description
-- ❌ **@example** - Too maintenance-heavy for active development
-- ❌ **@since** - Not needed for initial release
-- ❌ **@author** - Repository attribution is sufficient
-- ❌ **@version** - Package.json handles versioning
-
-## 🎯 Best Practices
-
-### **Writing Style**
-
-- **Start directly** with @description - no redundant titles
-- Use **present tense**: "Checks if valid" not "Will check if valid"
-- Be **specific**: "Discord channel" not just "channel"
-- Stay **concise**: Avoid redundant explanations
-- Use **active voice**: "Validates input" not "Input is validated"
-
-### **Discord Context**
-
-- Always mention **Discord** when relevant for context
-- Link to **official Discord documentation** when available
-- Use **Discord terminology**: "guild" not "server", "snowflake" not "ID"
-- Reference **permission requirements** for privileged operations
-
-### **Performance Notes**
-
-- Mention **zero-cache** behavior when relevant
-- Highlight **memory efficiency** for critical operations
-- Note **rate limiting** protection where applicable
-- Document **direct API** calls vs cached data
-
-### **Error Documentation**
-
-Only document these error types:
-
-- **PermissionError** - Missing Discord permissions
-- **RateLimitError** - Discord API rate limits
-- **ValidationError** - Invalid input data
-- **NotFoundError** - Resource doesn't exist
-- **TypeError** - Invalid data types (BigInt conversion, etc.)
-
-## 📋 Quick Reference
-
-### **Function Template**
-
-```typescript
-/**
- * @description [Action/purpose in 1-2 sentences with performance/cache notes if relevant].
- * @see {@link [Discord docs URL]}
+ * Configuration options for HTTP request handling with timeout and retry logic.
  *
- * @param param1 - [Brief description]
- * @param param2 - [Brief description with constraints if any]
- * @returns [Clear return description]
- * @throws {ErrorType} [When this error occurs]
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Request} for native Request options
  */
-```
+export interface RequestConfig {
+    /** Request timeout in milliseconds (default: 5000) */
+    timeout?: number;
 
-### **Interface Template**
+    /** Maximum number of retry attempts (default: 3) */
+    maxRetries?: number;
 
-```typescript
-/**
- * @description [Structure purpose and Discord context].
- * @see {@link [Discord docs URL]}
- */
-export interface Name {
-    /**
-     * @description [Property purpose and constraints]
-     */
-    property: Type;
+    /** Custom headers to include with request */
+    headers?: Record<string, string>;
 }
+
+/**
+ * Generic API response wrapper with consistent error handling.
+ *
+ * @typeParam T - Response data type
+ * @see {@link ApiError} for error response structure
+ */
+export type ApiResponse<T> = {
+    data: T;
+    status: number;
+    message?: string;
+};
+
+/**
+ * @deprecated Use `ApiResponse<T>` instead. Will be removed in v3.0.0.
+ * @see {@link ApiResponse}
+ */
+export type LegacyResponse<T> = ApiResponse<T>;
 ```
 
-### **Utility Template**
+### 🔧 Utility Objects and Constants
 
 ```typescript
 /**
- * @description [Utility collection purpose and performance notes].
- * @see {@link [Discord docs URL]}
+ * Collection of string manipulation utilities for common text processing tasks.
+ * All functions are pure and side-effect free for predictable behavior.
+ *
+ * @see {@link https://lodash.com/docs} for similar utility patterns
  */
-export const NameUtil = {
+export const StringUtils = {
         /**
-         * @description [Action description]
-         * @param param - [Description]
-         * @returns [Return description]
-         * @throws {ErrorType} [Error condition]
+         * Converts string to camelCase format removing special characters.
+         *
+         * @param input - String to convert to camelCase
+         * @returns Converted camelCase string
          */
-        method: (param: Type): ReturnType => implementation,
-    } as const;
-```
+        toCamelCase: (input: string): string => {
+            // Implementation
+        },
 
-### **Constant Template**
-
-```typescript
-/**
- * @description [Purpose and context with technical details if needed].
- * @see {@link [Discord docs URL]}
- */
-export const CONSTANT_NAME = value as const;
-```
-
-## 💬 Internal Code Comments (`//`)
-
-### **Philosophy: Minimal and Strategic**
-
-Code should be **self-documenting first**. Use `//` comments sparingly and only when they add real value.
-
-### **✅ Good Internal Comments**
-
-```typescript
-export function parseSnowflake(id: string): number {
-    // Discord epoch: January 1, 2015 (not Unix epoch)
-    const discordEpoch = 1420070400000n;
-
-    // Extract timestamp using bitwise right shift (22 bits)
-    const timestamp = (BigInt(id) >> 22n) + discordEpoch;
-
-    return Number(timestamp);
-}
-
-export async function sendWithRetry(request: APIRequest): Promise<Response> {
-    let attempts = 0;
-
-    while (attempts < 3) {
-        try {
-            return await this.execute(request);
-        } catch (error) {
-            attempts++;
-
-            // Rate limit: wait and retry automatically  
-            if (error instanceof RateLimitError) {
-                await this.waitForRateLimit(error.retryAfter);
-                continue;
-            }
-
-            // Permission errors: fail fast, no retry
-            if (error instanceof PermissionError) {
-                throw error;
-            }
-
-            // Unknown error on last attempt: give up
-            if (attempts === 3) throw error;
+        /**
+         * Truncates string to specified length with ellipsis indicator.
+         *
+         * @param text - String to truncate
+         * @param maxLength - Maximum allowed length including ellipsis
+         * @param suffix - Custom suffix for truncated strings (default: "...")
+         * @returns Truncated string with suffix if needed
+         */
+        truncate: (text: string, maxLength: number, suffix = "..."): string => {
+            // Implementation
         }
-    }
-}
+    } as const;
 
-export class RateLimiter {
-    private shouldQueue(request: Request): boolean {
-        // Major parameters (channelId, guildId) share rate limits
-        // Minor parameters (messageId) have separate buckets
-        const bucket = this.getBucket(request);
-        return bucket.remaining < 2; // Safety margin
-    }
-}
+/**
+ * HTTP status codes following RFC 7231 specification.
+ * Used throughout the API for consistent response handling.
+ *
+ * @see {@link https://tools.ietf.org/html/rfc7231#section-6} for complete specification
+ */
+export const HTTP_STATUS = {
+    OK: 200,
+    CREATED: 201,
+    BAD_REQUEST: 400,
+    UNAUTHORIZED: 401,
+    NOT_FOUND: 404,
+    INTERNAL_SERVER_ERROR: 500
+} as const;
 ```
 
-### **❌ Bad Internal Comments**
+### 🔒 Private APIs
 
 ```typescript
-// BAD - Code speaks for itself
-function isValid(id: string): boolean {
-    // Check if id matches regex pattern
-    return /^\d{17,20}$/.test(id);
-}
+export class DatabaseManager {
+    /**
+     * @private
+     * Internal connection pool management. Do not access directly.
+     * Use `getConnection()` instead for proper connection lifecycle.
+     *
+     * @see {@link getConnection}
+     */
+    private connectionPool: ConnectionPool;
 
-// BAD - Repeats TSDoc
-/**
- * @description Validates Discord snowflake format
- */
-function isValid(id: string): boolean {
-    // Validates Discord snowflake format
-    return /^\d{17,20}$/.test(id);
-}
+    /**
+     * @private
+     * Validates database schema integrity before operations.
+     * Called automatically by public methods.
+     *
+     * @param tableName - Database table to validate
+     * @throws {SchemaError} When table schema is corrupted
+     */
+    private validateSchema(tableName: string): void {
+        // Implementation
+    }
 
-// BAD - Obsolete/wrong comments
-function calculate(value: number): number {
-    // TODO: Add validation (never done)
-    // This uses the old algorithm (but it's the new one)
-    return value * 2.5;
+    /**
+     * Retrieves database connection with automatic pool management.
+     *
+     * @param options - Connection configuration options
+     * @returns Active database connection
+     * @throws {ConnectionError} When no connections available
+     */
+    public getConnection(options?: ConnectionOptions): Connection {
+        // Implementation
+    }
 }
-
-// BAD - Obvious statements
-enabled = true; // Set enabled to true
-count++; // Increment counter
 ```
-
-### **📝 Comment Guidelines**
-
-**Use `//` comments ONLY for:**
-
-- **Complex algorithms** (bitwise operations, mathematical formulas)
-- **Discord-specific business rules** (rate limits, permission logic, API quirks)
-- **Performance optimizations** (why this specific approach was chosen)
-- **Non-obvious behavior** (Discord API gotchas, timing requirements)
-- **External context** (RFC references, Discord documentation links)
-
-**DON'T use `//` comments for:**
-
-- **Obvious code** (assignments, simple conditionals)
-- **Repeating function names** or TSDoc descriptions
-- **TODO items** that won't be done soon
-- **Debugging code** left in production
-- **What the code does** (code should show this)
-
-**Style Rules:**
-
-- **Concise and precise** - Maximum impact, minimum words
-- **Technical context** - Explain the "why", not the "what"
-- **Present tense** - "Discord uses milliseconds" not "Discord will use"
-- **One line preferred** - Multi-line only for complex explanations
-
-**Target Ratio:** ~1 comment per 10-20 lines of code, only when adding real value.
 
 ---
 
-**This documentation standard ensures consistency, maintainability, and developer-friendly Discord bot development with
-Nyxo.js.**
+## 📝 Documentation Quality Guidelines
+
+### ✅ Best Practices
+
+**Clear Parameter Descriptions**
+
+```typescript
+/**
+ * // ✅ Good - Specific with constraints
+ * @param email - Valid email address (RFC 5322 compliant, max 254 characters)
+ *
+ * // ❌ Bad - Too vague
+ * @param email - User email
+ */
+```
+
+**Meaningful Return Descriptions**
+
+```typescript
+/**
+ * // ✅ Good - Describes all possible states
+ * @returns Promise resolving to user data, or null if user not found
+ *
+ * // ❌ Bad - Incomplete information
+ * @returns User data
+ */
+```
+
+**Strategic Link Usage**
+
+```typescript
+/**
+ * // ✅ Good - Adds value
+ * @see {@link https://tools.ietf.org/html/rfc3986} for URI specification
+ * @see {@link parseUri} for URI parsing utilities
+ *
+ * // ❌ Bad - Unnecessary noise
+ * @see {@link String} for string documentation
+ */
+```
+
+### 🔄 Deprecation Best Practices
+
+```typescript
+/**
+ * @deprecated Use `newFunction()` instead. Will be removed in v3.0.0.
+ * Migration guide: Replace `oldFunction(x, y)` with `newFunction({x, y})`
+ * @see {@link newFunction}
+ */
+export function oldFunction(x: number, y: number): Result {
+    return newFunction({x, y});
+}
+```
+
+### ⚡ Performance Documentation
+
+```typescript
+/**
+ * Sorts array in-place using optimized quicksort algorithm.
+ * Time complexity: O(n log n) average, O(n²) worst case.
+ * Space complexity: O(log n) for recursion stack.
+ *
+ * @param items - Array to sort (modified in place)
+ * @param compareFn - Custom comparison function for sorting logic
+ * @returns Reference to the same array for chaining
+ */
+export function quickSort<T>(items: T[], compareFn?: (a: T, b: T) => number): T[] {
+    // Implementation
+}
+```
+
+---
+
+
+**This focused approach ensures consistent, maintainable documentation that integrates seamlessly with modern TypeScript
+tooling while keeping cognitive overhead minimal for developers.**

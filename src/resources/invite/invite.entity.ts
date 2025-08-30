@@ -48,13 +48,13 @@ export interface InviteEntity {
 
 export type InviteWithMetadataEntity = InviteEntity & InviteMetadataEntity;
 
-export interface InviteDeleteEntity {
+export interface GatewayInviteDeleteEntity {
   channel_id: string;
   guild_id?: string;
   code: string;
 }
 
-export interface InviteCreateEntity {
+export interface GatewayInviteCreateEntity {
   channel_id: string;
   code: string;
   created_at: string;
