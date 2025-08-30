@@ -6,8 +6,11 @@ export abstract class BaseBuilder<T extends object> {
   }
 
   toJSON(): T {
+    this.validate();
     return this.rawData as T;
   }
+
+  protected abstract validate(): void;
 
   protected set<K extends keyof T>(key: K, value: T[K]): this {
     this.rawData[key] = value;

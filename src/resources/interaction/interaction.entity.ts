@@ -6,6 +6,11 @@ import type {
   ApplicationCommandType,
 } from "../application-commands/index.js";
 import type { AnyChannelEntity } from "../channel/index.js";
+import type {
+  ActionRowEntity,
+  ComponentType,
+  SelectMenuOptionEntity,
+} from "../components/index.js";
 import type { EntitlementEntity } from "../entitlement/index.js";
 import type { GuildEntity, GuildMemberEntity } from "../guild/index.js";
 import type {
@@ -15,11 +20,6 @@ import type {
   MessageEntity,
   MessageFlags,
 } from "../message/index.js";
-import type {
-  ActionRowEntity,
-  ComponentType,
-  SelectMenuOptionEntity,
-} from "../message-components/index.js";
 import type { PollCreateRequestEntity } from "../poll/index.js";
 import type { RoleEntity } from "../role/index.js";
 import type { UserEntity } from "../user/index.js";

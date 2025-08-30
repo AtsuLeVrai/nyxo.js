@@ -1,5 +1,6 @@
 import type { ApplicationEntity } from "../application/index.js";
 import type { AnyThreadBasedChannelEntity, ChannelType } from "../channel/index.js";
+import type { ActionRowEntity } from "../components/index.js";
 import type { EmojiEntity } from "../emoji/index.js";
 import type { GuildMemberEntity } from "../guild/index.js";
 import type {
@@ -7,7 +8,6 @@ import type {
   InteractionType,
   MessageInteractionEntity,
 } from "../interaction/index.js";
-import type { ActionRowEntity } from "../message-components/index.js";
 import type { PollEntity } from "../poll/index.js";
 import type { StickerEntity, StickerItemEntity } from "../sticker/index.js";
 import type { UserEntity } from "../user/index.js";
@@ -322,20 +322,20 @@ export interface MessageSnapshotEntity {
   >;
 }
 
-export interface MessageReactionRemoveEmojiEntity {
+export interface GatewayMessageReactionRemoveEmojiEntity {
   channel_id: string;
   guild_id?: string;
   message_id: string;
   emoji: Partial<EmojiEntity>;
 }
 
-export interface MessageReactionRemoveAllEntity {
+export interface GatewayMessageReactionRemoveAllEntity {
   channel_id: string;
   message_id: string;
   guild_id?: string;
 }
 
-export interface MessageReactionRemoveEntity {
+export interface GatewayMessageReactionRemoveEntity {
   user_id: string;
   channel_id: string;
   message_id: string;
@@ -345,7 +345,7 @@ export interface MessageReactionRemoveEntity {
   type: ReactionType;
 }
 
-export interface MessageReactionAddEntity {
+export interface GatewayMessageReactionAddEntity {
   user_id: string;
   channel_id: string;
   message_id: string;
@@ -358,25 +358,25 @@ export interface MessageReactionAddEntity {
   type: ReactionType;
 }
 
-export interface MessageDeleteBulkEntity {
+export interface GatewayMessageDeleteBulkEntity {
   ids: string[];
   channel_id: string;
   guild_id?: string;
 }
 
-export interface MessageDeleteEntity {
+export interface GatewayMessageDeleteEntity {
   id: string;
   channel_id: string;
   guild_id?: string;
 }
 
-export interface MessageCreateEntity extends Omit<MessageEntity, "mentions"> {
+export interface GatewayMessageCreateEntity extends Omit<MessageEntity, "mentions"> {
   mentions?: (UserEntity & Partial<GuildMemberEntity>)[];
   guild_id?: string;
   member?: Partial<GuildMemberEntity>;
 }
 
-export interface MessagePollVoteEntity {
+export interface GatewayMessagePollVoteEntity {
   user_id: string;
   channel_id: string;
   message_id: string;

@@ -7,7 +7,7 @@ import type {
   SectionEntity,
   SeparatorEntity,
   TextDisplayEntity,
-} from "../message-components/index.js";
+} from "../components/index.js";
 import type { PollCreateRequestEntity } from "../poll/index.js";
 import type { UserEntity } from "../user/index.js";
 import {

@@ -1,6 +1,22 @@
 import { BaseClass } from "../../bases/index.js";
 import { BitField, type CamelCaseKeys } from "../../utils/index.js";
-import type { UserEntity } from "./user.entity.js";
+import type { ConnectionEntity, UserEntity } from "./user.entity.js";
+
+export class Connection
+  extends BaseClass<ConnectionEntity>
+  implements CamelCaseKeys<ConnectionEntity>
+{
+  readonly id = this.rawData.id;
+  readonly name = this.rawData.name;
+  readonly type = this.rawData.type;
+  readonly revoked = Boolean(this.rawData.revoked);
+  readonly integrations = this.rawData.integrations;
+  readonly verified = this.rawData.verified;
+  readonly friendSync = this.rawData.friend_sync;
+  readonly showActivity = this.rawData.show_activity;
+  readonly twoWayLink = this.rawData.two_way_link;
+  readonly visibility = this.rawData.visibility;
+}
 
 export class User extends BaseClass<UserEntity> implements CamelCaseKeys<UserEntity> {
   readonly id = this.rawData.id;
