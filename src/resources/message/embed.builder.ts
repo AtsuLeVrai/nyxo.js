@@ -13,6 +13,10 @@ import type {
 } from "./message.entity.js";
 
 export class EmbedBuilder extends BaseBuilder<EmbedEntity> {
+  static from(embed: EmbedEntity): EmbedBuilder {
+    return new EmbedBuilder(embed);
+  }
+
   setTitle(title: string): this {
     return this.set("title", title);
   }

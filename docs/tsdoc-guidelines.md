@@ -143,16 +143,13 @@ export class TypedEventEmitter<T extends EventMap> {
 ```typescript
 /**
  * Configuration options for HTTP request handling with timeout and retry logic.
- *
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Request} for native Request options
  */
 export interface RequestConfig {
     /** Request timeout in milliseconds (default: 5000) */
     timeout?: number;
-
     /** Maximum number of retry attempts (default: 3) */
     maxRetries?: number;
-
     /** Custom headers to include with request */
     headers?: Record<string, string>;
 }

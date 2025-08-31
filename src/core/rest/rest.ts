@@ -45,7 +45,7 @@ import type {
   HttpResponse,
 } from "./rest.types.js";
 
-export type RouteBuilder = Record<string, (...args: string[]) => string>;
+export type RouteBuilder = Record<string, (...args: string[]) => `/${string}`>;
 
 const MAX_FILE_COUNT = 10 as const;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;

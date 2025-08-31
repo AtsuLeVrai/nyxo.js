@@ -8,6 +8,22 @@ import type {
   AutoModerationRuleEntity,
   ChannelPinsUpdateEntity,
   EntitlementEntity,
+  GatewayGuildSoundboardSoundDeleteEntity,
+  GatewayInviteCreateEntity,
+  GatewayInviteDeleteEntity,
+  GatewayMessageCreateEntity,
+  GatewayMessageDeleteBulkEntity,
+  GatewayMessageDeleteEntity,
+  GatewayMessagePollVoteEntity,
+  GatewayMessageReactionAddEntity,
+  GatewayMessageReactionRemoveAllEntity,
+  GatewayMessageReactionRemoveEmojiEntity,
+  GatewayMessageReactionRemoveEntity,
+  GatewayPresenceUpdateEntity,
+  GatewaySoundboardSoundsEntity,
+  GatewayTypingStartEntity,
+  GatewayVoiceChannelEffectSendEntity,
+  GatewayVoiceServerUpdateEntity,
   GatewayWebhooksUpdateEntity,
   GuildApplicationCommandPermissionEntity,
   GuildAuditLogEntryCreateEntity,
@@ -24,36 +40,20 @@ import type {
   GuildRoleUpdateEntity,
   GuildScheduledEventEntity,
   GuildScheduledEventUserAddRemoveEntity,
-  GuildSoundboardSoundDeleteEntity,
   GuildStickersUpdateEntity,
   IntegrationDeleteEntity,
   IntegrationUpdateEntity,
-  InviteCreateEntity,
-  InviteDeleteEntity,
-  MessageCreateEntity,
-  MessageDeleteBulkEntity,
-  MessageDeleteEntity,
-  MessagePollVoteEntity,
-  MessageReactionAddEntity,
-  MessageReactionRemoveAllEntity,
-  MessageReactionRemoveEmojiEntity,
-  MessageReactionRemoveEntity,
-  PresenceEntity,
   ReadyEntity,
   SoundboardSoundEntity,
-  SoundboardSoundsEntity,
   StageInstanceEntity,
   SubscriptionEntity,
   ThreadListSyncEntity,
   ThreadMemberEntity,
   ThreadMembersUpdateEntity,
   ThreadMemberUpdateEntity,
-  TypingStartEntity,
   UnavailableGuildEntity,
   UpdatePresenceStatusType,
   UserEntity,
-  VoiceChannelEffectSendEntity,
-  VoiceServerUpdateEntity,
   VoiceStateEntity,
 } from "../../resources/index.js";
 
@@ -169,28 +169,28 @@ export interface GatewayReceiveEvents {
   GUILD_SCHEDULED_EVENT_USER_REMOVE: GuildScheduledEventUserAddRemoveEntity;
   GUILD_SOUNDBOARD_SOUND_CREATE: SoundboardSoundEntity;
   GUILD_SOUNDBOARD_SOUND_UPDATE: SoundboardSoundEntity;
-  GUILD_SOUNDBOARD_SOUND_DELETE: GuildSoundboardSoundDeleteEntity;
-  GUILD_SOUNDBOARD_SOUNDS_UPDATE: SoundboardSoundsEntity;
-  SOUNDBOARD_SOUNDS: SoundboardSoundsEntity;
+  GUILD_SOUNDBOARD_SOUND_DELETE: GatewayGuildSoundboardSoundDeleteEntity;
+  GUILD_SOUNDBOARD_SOUNDS_UPDATE: GatewaySoundboardSoundsEntity;
+  SOUNDBOARD_SOUNDS: GatewaySoundboardSoundsEntity;
   INTEGRATION_CREATE: IntegrationUpdateEntity;
   INTEGRATION_UPDATE: IntegrationUpdateEntity;
   INTEGRATION_DELETE: IntegrationDeleteEntity;
-  INVITE_CREATE: InviteCreateEntity;
-  INVITE_DELETE: InviteDeleteEntity;
-  MESSAGE_CREATE: MessageCreateEntity;
-  MESSAGE_UPDATE: MessageCreateEntity;
-  MESSAGE_DELETE: MessageDeleteEntity;
-  MESSAGE_DELETE_BULK: MessageDeleteBulkEntity;
-  MESSAGE_REACTION_ADD: MessageReactionAddEntity;
-  MESSAGE_REACTION_REMOVE: MessageReactionRemoveEntity;
-  MESSAGE_REACTION_REMOVE_ALL: MessageReactionRemoveAllEntity;
-  MESSAGE_REACTION_REMOVE_EMOJI: MessageReactionRemoveEmojiEntity;
-  PRESENCE_UPDATE: PresenceEntity;
-  TYPING_START: TypingStartEntity;
+  INVITE_CREATE: GatewayInviteCreateEntity;
+  INVITE_DELETE: GatewayInviteDeleteEntity;
+  MESSAGE_CREATE: GatewayMessageCreateEntity;
+  MESSAGE_UPDATE: GatewayMessageCreateEntity;
+  MESSAGE_DELETE: GatewayMessageDeleteEntity;
+  MESSAGE_DELETE_BULK: GatewayMessageDeleteBulkEntity;
+  MESSAGE_REACTION_ADD: GatewayMessageReactionAddEntity;
+  MESSAGE_REACTION_REMOVE: GatewayMessageReactionRemoveEntity;
+  MESSAGE_REACTION_REMOVE_ALL: GatewayMessageReactionRemoveAllEntity;
+  MESSAGE_REACTION_REMOVE_EMOJI: GatewayMessageReactionRemoveEmojiEntity;
+  PRESENCE_UPDATE: GatewayPresenceUpdateEntity;
+  TYPING_START: GatewayTypingStartEntity;
   USER_UPDATE: UserEntity;
-  VOICE_CHANNEL_EFFECT_SEND: VoiceChannelEffectSendEntity;
+  VOICE_CHANNEL_EFFECT_SEND: GatewayVoiceChannelEffectSendEntity;
   VOICE_STATE_UPDATE: VoiceStateEntity;
-  VOICE_SERVER_UPDATE: VoiceServerUpdateEntity;
+  VOICE_SERVER_UPDATE: GatewayVoiceServerUpdateEntity;
   WEBHOOKS_UPDATE: GatewayWebhooksUpdateEntity;
   INTERACTION_CREATE: AnyInteractionEntity;
   STAGE_INSTANCE_CREATE: StageInstanceEntity;
@@ -199,6 +199,6 @@ export interface GatewayReceiveEvents {
   SUBSCRIPTION_CREATE: SubscriptionEntity;
   SUBSCRIPTION_UPDATE: SubscriptionEntity;
   SUBSCRIPTION_DELETE: SubscriptionEntity;
-  MESSAGE_POLL_VOTE_ADD: MessagePollVoteEntity;
-  MESSAGE_POLL_VOTE_REMOVE: MessagePollVoteEntity;
+  MESSAGE_POLL_VOTE_ADD: GatewayMessagePollVoteEntity;
+  MESSAGE_POLL_VOTE_REMOVE: GatewayMessagePollVoteEntity;
 }
