@@ -15,6 +15,10 @@ export enum InviteType {
   Friend = 2,
 }
 
+export enum GuildInviteFlags {
+  IsGuestInvite = 1 << 0,
+}
+
 export interface InviteStageInstanceEntity {
   members: Partial<GuildMemberEntity>[];
   participant_count: number;
@@ -44,6 +48,7 @@ export interface InviteEntity {
   expires_at?: string | null;
   stage_instance?: InviteStageInstanceEntity;
   guild_scheduled_event?: GuildScheduledEventEntity;
+  flags?: GuildInviteFlags;
 }
 
 export type InviteWithMetadataEntity = InviteEntity & InviteMetadataEntity;

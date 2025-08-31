@@ -1,32 +1,16 @@
-/**
- * @description Result type for successful dynamic module import operations.
- */
 export interface ImportSuccess<T> {
   readonly success: true;
   readonly module: T;
 }
 
-/**
- * @description Result type for failed dynamic module import operations.
- */
 export interface ImportFailure {
   readonly success: false;
   readonly error: Error;
   readonly moduleName: string;
 }
 
-/**
- * @description Union type representing safe dynamic import operation results.
- */
 export type ImportResult<T> = ImportSuccess<T> | ImportFailure;
 
-/**
- * @description Safely imports modules with error handling and ESM/CommonJS compatibility.
- *
- * @param moduleName - Module identifier or path to import
- * @returns Promise resolving to success/failure result with type safety
- * @throws {TypeError} When moduleName is invalid string
- */
 export async function safeModuleImport<T = unknown>(moduleName: string): Promise<ImportResult<T>> {
   try {
     const importedModule = await import(moduleName);

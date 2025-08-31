@@ -1,5 +1,6 @@
 import type { GatewayReceiveEvents } from "../gateway/index.js";
-import type { Client, ClientEvents } from "./client.js";
+import type { Client } from "./client.js";
+import type { ClientEvents } from "./client.types.js";
 
 interface EventMapping<
   T extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents,

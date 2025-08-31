@@ -1,7 +1,3 @@
-/**
- * @description Bitwise permission flags for Discord guild and channel permissions.
- * @see {@link https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags}
- */
 export enum BitwisePermissionFlags {
   CreateInstantInvite = 0x0000000000000001,
   KickMembers = 0x0000000000000002,

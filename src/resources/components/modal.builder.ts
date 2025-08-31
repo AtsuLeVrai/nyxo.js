@@ -7,11 +7,6 @@ import {
   type TextInputEntity,
 } from "./components.entity.js";
 
-/**
- * @description Professional builder for Discord modal components with Label entities.
- * Creates interactive forms for user input collection in Discord applications.
- * @see {@link https://discord.com/developers/docs/components/reference#modal}
- */
 export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
   constructor(data?: Partial<InteractionCallbackModalEntity>) {
     super({
@@ -20,20 +15,10 @@ export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
     });
   }
 
-  /**
-   * @description Creates a modal builder from existing data.
-   * @param data - Existing modal entity data
-   * @returns New modal builder instance
-   */
   static from(data: InteractionCallbackModalEntity): ModalBuilder {
     return new ModalBuilder(data);
   }
 
-  /**
-   * @description Sets the developer-defined identifier for the modal.
-   * @param customId - Modal identifier (max 100 characters)
-   * @returns This builder instance for method chaining
-   */
   setCustomId(customId: string): this {
     if (customId.length > 100) {
       throw new Error("Modal custom ID cannot exceed 100 characters");
@@ -41,11 +26,6 @@ export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
     return this.set("custom_id", customId);
   }
 
-  /**
-   * @description Sets the modal title displayed in the popup header.
-   * @param title - Modal title (max 45 characters)
-   * @returns This builder instance for method chaining
-   */
   setTitle(title: string): this {
     if (title.length > 45) {
       throw new Error("Modal title cannot exceed 45 characters");
@@ -53,20 +33,10 @@ export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
     return this.set("title", title);
   }
 
-  /**
-   * @description Adds a legacy ActionRow component to the modal.
-   * @param actionRow - ActionRow containing input components
-   * @returns This builder instance for method chaining
-   */
   addActionRow(actionRow: LegacyActionRowEntity): this {
     return this.pushToArray("components", actionRow);
   }
 
-  /**
-   * @description Adds multiple legacy ActionRow components to the modal.
-   * @param actionRows - ActionRow components to add
-   * @returns This builder instance for method chaining
-   */
   addActionRows(...actionRows: LegacyActionRowEntity[]): this {
     for (const actionRow of actionRows) {
       this.addActionRow(actionRow);
@@ -74,11 +44,6 @@ export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
     return this;
   }
 
-  /**
-   * @description Sets all ActionRow components, replacing existing ones.
-   * @param actionRows - ActionRow components (max 5)
-   * @returns This builder instance for method chaining
-   */
   setActionRows(actionRows: LegacyActionRowEntity[]): this {
     if (actionRows.length > 5) {
       throw new Error("Modal cannot have more than 5 action rows");
@@ -86,11 +51,6 @@ export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
     return this.setArray("components", actionRows);
   }
 
-  /**
-   * @description Creates a text input wrapped in an ActionRow and adds it to the modal.
-   * @param textInput - Text input component
-   * @returns This builder instance for method chaining
-   */
   addTextInput(textInput: TextInputEntity): this {
     const actionRow: LegacyActionRowEntity = {
       type: ComponentType.ActionRow,
@@ -99,11 +59,6 @@ export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
     return this.addActionRow(actionRow);
   }
 
-  /**
-   * @description Creates a select menu wrapped in an ActionRow and adds it to the modal.
-   * @param selectMenu - String select menu component
-   * @returns This builder instance for method chaining
-   */
   addSelectMenu(selectMenu: StringSelectMenuEntity): this {
     const actionRow: LegacyActionRowEntity = {
       type: ComponentType.ActionRow,
@@ -112,46 +67,22 @@ export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
     return this.addActionRow(actionRow);
   }
 
-  /**
-   * @description Creates a Label component wrapping a text input.
-   * @param textInput - Text input component
-   * @returns This builder instance for method chaining
-   */
   addLabeledTextInput(textInput: TextInputEntity): this {
     // Note: Labels are conceptual - in practice, text inputs are still wrapped in ActionRows
     // The label and description would be used by Discord's rendering system
     return this.addTextInput(textInput);
   }
 
-  /**
-   * @description Creates a Label component wrapping a select menu.
-   * @param selectMenu - String select menu component
-   * @returns This builder instance for method chaining
-   */
   addLabeledSelectMenu(selectMenu: StringSelectMenuEntity): this {
     // Note: Labels are conceptual - in practice, select menus are still wrapped in ActionRows
     // The label and description would be used by Discord's rendering system
     return this.addSelectMenu(selectMenu);
   }
 
-  /**
-   * @description Creates a simple text input modal with title and single input.
-   * @param title - Modal title
-   * @param customId - Modal custom ID
-   * @param textInput - Text input component
-   * @returns This builder instance for method chaining
-   */
   createSimpleTextModal(title: string, customId: string, textInput: TextInputEntity): this {
     return this.setTitle(title).setCustomId(customId).addTextInput(textInput);
   }
 
-  /**
-   * @description Creates a survey-style modal with multiple inputs.
-   * @param title - Modal title
-   * @param customId - Modal custom ID
-   * @param inputs - Array of text input components
-   * @returns This builder instance for method chaining
-   */
   createSurveyModal(title: string, customId: string, inputs: TextInputEntity[]): this {
     this.setTitle(title).setCustomId(customId);
     for (const input of inputs) {
@@ -160,10 +91,6 @@ export class ModalBuilder extends BaseBuilder<InteractionCallbackModalEntity> {
     return this;
   }
 
-  /**
-   * @description Validates modal data before building.
-   * @throws {Error} When modal configuration is invalid
-   */
   protected validate(): void {
     const data = this.rawData;
 

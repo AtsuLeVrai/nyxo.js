@@ -1,28 +1,15 @@
-/**
- * @description Generic constructor type for any class accepting unknown arguments.
- */
 export type ClassConstructor<T = object> = new (...args: any[]) => T;
 
-/**
- * @description Constructor type that omits specific properties from the resulting instance.
- */
 export type OmitFromConstructor<
   T extends ClassConstructor<any>,
   K extends PropertyKey & keyof InstanceType<T>,
 > = new (...args: ConstructorParameters<T>) => Omit<InstanceType<T>, K>;
 
-/**
- * @description Constructor type that picks only specific properties from the resulting instance.
- */
 export type PickFromConstructor<
   T extends ClassConstructor<any>,
   K extends PropertyKey & keyof InstanceType<T>,
 > = new (...args: ConstructorParameters<T>) => Pick<InstanceType<T>, K>;
 
-/**
- * @description Transforms snake_case property names to camelCase format (keys only).
- * Handles up to 3 levels of underscore nesting for performance optimization.
- */
 export type CamelCaseKeys<T> = {
   [K in keyof T as K extends string
     ? K extends `${infer P}_${infer Q}`
@@ -35,31 +22,18 @@ export type CamelCaseKeys<T> = {
     : never]-?: any; // T[K] can be any type, we don't want to change it
 };
 
-/**
- * @description Recursively removes null values from nested type structures.
- * Preserves arrays and object hierarchies while stripping null at all levels.
- */
 export type DeepNonNullable<T> = T extends (infer U)[]
   ? DeepNonNullable<U>[]
   : T extends Record<string, any>
     ? { [K in keyof T]: DeepNonNullable<T[K]> }
     : Exclude<T, null>;
 
-/**
- * @description Recursively adds null possibility to nested type structures.
- * Maintains arrays and object hierarchies while adding nullability at all levels.
- */
 export type DeepNullable<T> = T extends (infer U)[]
   ? DeepNullable<U>[]
   : T extends Record<string, any>
     ? { [K in keyof T]: DeepNullable<T[K]> }
     : T | null;
 
-/**
- * @description Gets all property names from an object and its prototype chain (excluding Object.prototype).
- * @param obj - Object to inspect
- * @returns Set of all property names
- */
 function getAllPropertyNames(obj: object): Set<PropertyKey> {
   const allNames = new Set<PropertyKey>();
 
@@ -83,11 +57,6 @@ function getAllPropertyNames(obj: object): Set<PropertyKey> {
   return allNames;
 }
 
-/**
- * @description Hides a property/method by making it undefined and non-enumerable.
- * @param obj - Target object
- * @param key - Property key to hide
- */
 function hideProperty(obj: object, key: PropertyKey): void {
   try {
     // First try to delete if possible
@@ -112,15 +81,6 @@ function hideProperty(obj: object, key: PropertyKey): void {
   }
 }
 
-/**
- * @description Creates class decorator that exposes only specified properties from base class.
- * Now handles both instance properties and prototype methods.
- *
- * @param BaseClass - Constructor function to extend
- * @param selectedKeys - Property names to keep visible
- * @returns New constructor with only selected properties accessible
- * @throws {TypeError} When BaseClass is not a constructor function
- */
 export function PickBy<
   T extends ClassConstructor<any>,
   K extends PropertyKey & keyof InstanceType<T>,
@@ -160,15 +120,6 @@ export function PickBy<
   };
 }
 
-/**
- * @description Creates class decorator that hides specified properties from base class.
- * Now handles both instance properties and prototype methods.
- *
- * @param BaseClass - Constructor function to extend
- * @param omittedKeys - Property names to hide from instances
- * @returns New constructor with omitted properties hidden
- * @throws {TypeError} When BaseClass is not a constructor function
- */
 export function OmitBy<
   T extends ClassConstructor<any>,
   K extends PropertyKey & keyof InstanceType<T>,

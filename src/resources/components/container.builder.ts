@@ -6,11 +6,6 @@ import {
   type ContainerEntity,
 } from "./components.entity.js";
 
-/**
- * @description Professional builder for Discord container components in Components v2.
- * Creates visual grouping containers with optional accent colors for organized layouts.
- * @see {@link https://discord.com/developers/docs/components/reference#container}
- */
 export class ContainerBuilder extends BaseBuilder<ContainerEntity> {
   constructor(data?: Partial<ContainerEntity>) {
     super({
@@ -20,29 +15,14 @@ export class ContainerBuilder extends BaseBuilder<ContainerEntity> {
     });
   }
 
-  /**
-   * @description Creates a container builder from existing data.
-   * @param data - Existing container entity data
-   * @returns New container builder instance
-   */
   static from(data: ContainerEntity): ContainerBuilder {
     return new ContainerBuilder(data);
   }
 
-  /**
-   * @description Adds a single child component to the container.
-   * @param component - Components v2 message component
-   * @returns This builder instance for method chaining
-   */
   addComponent(component: ComponentsV2MessageComponentEntity): this {
     return this.pushToArray("components", component);
   }
 
-  /**
-   * @description Adds multiple child components to the container.
-   * @param components - Components v2 message components
-   * @returns This builder instance for method chaining
-   */
   addComponents(...components: ComponentsV2MessageComponentEntity[]): this {
     for (const component of components) {
       this.addComponent(component);
@@ -50,20 +30,10 @@ export class ContainerBuilder extends BaseBuilder<ContainerEntity> {
     return this;
   }
 
-  /**
-   * @description Sets all child components, replacing existing ones.
-   * @param components - Components v2 message components
-   * @returns This builder instance for method chaining
-   */
   setComponents(components: ComponentsV2MessageComponentEntity[]): this {
     return this.setArray("components", components);
   }
 
-  /**
-   * @description Sets the RGB accent color for the container border.
-   * @param color - Color resolvable (hex string, RGB array, number)
-   * @returns This builder instance for method chaining
-   */
   setAccentColor(color: ColorResolvable): this {
     const resolvedColor = resolveColor(color);
     if (resolvedColor < 0x000000 || resolvedColor > 0xffffff) {
@@ -72,38 +42,18 @@ export class ContainerBuilder extends BaseBuilder<ContainerEntity> {
     return this.set("accent_color", resolvedColor);
   }
 
-  /**
-   * @description Removes the accent color from the container.
-   * @returns This builder instance for method chaining
-   */
   clearAccentColor(): this {
     return this.set("accent_color", null);
   }
 
-  /**
-   * @description Sets whether the container should be blurred as a spoiler.
-   * @param spoiler - Whether container is a spoiler (defaults to true)
-   * @returns This builder instance for method chaining
-   */
   setSpoiler(spoiler = true): this {
     return this.set("spoiler", spoiler);
   }
 
-  /**
-   * @description Sets the unique component identifier within the message.
-   * @param id - Component identifier
-   * @returns This builder instance for method chaining
-   */
   setId(id: number): this {
     return this.set("id", id);
   }
 
-  /**
-   * @description Creates a container with accent color and components.
-   * @param color - Accent color
-   * @param components - Child components
-   * @returns This builder instance for method chaining
-   */
   setColoredContainer(
     color: ColorResolvable,
     components: ComponentsV2MessageComponentEntity[],
@@ -111,21 +61,10 @@ export class ContainerBuilder extends BaseBuilder<ContainerEntity> {
     return this.setAccentColor(color).setComponents(components);
   }
 
-  /**
-   * @description Creates a neutral container without accent color.
-   * @param components - Child components
-   * @returns This builder instance for method chaining
-   */
   setNeutralContainer(components: ComponentsV2MessageComponentEntity[]): this {
     return this.clearAccentColor().setComponents(components);
   }
 
-  /**
-   * @description Creates a spoiler container that blurs its contents.
-   * @param components - Child components
-   * @param color - Optional accent color
-   * @returns This builder instance for method chaining
-   */
   setSpoilerContainer(
     components: ComponentsV2MessageComponentEntity[],
     color?: ColorResolvable,
@@ -135,12 +74,6 @@ export class ContainerBuilder extends BaseBuilder<ContainerEntity> {
     return this;
   }
 
-  /**
-   * @description Creates a themed container with specific color scheme.
-   * @param theme - Color theme ("primary", "success", "warning", "danger", or custom color)
-   * @param components - Child components
-   * @returns This builder instance for method chaining
-   */
   setThemedContainer(
     theme: "primary" | "success" | "warning" | "danger" | ColorResolvable,
     components: ComponentsV2MessageComponentEntity[],
@@ -160,10 +93,6 @@ export class ContainerBuilder extends BaseBuilder<ContainerEntity> {
     return this.setAccentColor(color).setComponents(components);
   }
 
-  /**
-   * @description Validates container data before building.
-   * @throws {Error} When container configuration is invalid
-   */
   protected validate(): void {
     const data = this.rawData;
 

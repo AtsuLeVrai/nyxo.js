@@ -7,7 +7,7 @@ import type {
 } from "../application-commands/index.js";
 import type { AnyChannelEntity } from "../channel/index.js";
 import type {
-  ActionRowEntity,
+  AnyComponentEntity,
   ComponentType,
   SelectMenuOptionEntity,
 } from "../components/index.js";
@@ -175,7 +175,7 @@ export interface MessageComponentInteractionDataEntity {
 
 export interface ModalSubmitInteractionDataEntity {
   custom_id: string;
-  components: ActionRowEntity[];
+  components: AnyComponentEntity[];
 }
 
 export type InteractionDataEntity =
@@ -217,7 +217,7 @@ export interface InteractionCallbackMessagesEntity {
   embeds?: EmbedEntity[];
   allowed_mentions?: AllowedMentionsEntity;
   flags?: MessageFlags;
-  components?: ActionRowEntity[];
+  components?: AnyComponentEntity[];
   attachments?: AttachmentEntity[];
   poll?: PollCreateRequestEntity;
 }
@@ -225,19 +225,34 @@ export interface InteractionCallbackMessagesEntity {
 export interface InteractionCallbackModalEntity {
   custom_id: string;
   title: string;
-  components: ActionRowEntity[];
+  components: AnyComponentEntity[];
 }
 
 export interface InteractionCallbackAutocompleteEntity {
   choices: ApplicationCommandOptionChoiceEntity[];
 }
 
-export interface InteractionResponseEntity {
-  type: InteractionCallbackType;
-  data?:
-    | InteractionCallbackAutocompleteEntity
-    | InteractionCallbackModalEntity
-    | InteractionCallbackMessagesEntity;
+export interface InteractionCallbackActivityEntity {
+  activity_instance_id: string;
+}
+
+type InteractionCallbackDataMap = {
+  [InteractionCallbackType.Pong]: undefined;
+  [InteractionCallbackType.ChannelMessageWithSource]: InteractionCallbackMessagesEntity;
+  [InteractionCallbackType.DeferredChannelMessageWithSource]: InteractionCallbackMessagesEntity;
+  [InteractionCallbackType.DeferredUpdateMessage]: InteractionCallbackMessagesEntity;
+  [InteractionCallbackType.UpdateMessage]: InteractionCallbackMessagesEntity;
+  [InteractionCallbackType.ApplicationCommandAutocompleteResult]: InteractionCallbackAutocompleteEntity;
+  [InteractionCallbackType.Modal]: InteractionCallbackModalEntity;
+  [InteractionCallbackType.PremiumRequired]: undefined;
+  [InteractionCallbackType.LaunchActivity]: InteractionCallbackActivityEntity;
+};
+
+export interface InteractionResponseEntity<
+  T extends InteractionCallbackType = InteractionCallbackType,
+> {
+  type: T;
+  data?: InteractionCallbackDataMap[T];
 }
 
 export interface InteractionEntity {
@@ -260,6 +275,7 @@ export interface InteractionEntity {
   entitlements: EntitlementEntity[];
   authorizing_integration_owners: Record<ApplicationIntegrationType, string | "0">;
   context?: InteractionContextType;
+  attachment_size_limit: number;
 }
 
 export interface GuildInteractionEntity

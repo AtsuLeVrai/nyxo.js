@@ -18,10 +18,16 @@ export class EmbedBuilder extends BaseBuilder<EmbedEntity> {
   }
 
   setTitle(title: string): this {
+    if (title.length > 256) {
+      throw new Error("Embed title cannot exceed 256 characters");
+    }
     return this.set("title", title);
   }
 
   setDescription(description: string): this {
+    if (description.length > 4096) {
+      throw new Error("Embed description cannot exceed 4096 characters");
+    }
     return this.set("description", description);
   }
 
@@ -66,19 +72,64 @@ export class EmbedBuilder extends BaseBuilder<EmbedEntity> {
   }
 
   addField(field: EmbedFieldEntity): this {
+    const currentFields = this.get("fields") || [];
+    if (currentFields.length >= 25) {
+      throw new Error("Embed cannot have more than 25 fields");
+    }
+    if (field.name.length > 256) {
+      throw new Error("Field name cannot exceed 256 characters");
+    }
+    if (field.value.length > 1024) {
+      throw new Error("Field value cannot exceed 1024 characters");
+    }
     return this.pushToArray("fields", field);
   }
 
   addFields(...fields: EmbedFieldEntity[]): this {
+    const currentFields = this.get("fields") || [];
+    if (currentFields.length + fields.length > 25) {
+      throw new Error("Embed cannot have more than 25 fields");
+    }
+    for (const field of fields) {
+      if (field.name.length > 256) {
+        throw new Error("Field name cannot exceed 256 characters");
+      }
+      if (field.value.length > 1024) {
+        throw new Error("Field value cannot exceed 1024 characters");
+      }
+    }
     return this.pushToArray("fields", ...fields);
   }
 
   setFields(fields: EmbedFieldEntity[]): this {
+    if (fields.length > 25) {
+      throw new Error("Embed cannot have more than 25 fields");
+    }
+    for (const field of fields) {
+      if (field.name.length > 256) {
+        throw new Error("Field name cannot exceed 256 characters");
+      }
+      if (field.value.length > 1024) {
+        throw new Error("Field value cannot exceed 1024 characters");
+      }
+    }
     return this.setArray("fields", fields);
   }
 
   spliceFields(index: number, deleteCount: number, ...fields: EmbedFieldEntity[]): this {
     const currentFields = this.get("fields") || [];
+    const resultingLength = currentFields.length - deleteCount + fields.length;
+    if (resultingLength > 25) {
+      throw new Error("Embed cannot have more than 25 fields");
+    }
+    for (const field of fields) {
+      if (field.name.length > 256) {
+        throw new Error("Field name cannot exceed 256 characters");
+      }
+      if (field.value.length > 1024) {
+        throw new Error("Field value cannot exceed 1024 characters");
+      }
+    }
     currentFields.splice(index, deleteCount, ...fields);
     return this.set("fields", currentFields);
   }
@@ -95,5 +146,24 @@ export class EmbedBuilder extends BaseBuilder<EmbedEntity> {
       ) ?? 0;
 
     return title + description + footer + author + fields;
+  }
+
+  protected validate(): void {
+    const totalLength = this.getTotalLength();
+    if (totalLength > 6000) {
+      throw new Error(
+        `Embed total length cannot exceed 6000 characters (currently ${totalLength})`,
+      );
+    }
+
+    const footer = this.get("footer");
+    if (footer?.text && footer.text.length > 2048) {
+      throw new Error("Footer text cannot exceed 2048 characters");
+    }
+
+    const author = this.get("author");
+    if (author?.name && author.name.length > 256) {
+      throw new Error("Author name cannot exceed 256 characters");
+    }
   }
 }

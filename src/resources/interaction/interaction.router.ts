@@ -1,126 +1,120 @@
-import type { Rest } from "../../core/index.js";
+import { BaseRouter } from "../../bases/index.js";
+import type { FileInput, RouteBuilder } from "../../core/index.js";
 import type { MessageEntity } from "../message/index.js";
-import type { WebhookExecuteOptions, WebhookMessageEditOptions } from "../webhook/index.js";
+import type {
+  RESTWebhookExecuteJSONParams,
+  RESTWebhookMessageEditJSONParams,
+} from "../webhook/index.js";
 import type {
   InteractionCallbackResponseEntity,
   InteractionResponseEntity,
 } from "./interaction.entity.js";
 
-export class InteractionRouter {
-  static readonly Routes = {
-    createResponseEndpoint: (interactionId: string, interactionToken: string) =>
-      `/interactions/${interactionId}/${interactionToken}/callback` as const,
-    getOriginalResponseEndpoint: (applicationId: string, interactionToken: string) =>
-      `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
-    editOriginalResponseEndpoint: (applicationId: string, interactionToken: string) =>
-      `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
-    deleteOriginalResponseEndpoint: (applicationId: string, interactionToken: string) =>
-      `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
-    createFollowupMessageEndpoint: (applicationId: string, interactionToken: string) =>
-      `/webhooks/${applicationId}/${interactionToken}` as const,
-    getFollowupMessageEndpoint: (
-      applicationId: string,
-      interactionToken: string,
-      messageId: string,
-    ) => `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
-    editFollowupMessageEndpoint: (
-      applicationId: string,
-      interactionToken: string,
-      messageId: string,
-    ) => `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
-    deleteFollowupMessageEndpoint: (
-      applicationId: string,
-      interactionToken: string,
-      messageId: string,
-    ) => `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
+export const InteractionRoutes = {
+  createResponse: (interactionId: string, interactionToken: string) =>
+    `/interactions/${interactionId}/${interactionToken}/callback` as const,
+  getOriginalResponse: (applicationId: string, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
+  editOriginalResponse: (applicationId: string, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
+  deleteOriginalResponse: (applicationId: string, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
+  createFollowupMessage: (applicationId: string, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}` as const,
+  getFollowupMessage: (applicationId: string, interactionToken: string, messageId: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
+  editFollowupMessage: (applicationId: string, interactionToken: string, messageId: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
+  deleteFollowupMessage: (applicationId: string, interactionToken: string, messageId: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
+} as const satisfies RouteBuilder;
+
+export class InteractionRouter extends BaseRouter {
   createResponse(
     interactionId: string,
     interactionToken: string,
     options: InteractionResponseEntity,
-    withResponse = true,
+    withResponse = false,
   ): Promise<InteractionCallbackResponseEntity | undefined> {
-    return this.#rest.post(
-      InteractionRouter.Routes.createResponseEndpoint(interactionId, interactionToken),
-      { body: JSON.stringify(options), query: { with_response: withResponse } },
-    );
+    return this.rest.post(InteractionRoutes.createResponse(interactionId, interactionToken), {
+      body: JSON.stringify(options),
+      query: { with_response: withResponse },
+    });
   }
-  fetchOriginalResponse(applicationId: string, interactionToken: string): Promise<MessageEntity> {
-    return this.#rest.get(
-      InteractionRouter.Routes.getOriginalResponseEndpoint(applicationId, interactionToken),
-    );
+
+  getOriginalResponse(applicationId: string, interactionToken: string): Promise<MessageEntity> {
+    return this.rest.get(InteractionRoutes.getOriginalResponse(applicationId, interactionToken));
   }
-  updateOriginalResponse(
+
+  editOriginalResponse(
     applicationId: string,
     interactionToken: string,
-    options: WebhookMessageEditOptions,
+    options: RESTWebhookMessageEditJSONParams,
   ): Promise<MessageEntity> {
-    const { files, ...rest } = options;
-    return this.#rest.patch(
-      InteractionRouter.Routes.editOriginalResponseEndpoint(applicationId, interactionToken),
-      { body: JSON.stringify(rest), files },
+    const { files, ...body } = options;
+    return this.rest.patch(
+      InteractionRoutes.editOriginalResponse(applicationId, interactionToken),
+      {
+        body: JSON.stringify(body),
+        files: files as FileInput[] | undefined,
+      },
     );
   }
+
   deleteOriginalResponse(applicationId: string, interactionToken: string): Promise<void> {
-    return this.#rest.delete(
-      InteractionRouter.Routes.deleteOriginalResponseEndpoint(applicationId, interactionToken),
+    return this.rest.delete(
+      InteractionRoutes.deleteOriginalResponse(applicationId, interactionToken),
     );
   }
+
   createFollowupMessage(
     applicationId: string,
     interactionToken: string,
-    options: WebhookExecuteOptions,
+    options: RESTWebhookExecuteJSONParams,
   ): Promise<MessageEntity> {
-    const { files, ...rest } = options;
-    return this.#rest.post(
-      InteractionRouter.Routes.createFollowupMessageEndpoint(applicationId, interactionToken),
-      { body: JSON.stringify(rest), files },
+    const { files, ...body } = options;
+    return this.rest.post(
+      InteractionRoutes.createFollowupMessage(applicationId, interactionToken),
+      {
+        body: JSON.stringify(body),
+        files,
+      },
     );
   }
-  fetchFollowupMessage(
+
+  getFollowupMessage(
     applicationId: string,
     interactionToken: string,
     messageId: string,
   ): Promise<MessageEntity> {
-    return this.#rest.get(
-      InteractionRouter.Routes.getFollowupMessageEndpoint(
-        applicationId,
-        interactionToken,
-        messageId,
-      ),
+    return this.rest.get(
+      InteractionRoutes.getFollowupMessage(applicationId, interactionToken, messageId),
     );
   }
-  updateFollowupMessage(
+
+  editFollowupMessage(
     applicationId: string,
     interactionToken: string,
     messageId: string,
-    options: WebhookMessageEditOptions,
+    options: RESTWebhookMessageEditJSONParams,
   ): Promise<MessageEntity> {
-    const { files, ...rest } = options;
-    return this.#rest.patch(
-      InteractionRouter.Routes.editFollowupMessageEndpoint(
-        applicationId,
-        interactionToken,
-        messageId,
-      ),
-      { body: JSON.stringify(rest), files },
+    const { files, ...body } = options;
+    return this.rest.patch(
+      InteractionRoutes.editFollowupMessage(applicationId, interactionToken, messageId),
+      {
+        body: JSON.stringify(body),
+        files: files as FileInput[] | undefined,
+      },
     );
   }
+
   deleteFollowupMessage(
     applicationId: string,
     interactionToken: string,
     messageId: string,
   ): Promise<void> {
-    return this.#rest.delete(
-      InteractionRouter.Routes.deleteFollowupMessageEndpoint(
-        applicationId,
-        interactionToken,
-        messageId,
-      ),
+    return this.rest.delete(
+      InteractionRoutes.deleteFollowupMessage(applicationId, interactionToken, messageId),
     );
   }
 }

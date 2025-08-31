@@ -1,9 +1,5 @@
 import type { EmojiEntity } from "../resources/index.js";
 
-/**
- * @description Flexible input types for Discord emoji resolution, supporting Unicode, custom emojis, and partial emoji objects.
- * @see {@link https://discord.com/developers/docs/resources/emoji#emoji-object}
- */
 export type EmojiResolvable =
   | string
   | Pick<EmojiEntity, "id" | "name" | "animated">
@@ -14,14 +10,6 @@ const DISCORD_CUSTOM_EMOJI_PATTERN = /<(a)?:([a-zA-Z0-9_]{2,32}):(\d{17,21})>/;
 const PLAIN_CUSTOM_EMOJI_PATTERN = /^([a-zA-Z0-9_]{2,32}):(\d{17,21})$/;
 const ENCODED_CUSTOM_EMOJI_PATTERN = /^(.{2,32}):(\d{17,21})$/;
 
-/**
- * @description Encodes Discord emoji for URL-safe transmission in reaction API requests.
- * @see {@link https://discord.com/developers/docs/resources/channel#create-reaction}
- *
- * @param emoji - Emoji to encode (Unicode string, Discord format, or emoji object)
- * @returns URL-encoded emoji string formatted for Discord reaction endpoints
- * @throws {TypeError} When emoji format cannot be resolved
- */
 export function encodeEmojiForReaction(emoji: EmojiResolvable): string {
   const resolved = resolveEmoji(emoji);
 
@@ -34,12 +22,6 @@ export function encodeEmojiForReaction(emoji: EmojiResolvable): string {
   return encodeURIComponent(resolved.name as string);
 }
 
-/**
- * @description Decodes URL-encoded emoji string from Discord API responses back to structured data.
- *
- * @param encoded - URL-encoded emoji string from Discord reaction endpoints
- * @returns Structured emoji object with name, ID, and animation properties
- */
 export function decodeEmojiFromReaction(
   encoded: string,
 ): Pick<EmojiEntity, "id" | "name" | "animated"> {
@@ -62,14 +44,6 @@ export function decodeEmojiFromReaction(
   };
 }
 
-/**
- * @description Resolves various Discord emoji input formats to normalized emoji object structure.
- * @see {@link https://discord.com/developers/docs/resources/emoji#emoji-object}
- *
- * @param emoji - Input emoji in any supported format (Unicode, Discord format, or partial object)
- * @returns Normalized emoji object with name, ID, and animation properties
- * @throws {TypeError} When emoji input cannot be parsed or is in invalid format
- */
 export function resolveEmoji(
   emoji: EmojiResolvable,
 ): Pick<EmojiEntity, "id" | "name" | "animated"> {
