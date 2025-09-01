@@ -43,7 +43,7 @@ export class InviteRouter extends BaseRouter {
     reason?: string,
   ): Promise<InviteEntity> {
     return this.rest.post(InviteRoutes.channelInvites(channelId), {
-      body: JSON.stringify(options || {}),
+      body: JSON.stringify(options),
       reason,
     });
   }

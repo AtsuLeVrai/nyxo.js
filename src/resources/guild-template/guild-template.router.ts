@@ -1,4 +1,5 @@
-import type { FileInput, Rest } from "../../core/index.js";
+import { BaseRouter } from "../../bases/index.js";
+import type { FileInput, RouteBuilder } from "../../core/index.js";
 import type { GuildEntity } from "../guild/index.js";
 import type { GuildTemplateEntity } from "./guild-template.entity.js";
 
@@ -14,56 +15,56 @@ export interface GuildTemplateCreateOptions {
 
 export type GuildTemplateUpdateOptions = Partial<GuildTemplateCreateOptions>;
 
-export class GuildTemplateRouter {
-  static readonly Routes = {
-    templateByCodeEndpoint: (code: string) => `/guilds/templates/${code}` as const,
-    guildTemplatesEndpoint: (guildId: string) => `/guilds/${guildId}/templates` as const,
-    guildTemplateByCodeEndpoint: (guildId: string, code: string) =>
-      `/guilds/${guildId}/templates/${code}` as const,
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
+export const GuildTemplateRoutes = {
+  templateByCodeEndpoint: (code: string) => `/guilds/templates/${code}` as const,
+  guildTemplatesEndpoint: (guildId: string) => `/guilds/${guildId}/templates` as const,
+  guildTemplateByCodeEndpoint: (guildId: string, code: string) =>
+    `/guilds/${guildId}/templates/${code}` as const,
+} as const satisfies RouteBuilder;
+
+export class GuildTemplateRouter extends BaseRouter {
   fetchGuildTemplate(code: string): Promise<GuildTemplateEntity> {
-    return this.#rest.get(GuildTemplateRouter.Routes.templateByCodeEndpoint(code));
+    return this.rest.get(GuildTemplateRoutes.templateByCodeEndpoint(code));
   }
+
   async createGuildFromTemplate(
     code: string,
     options: GuildFromTemplateCreateOptions,
   ): Promise<GuildEntity> {
-    const processedOptions = { ...options };
-    if (processedOptions.icon) {
-      processedOptions.icon = await this.#rest.toDataUri(processedOptions.icon);
-    }
-    return this.#rest.post(GuildTemplateRouter.Routes.templateByCodeEndpoint(code), {
+    const processedOptions = await this.processFileOptions(options, ["icon"]);
+    return this.rest.post(GuildTemplateRoutes.templateByCodeEndpoint(code), {
       body: JSON.stringify(processedOptions),
     });
   }
+
   fetchGuildTemplates(guildId: string): Promise<GuildTemplateEntity[]> {
-    return this.#rest.get(GuildTemplateRouter.Routes.guildTemplatesEndpoint(guildId));
+    return this.rest.get(GuildTemplateRoutes.guildTemplatesEndpoint(guildId));
   }
+
   createGuildTemplate(
     guildId: string,
     options: GuildTemplateCreateOptions,
   ): Promise<GuildTemplateEntity> {
-    return this.#rest.post(GuildTemplateRouter.Routes.guildTemplatesEndpoint(guildId), {
+    return this.rest.post(GuildTemplateRoutes.guildTemplatesEndpoint(guildId), {
       body: JSON.stringify(options),
     });
   }
+
   syncGuildTemplate(guildId: string, code: string): Promise<GuildTemplateEntity> {
-    return this.#rest.put(GuildTemplateRouter.Routes.guildTemplateByCodeEndpoint(guildId, code));
+    return this.rest.put(GuildTemplateRoutes.guildTemplateByCodeEndpoint(guildId, code));
   }
+
   updateGuildTemplate(
     guildId: string,
     code: string,
     options: GuildTemplateUpdateOptions,
   ): Promise<GuildTemplateEntity> {
-    return this.#rest.patch(GuildTemplateRouter.Routes.guildTemplateByCodeEndpoint(guildId, code), {
+    return this.rest.patch(GuildTemplateRoutes.guildTemplateByCodeEndpoint(guildId, code), {
       body: JSON.stringify(options),
     });
   }
+
   deleteGuildTemplate(guildId: string, code: string): Promise<GuildTemplateEntity> {
-    return this.#rest.delete(GuildTemplateRouter.Routes.guildTemplateByCodeEndpoint(guildId, code));
+    return this.rest.delete(GuildTemplateRoutes.guildTemplateByCodeEndpoint(guildId, code));
   }
 }
