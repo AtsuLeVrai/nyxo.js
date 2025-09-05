@@ -4,15 +4,25 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/nyxo-labs/nyxo.js/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Status](https://img.shields.io/badge/Status-Active%20Development-orange.svg)](https://github.com/nyxo-labs/nyxo.js)
+[![Status](https://img.shields.io/badge/Status-Archived-red.svg)](https://github.com/nyxo-labs/nyxo.js)
 
 ---
 
-## Overview
+## ⏸️ Project Status: Archived
 
-Nyxo.js is a TypeScript Discord library focused on memory efficiency and reliability for large-scale applications.
+**This project has reached its natural conclusion.** After extensive development and architectural exploration, Nyxo.js is being archived as its creator has moved on to explore new horizons beyond the Discord ecosystem.
 
-**Core Design:**
+*Sometimes the greatest achievement is knowing when a chapter has ended and a new one is ready to begin.*
+
+The codebase remains available for educational purposes and community forking.
+
+---
+
+## What Nyxo.js Was
+
+Nyxo.js was a TypeScript Discord library focused on memory efficiency and reliability for large-scale applications.
+
+**Core Design Philosophy:**
 
 - Low memory footprint through intelligent caching
 - Advanced rate limiting with circuit breaker protection
@@ -21,75 +31,73 @@ Nyxo.js is a TypeScript Discord library focused on memory efficiency and reliabi
 
 ---
 
-## Current Status
+## Final State
 
-**Active Reconstruction** - The project is being completely rebuilt from the ground up. The legacy enterprise
-implementation has been archived to the `legacy-enterprise` branch.
+**Last Active Development:** 2025
 
-**What's Working:**
+**What Was Completed:**
 
-- REST API foundation with rate limiting
-- Intelligent caching system with LRU/TTL
+- REST API foundation with sophisticated rate limiting
+- Intelligent caching system with LRU/TTL algorithms
 - Circuit breaker resilience patterns
-- TypeScript architecture and build system
+- Robust TypeScript architecture and build system
 
-**In Development:**
+**What Remained In Progress:**
 
 - Complete Discord API coverage
 - WebSocket Gateway implementation
-- Documentation and examples
+- Comprehensive documentation and examples
 
 ---
 
-## Installation
+## Technical Legacy
 
-Not yet published. The library will be available on npm after the core rebuild is complete.
+Built for applications that needed:
 
-**Requirements:**
-
-- Node.js 24+
-- TypeScript 5.9+
-- ESM support
-
----
-
-## Architecture
-
-Built for applications that need:
-
-- Predictable memory usage at scale
+- Predictable memory usage at enterprise scale
 - Reliable handling of Discord API rate limits
 - Type-safe Discord API interactions
-- Enterprise-grade error handling
+- Production-grade error handling and resilience
 
-**Not suitable for:**
+**Architecture Lessons:**
 
-- Simple Discord bots with basic needs
-- Projects requiring immediate stability
-- CommonJS environments
+- Performance-first design decisions
+- Memory-conscious caching strategies
+- Resilience patterns for external API dependencies
+- Modern TypeScript best practices
 
 ---
 
-## Development
+## For Future Maintainers
 
-This is a focused single-developer project prioritizing architectural consistency and performance optimization.
+This project represented a deep exploration into high-performance Discord library architecture. The codebase contains valuable patterns for:
 
-**Contributing:**
+- **Rate limiting** implementation with backoff strategies
+- **Memory management** in long-running Node.js applications
+- **Circuit breaker** patterns for API reliability
+- **TypeScript** architecture for large-scale libraries
 
-- Performance feedback and testing welcome
-- API design suggestions appreciated
-- Documentation improvements accepted
+Feel free to learn from, fork, or continue this work if it aligns with your goals.
+
+---
+
+## Acknowledgments
+
+Thank you to everyone who showed interest in Nyxo.js during its development. Your feedback and enthusiasm shaped its direction.
+
+**Special thanks to:**
+- The Discord.js community for inspiration
+- TypeScript team for excellent tooling
+- All developers who believe in performance-first design
 
 ---
 
 ## License
 
-Apache License 2.0
+Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ---
 
-## Links
+*"Every project teaches us something new. Nyxo.js taught me the beauty of architectural perfection and the wisdom of knowing when to let go."*
 
-- [Repository](https://github.com/nyxo-labs/nyxo.js)
-- [Legacy Code](https://github.com/nyxo-labs/nyxo.js/tree/legacy-enterprise)
-- [Issues](https://github.com/nyxo-labs/nyxo.js/issues)
+**AtsuLeVrai** - 2025
