@@ -1,5 +1,8 @@
 onlyBuiltDependencies:
+  - '@discordjs/opus'
   - bufferutil
   - erlpack
   - esbuild
+  - ffmpeg-static
+  - sharp
   - zlib-sync

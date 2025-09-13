@@ -10,30 +10,6 @@ export type PickFromConstructor<
   K extends PropertyKey & keyof InstanceType<T>,
 > = new (...args: ConstructorParameters<T>) => Pick<InstanceType<T>, K>;
 
-export type CamelCaseKeys<T> = {
-  [K in keyof T as K extends string
-    ? K extends `${infer P}_${infer Q}`
-      ? `${P}${Capitalize<
-          Q extends `${infer R}_${infer S}`
-            ? `${R}${Capitalize<S extends `${infer U}_${infer V}` ? `${U}${Capitalize<V>}` : S>}`
-            : Q
-        >}`
-      : K
-    : never]-?: any; // T[K] can be any type, we don't want to change it
-};
-
-export type DeepNonNullable<T> = T extends (infer U)[]
-  ? DeepNonNullable<U>[]
-  : T extends Record<string, any>
-    ? { [K in keyof T]: DeepNonNullable<T[K]> }
-    : Exclude<T, null>;
-
-export type DeepNullable<T> = T extends (infer U)[]
-  ? DeepNullable<U>[]
-  : T extends Record<string, any>
-    ? { [K in keyof T]: DeepNullable<T[K]> }
-    : T | null;
-
 function getAllPropertyNames(obj: object): Set<PropertyKey> {
   const allNames = new Set<PropertyKey>();
 

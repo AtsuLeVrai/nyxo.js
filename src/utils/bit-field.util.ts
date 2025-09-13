@@ -1,5 +1,12 @@
 const MAX_BIT_VALUE = (1n << 64n) - 1n;
 
+const resolve = <F extends number | bigint>(...bits: F[]): bigint =>
+  bits.reduce((acc, bit) => {
+    if (bit == null) return acc;
+
+    return acc | safeBigInt(bit);
+  }, 0n);
+
 function safeBigInt(value: bigint | number): bigint {
   if (typeof value === "bigint") {
     if (value < 0n || value > MAX_BIT_VALUE) {
@@ -15,13 +22,6 @@ function safeBigInt(value: bigint | number): bigint {
 
   return BigInt(value);
 }
-
-const resolve = <F extends number | bigint>(...bits: F[]): bigint =>
-  bits.reduce((acc, bit) => {
-    if (bit == null) return acc;
-
-    return acc | safeBigInt(bit);
-  }, 0n);
 
 export class BitField<T extends number | bigint> {
   #bitfield: bigint;
