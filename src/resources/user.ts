@@ -2,6 +2,7 @@ import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, BaseRouter } from "../bases/index.js";
 import type { FileInput, RouteBuilder } from "../core/index.js";
 import { BitField } from "../utils/index.js";
+import type { ActivityData } from "./activity.js";
 import type { DMChannelEntity, GroupDMChannelEntity } from "./channel.js";
 import type { Locale } from "./constants.js";
 import type { GuildEntity, GuildMemberEntity, IntegrationEntity } from "./guild.js";
@@ -170,58 +171,6 @@ export interface GatewayTypingStartData {
   user_id: string;
   timestamp: number;
   member?: GuildMemberEntity;
-}
-
-export interface ActivityButtonData {
-  label: string;
-  url: string;
-}
-
-export interface ActivitySecretsData {
-  join?: string;
-  spectate?: string;
-  match?: string;
-}
-
-export interface ActivityAssetImageData {
-  large_text?: string;
-  large_image?: string;
-  small_text?: string;
-  small_image?: string;
-}
-
-export interface ActivityPartyData {
-  id?: string;
-  size?: [number, number];
-}
-
-export interface ActivityEmojiData {
-  name: string;
-  id?: string;
-  animated?: boolean;
-}
-
-export interface ActivityTimestampsData {
-  start?: number;
-  end?: number;
-}
-
-export interface ActivityData {
-  name: string;
-  type: ActivityType;
-  url?: string | null;
-  created_at: number;
-  timestamps?: ActivityTimestampsData;
-  application_id?: string;
-  details?: string | null;
-  state?: string | null;
-  emoji?: ActivityEmojiData | null;
-  party?: ActivityPartyData;
-  assets?: ActivityAssetImageData;
-  secrets?: ActivitySecretsData;
-  instance?: boolean;
-  flags?: ActivityFlags;
-  buttons?: ActivityButtonData[];
 }
 
 export type UpdatePresenceStatusType = "online" | "dnd" | "idle" | "invisible" | "offline";
