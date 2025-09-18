@@ -88,7 +88,6 @@ export interface CdnOptions<
 
 export const Cdn = {
   ANIMATED_HASH_PATTERN: /^a_/,
-  DISCORD_EPOCH: 1420070400000n,
   CDN_URL: "https://cdn.discordapp.com/" as const,
   MEDIA_PROXY_URL: "https://media.discordapp.net/" as const,
   DEFAULT_AVATARS: { legacy: 5, new: 6 } as const,

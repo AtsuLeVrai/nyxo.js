@@ -5,35 +5,7 @@ import FormData from "form-data";
 import { extension, lookup } from "mime-types";
 import { Pool } from "undici";
 import { z } from "zod";
-import { ApiVersion } from "../../enum/index.js";
-import {
-  ApplicationCommandRouter,
-  ApplicationConnectionRouter,
-  ApplicationRouter,
-  AuditLogRouter,
-  AutoModerationRouter,
-  ChannelRouter,
-  EmojiRouter,
-  EntitlementRouter,
-  GatewayRouter,
-  GuildRouter,
-  GuildScheduledEventRouter,
-  GuildTemplateRouter,
-  InteractionRouter,
-  InviteRouter,
-  LobbyRouter,
-  MessageRouter,
-  OAuth2Router,
-  PollRouter,
-  SKURouter,
-  SoundboardRouter,
-  StageInstanceRouter,
-  StickerRouter,
-  SubscriptionRouter,
-  UserRouter,
-  VoiceRouter,
-  WebhookRouter,
-} from "../../resources/index.js";
+import { ApiVersion } from "../../resources/index.js";
 import { RateLimitManager, RateLimitOptions } from "./rate-limit.manager.js";
 import { ResilienceManager, ResilienceOptions } from "./resilience.manager.js";
 import type {
@@ -44,8 +16,6 @@ import type {
   HttpRequestOptions,
   HttpResponse,
 } from "./rest.types.js";
-
-export type RouteBuilder = Record<string, (...args: string[]) => `/${string}`>;
 
 const MAX_FILE_COUNT = 10 as const;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -79,33 +49,6 @@ export const RestOptions = z.object({
 });
 
 export class Rest {
-  readonly application = new ApplicationRouter(this);
-  readonly applicationCommand = new ApplicationCommandRouter(this);
-  readonly applicationConnection = new ApplicationConnectionRouter(this);
-  readonly auditLog = new AuditLogRouter(this);
-  readonly autoModeration = new AutoModerationRouter(this);
-  readonly channel = new ChannelRouter(this);
-  readonly emoji = new EmojiRouter(this);
-  readonly entitlement = new EntitlementRouter(this);
-  readonly gateway = new GatewayRouter(this);
-  readonly guild = new GuildRouter(this);
-  readonly guildScheduledEvent = new GuildScheduledEventRouter(this);
-  readonly guildTemplate = new GuildTemplateRouter(this);
-  readonly interaction = new InteractionRouter(this);
-  readonly invite = new InviteRouter(this);
-  readonly lobby = new LobbyRouter(this);
-  readonly message = new MessageRouter(this);
-  readonly oauth2 = new OAuth2Router(this);
-  readonly poll = new PollRouter(this);
-  readonly sku = new SKURouter(this);
-  readonly soundboard = new SoundboardRouter(this);
-  readonly stageInstance = new StageInstanceRouter(this);
-  readonly sticker = new StickerRouter(this);
-  readonly subscription = new SubscriptionRouter(this);
-  readonly user = new UserRouter(this);
-  readonly voice = new VoiceRouter(this);
-  readonly webhook = new WebhookRouter(this);
-
   readonly pool: Pool;
   readonly rateLimit: RateLimitManager;
   readonly resilience: ResilienceManager;
@@ -142,24 +85,67 @@ export class Rest {
     );
   }
 
-  get<T>(path: string, options: Omit<HttpRequestOptions, "method" | "path"> = {}): Promise<T> {
-    return this.request<T>({ ...options, method: "GET", path });
+  get<T extends TypedRoute>(
+    path: T,
+    options?: Omit<HttpRequestOptions, "method" | "path"> & {
+      query?: ExtractQuery<T["__schema"]["GET"]>;
+    },
+  ): Promise<ExtractResponse<T["__schema"]["GET"]>> {
+    return this.request({ ...options, method: "GET", path: path as string });
   }
 
-  post<T>(path: string, options: Omit<HttpRequestOptions, "method" | "path"> = {}): Promise<T> {
-    return this.request<T>({ ...options, method: "POST", path });
+  post<T extends TypedRoute>(
+    path: T,
+    options?: Omit<HttpRequestOptions, "method" | "path" | "body"> & {
+      body?: ExtractRequestBody<T["__schema"]["POST"]>;
+      query?: ExtractQuery<T["__schema"]["POST"]>;
+    },
+  ): Promise<ExtractResponse<T["__schema"]["POST"]>> {
+    return this.request({
+      ...options,
+      method: "POST",
+      path: path as string,
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+    });
   }
 
-  put<T>(path: string, options: Omit<HttpRequestOptions, "method" | "path"> = {}): Promise<T> {
-    return this.request<T>({ ...options, method: "PUT", path });
+  patch<T extends TypedRoute>(
+    path: T,
+    options?: Omit<HttpRequestOptions, "method" | "path" | "body"> & {
+      body?: ExtractRequestBody<T["__schema"]["PATCH"]>;
+      query?: ExtractQuery<T["__schema"]["PATCH"]>;
+    },
+  ): Promise<ExtractResponse<T["__schema"]["PATCH"]>> {
+    return this.request({
+      ...options,
+      method: "PATCH",
+      path: path as string,
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+    });
   }
 
-  patch<T>(path: string, options: Omit<HttpRequestOptions, "method" | "path"> = {}): Promise<T> {
-    return this.request<T>({ ...options, method: "PATCH", path });
+  put<T extends TypedRoute>(
+    path: T,
+    options?: Omit<HttpRequestOptions, "method" | "path" | "body"> & {
+      body?: ExtractRequestBody<T["__schema"]["PUT"]>;
+      query?: ExtractQuery<T["__schema"]["PUT"]>;
+    },
+  ): Promise<ExtractResponse<T["__schema"]["PUT"]>> {
+    return this.request({
+      ...options,
+      method: "PUT",
+      path: path as string,
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+    });
   }
 
-  delete<T>(path: string, options: Omit<HttpRequestOptions, "method" | "path"> = {}): Promise<T> {
-    return this.request<T>({ ...options, method: "DELETE", path });
+  delete<T extends TypedRoute>(
+    path: T,
+    options?: Omit<HttpRequestOptions, "method" | "path"> & {
+      query?: ExtractQuery<T["__schema"]["DELETE"]>;
+    },
+  ): Promise<ExtractResponse<T["__schema"]["DELETE"]>> {
+    return this.request({ ...options, method: "DELETE", path: path as string });
   }
 
   async destroy(): Promise<void> {

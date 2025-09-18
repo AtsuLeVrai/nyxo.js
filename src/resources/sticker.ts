@@ -1,38 +1,42 @@
-export enum StickerFormatType {
+import type { SetNonNullable } from "type-fest";
+import type { FileInput } from "../core/index.js";
+import type { UserObject } from "./user.js";
+
+export enum StickerFormatTypes {
   Png = 1,
   Apng = 2,
   Lottie = 3,
   Gif = 4,
 }
 
-export enum StickerType {
+export enum StickerTypes {
   Standard = 1,
   Guild = 2,
 }
 
-export interface StickerEntity {
+export interface StickerObject {
   id: string;
   pack_id?: string;
   name: string;
   description: string | null;
   tags: string;
-  type: StickerType;
-  format_type: StickerFormatType;
+  type: StickerTypes;
+  format_type: StickerFormatTypes;
   available?: boolean;
   guild_id?: string;
-  user?: UserEntity;
+  user?: UserObject;
   sort_value?: number;
 }
 
-export interface StickerItemEntity {
+export interface StickerItemObject {
   id: string;
   name: string;
-  format_type: StickerFormatType;
+  format_type: StickerFormatTypes;
 }
 
-export interface StickerPackEntity {
+export interface StickerPackObject {
   id: string;
-  stickers: StickerEntity[];
+  stickers: StickerObject[];
   name: string;
   sku_id: string;
   cover_sticker_id?: string;
@@ -40,104 +44,53 @@ export interface StickerPackEntity {
   banner_asset_id?: string;
 }
 
-export interface RESTStickerPacksResponseEntity {
-  sticker_packs: StickerPackEntity[];
+export interface ListStickerPacksResponse {
+  sticker_packs: StickerPackObject[];
 }
 
-export interface RESTCreateGuildStickerFormParams
-  extends DeepNonNullable<Pick<StickerEntity, "name" | "description" | "tags">> {
+export interface CreateGuildStickerFormParams
+  extends SetNonNullable<Pick<StickerObject, "name" | "description" | "tags">> {
   file: FileInput;
 }
 
-export type RESTModifyGuildStickerJSONParams = Partial<
-  Omit<RESTCreateGuildStickerFormParams, "file">
->;
+export type ModifyGuildStickerJSONParams = Partial<Omit<CreateGuildStickerFormParams, "file">>;
 
-export const StickerRoutes = {
-  getSticker: (stickerId: string) => `/stickers/${stickerId}` as const,
-  listStickerPacks: () => "/sticker-packs",
-  getStickerPack: (packId: string) => `/sticker-packs/${packId}` as const,
-  listGuildStickers: (guildId: string) => `/guilds/${guildId}/stickers` as const,
-  getGuildSticker: (guildId: string, stickerId: string) =>
-    `/guilds/${guildId}/stickers/${stickerId}` as const,
-} as const satisfies RouteBuilder;
-
-export class StickerRouter extends BaseRouter {
-  getSticker(stickerId: string): Promise<StickerEntity> {
-    return this.rest.get(StickerRoutes.getSticker(stickerId));
-  }
-
-  listStickerPacks(): Promise<RESTStickerPacksResponseEntity> {
-    return this.rest.get(StickerRoutes.listStickerPacks());
-  }
-
-  getStickerPack(packId: string): Promise<StickerPackEntity> {
-    return this.rest.get(StickerRoutes.getStickerPack(packId));
-  }
-
-  listGuildStickers(guildId: string): Promise<StickerEntity[]> {
-    return this.rest.get(StickerRoutes.listGuildStickers(guildId));
-  }
-
-  getGuildSticker(guildId: string, stickerId: string): Promise<StickerEntity> {
-    return this.rest.get(StickerRoutes.getGuildSticker(guildId, stickerId));
-  }
-
-  createGuildSticker(
-    guildId: string,
-    options: RESTCreateGuildStickerFormParams,
-    reason?: string,
-  ): Promise<StickerEntity> {
-    const { file, ...rest } = options;
-    return this.rest.post(StickerRoutes.listGuildStickers(guildId), {
-      body: JSON.stringify(rest),
-      files: file,
-      reason,
-    });
-  }
-
-  modifyGuildSticker(
-    guildId: string,
-    stickerId: string,
-    options: RESTModifyGuildStickerJSONParams,
-    reason?: string,
-  ): Promise<StickerEntity> {
-    return this.rest.patch(StickerRoutes.getGuildSticker(guildId, stickerId), {
-      body: JSON.stringify(options),
-      reason,
-    });
-  }
-
-  deleteGuildSticker(guildId: string, stickerId: string, reason?: string): Promise<void> {
-    return this.rest.delete(StickerRoutes.getGuildSticker(guildId, stickerId), {
-      reason,
-    });
-  }
+/**
+ * Checks if a sticker is a standard Discord sticker
+ * @param sticker The sticker to check
+ * @returns true if it's a standard sticker
+ */
+export function isStandardSticker(sticker: StickerObject): boolean {
+  return sticker.type === StickerTypes.Standard;
 }
 
-export class Sticker extends BaseClass<StickerEntity> implements CamelCaseKeys<StickerEntity> {
-  readonly id = this.rawData.id;
-  readonly packId = this.rawData.pack_id;
-  readonly name = this.rawData.name;
-  readonly description = this.rawData.description;
-  readonly tags = this.rawData.tags;
-  readonly type = this.rawData.type;
-  readonly formatType = this.rawData.format_type;
-  readonly available = this.rawData.available;
-  readonly guildId = this.rawData.guild_id;
-  readonly user = this.rawData.user;
-  readonly sortValue = this.rawData.sort_value;
+/**
+ * Checks if a sticker is a guild-specific sticker
+ * @param sticker The sticker to check
+ * @returns true if it's a guild sticker
+ */
+export function isGuildSticker(sticker: StickerObject): boolean {
+  return sticker.type === StickerTypes.Guild;
 }
 
-export class StickerPack
-  extends BaseClass<StickerPackEntity>
-  implements CamelCaseKeys<StickerPackEntity>
-{
-  readonly id = this.rawData.id;
-  readonly stickers = this.rawData.stickers.map((sticker) => new Sticker(this.client, sticker));
-  readonly name = this.rawData.name;
-  readonly skuId = this.rawData.sku_id;
-  readonly coverStickerId = this.rawData.cover_sticker_id;
-  readonly description = this.rawData.description;
-  readonly bannerAssetId = this.rawData.banner_asset_id;
+/**
+ * Checks if a sticker is available for use
+ * @param sticker The sticker to check
+ * @returns true if the sticker is available
+ */
+export function isStickerAvailable(sticker: StickerObject): boolean {
+  return sticker.available !== false;
+}
+
+/**
+ * Checks if a sticker format is animated
+ * @param formatType The sticker format type
+ * @returns true if the format supports animation
+ */
+export function isAnimatedStickerFormat(formatType: StickerFormatTypes): boolean {
+  return (
+    formatType === StickerFormatTypes.Apng ||
+    formatType === StickerFormatTypes.Lottie ||
+    formatType === StickerFormatTypes.Gif
+  );
 }

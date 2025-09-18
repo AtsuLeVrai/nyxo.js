@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "nyxo.js",
-  "packageManager": "pnpm@10.16.0+sha512.8066e7b034217b700a9a4dbb3a005061d641ba130a89915213a10b3ca4919c19c037bec8066afdc559b89635fdb806b16ea673f2468fbb28aabfa13c53e3f769",
+  "packageManager": "pnpm@10.16.1+sha512.0e155aa2629db8672b49e8475da6226aa4bdea85fdcdfdc15350874946d4f3c91faaf64cbdc4a5d1ab8002f473d5c3fcedcd197989cf0390f9badd3c04678706",
   "homepage": "https://github.com/nyxo-labs/nyxo.js",
   "readme": "README.md",
   "license": "Apache-2.0",
@@ -47,18 +47,9 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@discordjs/opus": "^0.10.0",
-    "@noble/ciphers": "^2.0.0",
-    "deepmerge-ts": "^7.1.5",
     "eventemitter3": "^5.0.1",
-    "file-type": "^21.0.0",
     "form-data": "^4.0.4",
     "mime-types": "^3.0.1",
-    "prism-media": "^1.3.5",
-    "quick-lru": "^7.1.0",
-    "reflect-metadata": "^0.2.2",
-    "sharp": "^0.34.3",
-    "sodium-native": "^5.0.8",
     "type-fest": "^5.0.0",
     "undici": "^7.16.0",
     "ws": "^8.18.3",
@@ -67,21 +58,16 @@
   "optionalDependencies": {
     "bufferutil": "^4.0.9",
     "erlpack": "^0.1.4",
-    "ffmpeg-static": "^5.2.0",
-    "libsodium-wrappers": "^0.7.15",
-    "opusscript": "^0.1.1",
-    "tweetnacl": "^1.0.3",
     "zlib-sync": "^0.1.10"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@types/mime-types": "^3.0.1",
-    "@types/node": "^24.3.3",
-    "@types/sodium-native": "^2.3.9",
+    "@types/node": "^24.5.0",
     "@types/ws": "^8.18.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
-    "tsdown": "^0.15.1",
+    "tsdown": "^0.15.2",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },

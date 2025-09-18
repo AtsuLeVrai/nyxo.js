@@ -1,21 +1,20 @@
-import type { CamelCasedProperties } from "type-fest";
-import { BaseClass, BaseRouter } from "../bases/index.js";
-import type { FileInput, RouteBuilder } from "../core/index.js";
-import { BitField } from "../utils/index.js";
+import type { SetNonNullable } from "type-fest";
+import type { FileInput } from "../core/index.js";
 import type { ActivityData } from "./activity.js";
-import type { DMChannelEntity, GroupDMChannelEntity } from "./channel.js";
 import type { Locale } from "./constants.js";
-import type { GuildEntity, GuildMemberEntity, IntegrationEntity } from "./guild.js";
+import type { GuildMemberEntity, IntegrationEntity } from "./guild.js";
 
-export enum ConnectionVisibility {
+export enum ConnectionVisibilityTypes {
   None = 0,
   Everyone = 1,
 }
 
-export enum ConnectionService {
+export enum Services {
   AmazonMusic = "amazon-music",
   BattleNet = "battlenet",
+  Bluesky = "bluesky",
   Bungie = "bungie",
+  Crunchyroll = "crunchyroll",
   Domain = "domain",
   Ebay = "ebay",
   EpicGames = "epicgames",
@@ -23,39 +22,37 @@ export enum ConnectionService {
   GitHub = "github",
   Instagram = "instagram",
   LeagueOfLegends = "leagueoflegends",
+  Mastodon = "mastodon",
   PayPal = "paypal",
   PlayStation = "playstation",
   Reddit = "reddit",
   RiotGames = "riotgames",
   Roblox = "roblox",
-  Spotify = "spotify",
   Skype = "skype",
+  Spotify = "spotify",
   Steam = "steam",
   TikTok = "tiktok",
   Twitch = "twitch",
   Twitter = "twitter",
   Xbox = "xbox",
   YouTube = "youtube",
-  Bluesky = "bluesky",
-  Crunchyroll = "crunchyroll",
-  Mastodon = "mastodon",
 }
 
-export enum NameplatePalette {
-  Crimson = "crimson",
+export enum NameplatePalettes {
   Berry = "berry",
+  BubbleGum = "bubble_gum",
+  Clover = "clover",
+  Cobalt = "cobalt",
+  Crimson = "crimson",
+  Forest = "forest",
+  Lemon = "lemon",
   Sky = "sky",
   Teal = "teal",
-  Forest = "forest",
-  BubbleGum = "bubble_gum",
   Violet = "violet",
-  Cobalt = "cobalt",
-  Clover = "clover",
-  Lemon = "lemon",
   White = "white",
 }
 
-export enum PremiumType {
+export enum PremiumTypes {
   None = 0,
   NitroClassic = 1,
   Nitro = 2,
@@ -65,14 +62,14 @@ export enum PremiumType {
 export enum UserFlags {
   Staff = 1 << 0,
   Partner = 1 << 1,
-  HypesquadEvents = 1 << 2,
-  BugHunter1 = 1 << 3,
-  HouseBravery = 1 << 6,
-  HouseBrilliance = 1 << 7,
-  HouseBalance = 1 << 8,
-  EarlySupporter = 1 << 9,
+  Hypesquad = 1 << 2,
+  BugHunterLevel1 = 1 << 3,
+  HypesquadOnlineHouse1 = 1 << 6,
+  HypesquadOnlineHouse2 = 1 << 7,
+  HypesquadOnlineHouse3 = 1 << 8,
+  PremiumEarlySupporter = 1 << 9,
   TeamPseudoUser = 1 << 10,
-  BugHunter2 = 1 << 14,
+  BugHunterLevel2 = 1 << 14,
   VerifiedBot = 1 << 16,
   VerifiedDeveloper = 1 << 17,
   CertifiedModerator = 1 << 18,
@@ -80,70 +77,30 @@ export enum UserFlags {
   ActiveDeveloper = 1 << 22,
 }
 
-export enum ActivityFlags {
-  Instance = 1 << 0,
-  Join = 1 << 1,
-  Spectate = 1 << 2,
-  JoinRequest = 1 << 3,
-  Sync = 1 << 4,
-  Play = 1 << 5,
-  PartyPrivacyFriends = 1 << 6,
-  PartyPrivacyVoiceChannel = 1 << 7,
-  Embedded = 1 << 8,
-}
-
-export enum ActivityType {
-  Game = 0,
-  Streaming = 1,
-  Listening = 2,
-  Watching = 3,
-  Custom = 4,
-  Competing = 5,
-}
-
-export interface ApplicationRoleConnectionData {
-  platform_name: string | null;
-  platform_username: string | null;
-  metadata: Record<string, string>;
-}
-
-export interface ConnectionData {
-  id: string;
-  name: string;
-  type: ConnectionService;
-  revoked?: boolean;
-  integrations?: Partial<IntegrationEntity>[];
-  verified: boolean;
-  friend_sync: boolean;
-  show_activity: boolean;
-  two_way_link: boolean;
-  visibility: ConnectionVisibility;
-}
-
-export interface AvatarDecorationDataData {
+export interface AvatarDecorationDataObject {
   asset: string;
   sku_id: string;
 }
 
-export interface UserPrimaryGuildData {
-  identity_guild_id?: string | null;
-  identity_enabled?: boolean | null;
-  tag?: string | null;
-  badge?: string | null;
-}
-
-export interface NameplateData {
-  sku_id: string;
+export interface NameplateObject {
   asset: string;
   label: string;
-  palette: NameplatePalette;
+  palette: NameplatePalettes;
+  sku_id: string;
 }
 
-export interface CollectiblesData {
-  nameplate?: NameplateData;
+export interface CollectiblesObject {
+  nameplate?: NameplateObject;
 }
 
-export interface UserData {
+export interface UserPrimaryGuildEntity {
+  badge?: string | null;
+  identity_enabled?: boolean | null;
+  identity_guild_id?: string | null;
+  tag?: string | null;
+}
+
+export interface UserObject {
   id: string;
   username: string;
   discriminator: string;
@@ -158,14 +115,33 @@ export interface UserData {
   verified?: boolean;
   email?: string | null;
   flags?: UserFlags;
-  premium_type?: PremiumType;
+  premium_type?: PremiumTypes;
   public_flags?: UserFlags;
-  avatar_decoration_data?: AvatarDecorationDataData | null;
-  primary_guild?: UserPrimaryGuildData | null;
-  collectibles?: CollectiblesData | null;
+  avatar_decoration_data?: AvatarDecorationDataObject | null;
+  collectibles?: CollectiblesObject | null;
+  primary_guild?: UserPrimaryGuildEntity | null;
 }
 
-export interface GatewayTypingStartData {
+export interface ConnectionObject {
+  id: string;
+  name: string;
+  type: Services;
+  revoked?: boolean;
+  integrations?: Partial<IntegrationEntity>[];
+  verified: boolean;
+  friend_sync: boolean;
+  show_activity: boolean;
+  two_way_link: boolean;
+  visibility: ConnectionVisibilityTypes;
+}
+
+export interface ApplicationRoleConnectionObject {
+  platform_name: string | null;
+  platform_username: string | null;
+  metadata: Record<string, string>;
+}
+
+export interface TypingStartObject {
   channel_id: string;
   guild_id?: string;
   user_id: string;
@@ -173,22 +149,52 @@ export interface GatewayTypingStartData {
   member?: GuildMemberEntity;
 }
 
-export type UpdatePresenceStatusType = "online" | "dnd" | "idle" | "invisible" | "offline";
-
-export interface ClientStatusData {
+export interface ClientStatusObject {
   desktop?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
   mobile?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
   web?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
 }
 
-export interface GatewayPresenceUpdateData {
-  user: UserData;
+export interface PresenceUpdateObject {
+  user: UserObject;
   guild_id: string;
   status: Omit<UpdatePresenceStatusType, "invisible">;
   activities: ActivityData[];
-  client_status: ClientStatusData;
+  client_status: ClientStatusObject;
 }
 
+export interface ModifyCurrentUserJSONParams extends Partial<Pick<UserObject, "username">> {
+  avatar?: FileInput | null;
+  banner?: FileInput | null;
+}
+
+export interface GetCurrentUserGuildsQueryStringParams {
+  before?: string;
+  after?: string;
+  limit?: number;
+  with_counts?: boolean;
+}
+
+export interface CreateDMJSONParams {
+  recipient_id: string;
+}
+
+export interface CreateGroupDMJSONParams {
+  access_tokens: string[];
+  nicks: Record<string, string>;
+}
+
+export type UpdateCurrentUserApplicationRoleConnectionJSONParams = Partial<
+  SetNonNullable<ApplicationRoleConnectionObject>
+>;
+
+export type UpdatePresenceStatusType = "online" | "dnd" | "idle" | "invisible" | "offline";
+
+/**
+ * Validates a Discord username according to Discord's rules
+ * @param username The username to validate
+ * @returns true if the username is valid, false otherwise
+ */
 export function isValidUsername(username: string): boolean {
   if (!username || username.length < 2 || username.length > 32) {
     return false;
@@ -206,139 +212,29 @@ export function isValidUsername(username: string): boolean {
   return !forbiddenNames.includes(username.toLowerCase());
 }
 
-export interface ModifyCurrentUserParams extends Partial<Pick<UserData, "username">> {
-  avatar?: FileInput | null;
-  banner?: FileInput | null;
+/**
+ * Checks if a user has a specific flag
+ * @param userFlags The user's flags value
+ * @param flag The flag to check for
+ * @returns true if the user has the flag
+ */
+export function hasUserFlag(userFlags: number, flag: UserFlags): boolean {
+  return (userFlags & flag) === flag;
 }
 
-export interface GetCurrentUserGuildsQuery {
-  before?: string;
-  after?: string;
-  limit?: number;
-  with_counts?: boolean;
-}
+/**
+ * Gets all flags that a user has
+ * @param userFlags The user's flags value
+ * @returns Array of UserFlags that the user has
+ */
+export function getUserFlags(userFlags: number): UserFlags[] {
+  const flags: UserFlags[] = [];
 
-export interface CreateGroupDMParams {
-  access_tokens: string[];
-  nicks: Record<string, string>;
-}
-
-export const UserRoutes = {
-  currentUser: () => "/users/@me",
-  user: (userId: string) => `/users/${userId}` as const,
-  currentUserGuilds: () => "/users/@me/guilds",
-  currentUserGuildMember: (guildId: string) => `/users/@me/guilds/${guildId}/member` as const,
-  leaveGuild: (guildId: string) => `/users/@me/guilds/${guildId}` as const,
-  createDM: () => "/users/@me/channels",
-  currentUserConnections: () => "/users/@me/connections",
-  currentUserApplicationRoleConnection: (applicationId: string) =>
-    `/users/@me/applications/${applicationId}/role-connection` as const,
-} as const satisfies RouteBuilder;
-
-export class UserRouter extends BaseRouter {
-  getCurrentUser(): Promise<UserData> {
-    return this.rest.get(UserRoutes.currentUser());
-  }
-
-  getUser(userId: string): Promise<UserData> {
-    return this.rest.get(UserRoutes.user(userId));
-  }
-
-  async modifyCurrentUser(options: ModifyCurrentUserParams): Promise<UserData> {
-    if (options.username && !isValidUsername(options.username)) {
-      throw new TypeError("Invalid username format");
+  for (const flag of Object.values(UserFlags)) {
+    if (typeof flag === "number" && hasUserFlag(userFlags, flag)) {
+      flags.push(flag);
     }
-
-    const processedOptions = await this.processFileOptions(options, ["avatar", "banner"]);
-    return this.rest.patch(UserRoutes.currentUser(), {
-      body: JSON.stringify(processedOptions),
-    });
   }
 
-  getCurrentUserGuilds(query?: GetCurrentUserGuildsQuery): Promise<Partial<GuildEntity>[]> {
-    return this.rest.get(UserRoutes.currentUserGuilds(), { query });
-  }
-
-  getCurrentUserGuildMember(guildId: string): Promise<GuildMemberEntity> {
-    return this.rest.get(UserRoutes.currentUserGuildMember(guildId));
-  }
-
-  leaveGuild(guildId: string): Promise<void> {
-    return this.rest.delete(UserRoutes.leaveGuild(guildId));
-  }
-
-  createDM(recipientId: string): Promise<DMChannelEntity> {
-    return this.rest.post(UserRoutes.createDM(), {
-      body: JSON.stringify({ recipient_id: recipientId }),
-    });
-  }
-
-  createGroupDM(options: CreateGroupDMParams): Promise<GroupDMChannelEntity> {
-    if (!options.access_tokens?.length) {
-      throw new TypeError("At least one access token is required");
-    }
-
-    return this.rest.post(UserRoutes.createDM(), {
-      body: JSON.stringify(options),
-    });
-  }
-
-  getCurrentUserConnections(): Promise<ConnectionData[]> {
-    return this.rest.get(UserRoutes.currentUserConnections());
-  }
-
-  getCurrentUserApplicationRoleConnection(
-    applicationId: string,
-  ): Promise<ApplicationRoleConnectionData> {
-    return this.rest.get(UserRoutes.currentUserApplicationRoleConnection(applicationId));
-  }
-
-  updateCurrentUserApplicationRoleConnection(
-    applicationId: string,
-    connection: Partial<ApplicationRoleConnectionData>,
-  ): Promise<ApplicationRoleConnectionData> {
-    return this.rest.put(UserRoutes.currentUserApplicationRoleConnection(applicationId), {
-      body: JSON.stringify(connection),
-    });
-  }
-}
-
-export class Connection
-  extends BaseClass<ConnectionData>
-  implements CamelCasedProperties<ConnectionData>
-{
-  readonly id = this.rawData.id;
-  readonly name = this.rawData.name;
-  readonly type = this.rawData.type;
-  readonly revoked = this.rawData.revoked ?? false;
-  readonly integrations = this.rawData.integrations;
-  readonly verified = this.rawData.verified;
-  readonly friendSync = this.rawData.friend_sync;
-  readonly showActivity = this.rawData.show_activity;
-  readonly twoWayLink = this.rawData.two_way_link;
-  readonly visibility = this.rawData.visibility;
-}
-
-export class User extends BaseClass<UserData> implements CamelCasedProperties<UserData> {
-  readonly id = this.rawData.id;
-  readonly username = this.rawData.username;
-  readonly discriminator = this.rawData.discriminator;
-  readonly globalName = this.rawData.global_name;
-  readonly avatar = this.rawData.avatar;
-  readonly bot = this.rawData.bot ?? false;
-  readonly system = this.rawData.system ?? false;
-  readonly mfaEnabled = this.rawData.mfa_enabled ?? false;
-  readonly banner = this.rawData.banner;
-  readonly accentColor = this.rawData.accent_color;
-  readonly locale = this.rawData.locale;
-  readonly verified = this.rawData.verified ?? false;
-  readonly email = this.rawData.email;
-  // @ts-expect-error - BitField is correctly typed
-  readonly flags = new BitField(this.rawData.flags);
-  readonly premiumType = this.rawData.premium_type;
-  // @ts-expect-error - BitField is correctly typed
-  readonly publicFlags = new BitField(this.rawData.public_flags);
-  readonly avatarDecorationData = this.rawData.avatar_decoration_data;
-  readonly primaryGuild = this.rawData.primary_guild;
-  readonly collectibles = this.rawData.collectibles;
+  return flags;
 }

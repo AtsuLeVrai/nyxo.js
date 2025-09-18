@@ -1,12 +1,14 @@
-import type { GuildEntity } from "./guild/index.js";
+import type { FileInput } from "../core/index.js";
+import type { GuildEntity } from "./guild.js";
+import type { UserObject } from "./user.js";
 
-export interface GuildTemplateEntity {
+export interface GuildTemplateObject {
   code: string;
   name: string;
   description: string | null;
   usage_count: number;
   creator_id: string;
-  creator: UserEntity;
+  creator: UserObject;
   created_at: string;
   updated_at: string;
   source_guild_id: string;
@@ -14,68 +16,42 @@ export interface GuildTemplateEntity {
   is_dirty: boolean | null;
 }
 
-export interface GuildFromTemplateCreateOptions {
-  name: string;
+export interface CreateGuildFromTemplateJSONParams extends Pick<GuildTemplateObject, "name"> {
   icon?: FileInput;
 }
 
-export interface GuildTemplateCreateOptions {
-  name: string;
-  description?: string | null;
+export type CreateGuildTemplateJSONParams = Pick<GuildTemplateObject, "name"> &
+  Partial<Pick<GuildTemplateObject, "description">>;
+
+export type ModifyGuildTemplateJSONParams = Partial<CreateGuildTemplateJSONParams>;
+
+/**
+ * Checks if a guild template has unsynced changes
+ * @param template The template to check
+ * @returns true if the template is dirty
+ */
+export function isTemplateDirty(template: GuildTemplateObject): boolean {
+  return template.is_dirty === true;
 }
 
-export type GuildTemplateUpdateOptions = Partial<GuildTemplateCreateOptions>;
+/**
+ * Checks if a guild template was created by a specific user
+ * @param template The template to check
+ * @param userId The user ID to compare
+ * @returns true if the user created the template
+ */
+export function isTemplateCreatedBy(template: GuildTemplateObject, userId: string): boolean {
+  return template.creator_id === userId;
+}
 
-export const GuildTemplateRoutes = {
-  templateByCodeEndpoint: (code: string) => `/guilds/templates/${code}` as const,
-  guildTemplatesEndpoint: (guildId: string) => `/guilds/${guildId}/templates` as const,
-  guildTemplateByCodeEndpoint: (guildId: string, code: string) =>
-    `/guilds/${guildId}/templates/${code}` as const,
-} as const satisfies RouteBuilder;
-
-export class GuildTemplateRouter extends BaseRouter {
-  fetchGuildTemplate(code: string): Promise<GuildTemplateEntity> {
-    return this.rest.get(GuildTemplateRoutes.templateByCodeEndpoint(code));
-  }
-
-  async createGuildFromTemplate(
-    code: string,
-    options: GuildFromTemplateCreateOptions,
-  ): Promise<GuildEntity> {
-    const processedOptions = await this.processFileOptions(options, ["icon"]);
-    return this.rest.post(GuildTemplateRoutes.templateByCodeEndpoint(code), {
-      body: JSON.stringify(processedOptions),
-    });
-  }
-
-  fetchGuildTemplates(guildId: string): Promise<GuildTemplateEntity[]> {
-    return this.rest.get(GuildTemplateRoutes.guildTemplatesEndpoint(guildId));
-  }
-
-  createGuildTemplate(
-    guildId: string,
-    options: GuildTemplateCreateOptions,
-  ): Promise<GuildTemplateEntity> {
-    return this.rest.post(GuildTemplateRoutes.guildTemplatesEndpoint(guildId), {
-      body: JSON.stringify(options),
-    });
-  }
-
-  syncGuildTemplate(guildId: string, code: string): Promise<GuildTemplateEntity> {
-    return this.rest.put(GuildTemplateRoutes.guildTemplateByCodeEndpoint(guildId, code));
-  }
-
-  updateGuildTemplate(
-    guildId: string,
-    code: string,
-    options: GuildTemplateUpdateOptions,
-  ): Promise<GuildTemplateEntity> {
-    return this.rest.patch(GuildTemplateRoutes.guildTemplateByCodeEndpoint(guildId, code), {
-      body: JSON.stringify(options),
-    });
-  }
-
-  deleteGuildTemplate(guildId: string, code: string): Promise<GuildTemplateEntity> {
-    return this.rest.delete(GuildTemplateRoutes.guildTemplateByCodeEndpoint(guildId, code));
-  }
+/**
+ * Gets the age of a guild template in days
+ * @param template The template to check
+ * @returns age in days
+ */
+export function getTemplateAge(template: GuildTemplateObject): number {
+  const now = new Date();
+  const created = new Date(template.created_at);
+  const diffTime = Math.abs(now.getTime() - created.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }

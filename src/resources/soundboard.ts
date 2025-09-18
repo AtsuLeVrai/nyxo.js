@@ -1,4 +1,7 @@
-export interface SoundboardSoundEntity {
+import type { FileInput } from "../core/index.js";
+import type { UserObject } from "./user.js";
+
+export interface SoundboardSoundObject {
   name: string;
   sound_id: string;
   volume: number;
@@ -6,107 +9,54 @@ export interface SoundboardSoundEntity {
   emoji_name: string | null;
   guild_id?: string;
   available: boolean;
-  user?: UserEntity;
+  user?: UserObject;
 }
 
-export interface GatewaySoundboardSoundsEntity
-  extends Required<Pick<SoundboardSoundEntity, "guild_id">> {
-  soundboard_sounds: SoundboardSoundEntity[];
+export interface SoundboardSoundsObject {
+  guild_id: string;
+  soundboard_sounds: SoundboardSoundObject[];
 }
 
-export type GatewayGuildSoundboardSoundDeleteEntity = Required<
-  Pick<SoundboardSoundEntity, "guild_id" | "sound_id">
->;
+export interface GuildSoundboardSoundDeleteObject {
+  guild_id: string;
+  sound_id: string;
+}
 
-export interface RESTSendSoundboardSoundJSONParams extends Pick<SoundboardSoundEntity, "sound_id"> {
+export interface SendSoundboardSoundJSONParams {
+  sound_id: string;
   source_guild_id?: string;
 }
 
-export interface RESTCreateGuildSoundboardSoundJSONParams
-  extends Pick<SoundboardSoundEntity, "name">,
-    Partial<DeepNullable<Pick<SoundboardSoundEntity, "volume" | "emoji_id" | "emoji_name">>> {
+export interface CreateGuildSoundboardSoundFormParams {
+  name: string;
   sound: FileInput;
+  volume?: number | null;
+  emoji_id?: string | null;
+  emoji_name?: string | null;
 }
 
-export type RESTModifyGuildSoundboardSoundJSONParams = Omit<
-  RESTCreateGuildSoundboardSoundJSONParams,
-  "sound"
->;
-
-export const SoundboardRoutes = {
-  sendSoundboardSound: (channelId: string) =>
-    `/channels/${channelId}/send-soundboard-sound` as const,
-  listDefaultSoundboardSounds: () => "/soundboard-default-sounds",
-  listGuildSoundboardSounds: (guildId: string) => `/guilds/${guildId}/soundboard-sounds` as const,
-  getGuildSoundboardSound: (guildId: string, soundId: string) =>
-    `/guilds/${guildId}/soundboard-sounds/${soundId}` as const,
-} as const satisfies RouteBuilder;
-
-export class SoundboardRouter extends BaseRouter {
-  sendSoundboardSound(
-    channelId: string,
-    options: RESTSendSoundboardSoundJSONParams,
-  ): Promise<void> {
-    return this.rest.post(SoundboardRoutes.sendSoundboardSound(channelId), {
-      body: JSON.stringify(options),
-    });
-  }
-
-  listDefaultSoundboardSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.rest.get(SoundboardRoutes.listDefaultSoundboardSounds());
-  }
-
-  listGuildSoundboardSounds(guildId: string): Promise<{
-    items: SoundboardSoundEntity[];
-  }> {
-    return this.rest.get(SoundboardRoutes.listGuildSoundboardSounds(guildId));
-  }
-
-  getGuildSoundboardSound(guildId: string, soundId: string): Promise<SoundboardSoundEntity> {
-    return this.rest.get(SoundboardRoutes.getGuildSoundboardSound(guildId, soundId));
-  }
-
-  async createGuildSoundboardSound(
-    guildId: string,
-    options: RESTCreateGuildSoundboardSoundJSONParams,
-    reason?: string,
-  ): Promise<SoundboardSoundEntity> {
-    const processedOptions = await this.processFileOptions(options, ["sound"]);
-    return this.rest.post(SoundboardRoutes.listGuildSoundboardSounds(guildId), {
-      body: JSON.stringify(processedOptions),
-      reason,
-    });
-  }
-
-  modifyGuildSoundboardSound(
-    guildId: string,
-    soundId: string,
-    options: RESTModifyGuildSoundboardSoundJSONParams,
-    reason?: string,
-  ): Promise<SoundboardSoundEntity> {
-    return this.rest.patch(SoundboardRoutes.getGuildSoundboardSound(guildId, soundId), {
-      body: JSON.stringify(options),
-      reason,
-    });
-  }
-
-  deleteGuildSoundboardSound(guildId: string, soundId: string, reason?: string): Promise<void> {
-    return this.rest.delete(SoundboardRoutes.getGuildSoundboardSound(guildId, soundId), {
-      reason,
-    });
-  }
+export interface ModifyGuildSoundboardSoundJSONParams {
+  name?: string;
+  volume?: number | null;
+  emoji_id?: string | null;
+  emoji_name?: string | null;
 }
 
-export class SoundboardSound
-  extends BaseClass<SoundboardSoundEntity>
-  implements CamelCaseKeys<SoundboardSoundEntity>
-{
-  readonly name = this.rawData.name;
-  readonly soundId = this.rawData.sound_id;
-  readonly volume = this.rawData.volume;
-  readonly emojiId = this.rawData.emoji_id;
-  readonly emojiName = this.rawData.emoji_name;
-  readonly guildId = this.rawData.guild_id;
-  readonly available = this.rawData.available;
-  readonly user = this.rawData.user;
+/**
+ * Checks if a soundboard sound is available for use
+ * @param sound The soundboard sound to check
+ * @returns true if the sound is available
+ */
+export function isSoundAvailable(sound: SoundboardSoundObject): boolean {
+  return sound.available;
+}
+
+/**
+ * Checks if a soundboard sound is from a specific guild
+ * @param sound The soundboard sound to check
+ * @param guildId The guild ID to compare
+ * @returns true if the sound is from the specified guild
+ */
+export function isSoundFromGuild(sound: SoundboardSoundObject, guildId: string): boolean {
+  return sound.guild_id === guildId;
 }

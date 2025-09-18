@@ -1,80 +1,55 @@
-import { BaseClass } from "../bases/index.js";
-import type { CamelCaseKeys } from "../utils/index.js";
+import type { SetNonNullable } from "type-fest";
 
-export enum StageInstancePrivacyLevel {
+export enum PrivacyLevel {
   Public = 1,
   GuildOnly = 2,
 }
 
-export interface StageInstanceEntity {
+export interface StageInstanceObject {
   id: string;
   guild_id: string;
   channel_id: string;
   topic: string;
-  privacy_level: StageInstancePrivacyLevel;
+  privacy_level: PrivacyLevel;
   discoverable_disabled: boolean;
   guild_scheduled_event_id: string | null;
 }
 
-export interface RESTCreateStageInstanceJSONParams
-  extends Pick<StageInstanceEntity, "channel_id" | "topic">,
-    DeepNonNullable<
-      Partial<Pick<StageInstanceEntity, "privacy_level" | "guild_scheduled_event_id">>
+export interface CreateStageInstanceJSONParams
+  extends Pick<StageInstanceObject, "channel_id" | "topic">,
+    Partial<
+      SetNonNullable<Pick<StageInstanceObject, "privacy_level" | "guild_scheduled_event_id">>
     > {
   send_start_notification?: boolean;
 }
 
-export type RESTModifyStageInstanceJSONParams = Partial<
-  Pick<StageInstanceEntity, "topic" | "privacy_level">
+export type ModifyStageInstanceJSONParams = Partial<
+  Pick<CreateStageInstanceJSONParams, "topic" | "privacy_level">
 >;
 
-export const StageInstanceRoutes = {
-  createStageInstance: () => "/stage-instances",
-  getStageInstance: (channelId: string) => `/stage-instances/${channelId}` as const,
-} as const satisfies RouteBuilder;
-
-export class StageInstanceRouter extends BaseRouter {
-  createStageInstance(
-    options: RESTCreateStageInstanceJSONParams,
-    reason?: string,
-  ): Promise<StageInstanceEntity> {
-    return this.rest.post(StageInstanceRoutes.createStageInstance(), {
-      body: JSON.stringify(options),
-      reason,
-    });
-  }
-
-  getStageInstance(channelId: string): Promise<StageInstanceEntity> {
-    return this.rest.get(StageInstanceRoutes.getStageInstance(channelId));
-  }
-
-  modifyStageInstance(
-    channelId: string,
-    options: RESTModifyStageInstanceJSONParams,
-    reason?: string,
-  ): Promise<StageInstanceEntity> {
-    return this.rest.patch(StageInstanceRoutes.getStageInstance(channelId), {
-      body: JSON.stringify(options),
-      reason,
-    });
-  }
-
-  deleteStageInstance(channelId: string, reason?: string): Promise<void> {
-    return this.rest.delete(StageInstanceRoutes.getStageInstance(channelId), {
-      reason,
-    });
-  }
+/**
+ * Checks if a stage instance is discoverable
+ * @param stageInstance The stage instance to check
+ * @returns true if discovery is not disabled
+ */
+export function isStageDiscoverable(stageInstance: StageInstanceObject): boolean {
+  return !stageInstance.discoverable_disabled;
 }
 
-export class StageInstance
-  extends BaseClass<StageInstanceEntity>
-  implements CamelCaseKeys<StageInstanceEntity>
-{
-  readonly id = this.rawData.id;
-  readonly guildId = this.rawData.guild_id;
-  readonly channelId = this.rawData.channel_id;
-  readonly topic = this.rawData.topic;
-  readonly privacyLevel = this.rawData.privacy_level;
-  readonly discoverableDisabled = this.rawData.discoverable_disabled;
-  readonly guildScheduledEventId = this.rawData.guild_scheduled_event_id;
+/**
+ * Checks if a stage instance is public
+ * @param stageInstance The stage instance to check
+ * @returns true if the stage is public (deprecated)
+ */
+export function isStagePublic(stageInstance: StageInstanceObject): boolean {
+  return stageInstance.privacy_level === PrivacyLevel.Public;
+}
+
+/**
+ * Checks if a stage instance has an associated scheduled event
+ * @param stageInstance The stage instance to check
+ * @returns true if there's an associated scheduled event
+ */
+export function hasScheduledEvent(stageInstance: StageInstanceObject): boolean {
+  return stageInstance.guild_scheduled_event_id !== null;
 }

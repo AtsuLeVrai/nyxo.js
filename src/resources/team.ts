@@ -1,3 +1,5 @@
+import type { UserObject } from "./user.js";
+
 export enum MembershipState {
   Invited = 1,
   Accepted = 2,
@@ -9,35 +11,69 @@ export enum TeamMemberRole {
   ReadOnly = "read_only",
 }
 
-export interface TeamMemberEntity {
+export interface TeamMemberObject {
   membership_state: MembershipState;
   team_id: string;
-  user: Pick<UserEntity, "id" | "username" | "discriminator" | "avatar">;
+  user: Pick<UserObject, "id" | "username" | "discriminator" | "avatar">;
   role: TeamMemberRole;
 }
 
-export interface TeamEntity {
+export interface TeamObject {
   icon: string | null;
   id: string;
-  members: TeamMemberEntity[];
+  members: TeamMemberObject[];
   name: string;
   owner_user_id: string;
 }
 
-export class TeamMember
-  extends BaseClass<TeamMemberEntity>
-  implements CamelCaseKeys<TeamMemberEntity>
-{
-  readonly membershipState = this.rawData.membership_state;
-  readonly teamId = this.rawData.team_id;
-  readonly user = this.rawData.user;
-  readonly role = this.rawData.role;
+/**
+ * Checks if a team member has admin privileges (Admin or Owner)
+ * @param teamMember The team member to check
+ * @param team The team object to check ownership
+ * @returns true if the member is an admin or owner
+ */
+export function hasAdminPrivileges(teamMember: TeamMemberObject, team: TeamObject): boolean {
+  return teamMember.role === TeamMemberRole.Admin || teamMember.user.id === team.owner_user_id;
 }
 
-export class Team extends BaseClass<TeamEntity> implements CamelCaseKeys<TeamEntity> {
-  readonly icon = this.rawData.icon;
-  readonly id = this.rawData.id;
-  readonly members = this.rawData.members.map((member) => new TeamMember(this.client, member));
-  readonly name = this.rawData.name;
-  readonly ownerUserId = this.rawData.owner_user_id;
+/**
+ * Checks if a team member is the team owner
+ * @param teamMember The team member to check
+ * @param team The team object to check ownership
+ * @returns true if the member is the team owner
+ */
+export function isTeamOwner(teamMember: TeamMemberObject, team: TeamObject): boolean {
+  return teamMember.user.id === team.owner_user_id;
+}
+
+/**
+ * Checks if a team member has accepted their invitation
+ * @param teamMember The team member to check
+ * @returns true if the member has accepted their invitation
+ */
+export function hasAcceptedInvitation(teamMember: TeamMemberObject): boolean {
+  return teamMember.membership_state === MembershipState.Accepted;
+}
+
+/**
+ * Gets the team member with developer privileges or higher
+ * @param team The team to check
+ * @returns array of team members with developer, admin, or owner privileges
+ */
+export function getDeveloperMembers(team: TeamObject): TeamMemberObject[] {
+  return team.members.filter(
+    (member) =>
+      member.role === TeamMemberRole.Developer ||
+      member.role === TeamMemberRole.Admin ||
+      member.user.id === team.owner_user_id,
+  );
+}
+
+/**
+ * Gets all active (accepted) team members
+ * @param team The team to check
+ * @returns array of team members who have accepted their invitation
+ */
+export function getActiveMembers(team: TeamObject): TeamMemberObject[] {
+  return team.members.filter((member) => member.membership_state === MembershipState.Accepted);
 }

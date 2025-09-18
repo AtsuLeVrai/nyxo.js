@@ -2,13 +2,13 @@ export enum RoleFlags {
   InPrompt = 1 << 0,
 }
 
-export interface RoleColorsEntity {
+export interface RoleColorsObject {
   primary_color: number;
   secondary_color?: number | null;
   tertiary_color?: number | null;
 }
 
-export interface RoleTagsEntity {
+export interface RoleTagsObject {
   bot_id?: string;
   integration_id?: string;
   premium_subscriber?: null;
@@ -17,11 +17,11 @@ export interface RoleTagsEntity {
   guild_connections?: null;
 }
 
-export interface RoleEntity {
+export interface RoleObject {
   id: string;
   name: string;
   color: number;
-  colors: RoleColorsEntity;
+  colors: RoleColorsObject;
   hoist: boolean;
   icon?: string | null;
   unicode_emoji?: string | null;
@@ -29,22 +29,87 @@ export interface RoleEntity {
   permissions: string;
   managed: boolean;
   mentionable: boolean;
-  tags?: RoleTagsEntity;
+  tags?: RoleTagsObject;
   flags: RoleFlags;
 }
 
-export class Role extends BaseClass<RoleEntity> implements CamelCaseKeys<RoleEntity> {
-  readonly id = this.rawData.id;
-  readonly name = this.rawData.name;
-  readonly color = this.rawData.color;
-  readonly colors = this.rawData.colors;
-  readonly hoist = this.rawData.hoist;
-  readonly icon = this.rawData.icon;
-  readonly unicodeEmoji = this.rawData.unicode_emoji;
-  readonly position = this.rawData.position;
-  readonly permissions = this.rawData.permissions;
-  readonly managed = this.rawData.managed;
-  readonly mentionable = this.rawData.mentionable;
-  readonly tags = this.rawData.tags;
-  readonly flags = this.rawData.flags;
+/**
+ * Checks if a role is hoisted (pinned in user listing)
+ * @param role The role to check
+ * @returns true if the role is hoisted
+ */
+export function isRoleHoisted(role: RoleObject): boolean {
+  return role.hoist;
+}
+
+/**
+ * Checks if a role is managed by an integration
+ * @param role The role to check
+ * @returns true if the role is managed
+ */
+export function isRoleManaged(role: RoleObject): boolean {
+  return role.managed;
+}
+
+/**
+ * Checks if a role is mentionable
+ * @param role The role to check
+ * @returns true if the role can be mentioned
+ */
+export function isRoleMentionable(role: RoleObject): boolean {
+  return role.mentionable;
+}
+
+/**
+ * Checks if a role is a bot role
+ * @param role The role to check
+ * @returns true if the role belongs to a bot
+ */
+export function isBotRole(role: RoleObject): boolean {
+  return role.tags?.bot_id !== undefined;
+}
+
+/**
+ * Checks if a role is the premium subscriber role
+ * @param role The role to check
+ * @returns true if this is the guild's booster role
+ */
+export function isPremiumSubscriberRole(role: RoleObject): boolean {
+  return role.tags?.premium_subscriber !== undefined;
+}
+
+/**
+ * Checks if a role has an icon
+ * @param role The role to check
+ * @returns true if the role has a custom icon
+ */
+export function hasRoleIcon(role: RoleObject): boolean {
+  return role.icon !== null && role.icon !== undefined;
+}
+
+/**
+ * Checks if a role has a unicode emoji
+ * @param role The role to check
+ * @returns true if the role has a unicode emoji
+ */
+export function hasRoleUnicodeEmoji(role: RoleObject): boolean {
+  return role.unicode_emoji !== null && role.unicode_emoji !== undefined;
+}
+
+/**
+ * Checks if a role has enhanced colors (gradient/holographic)
+ * @param role The role to check
+ * @returns true if the role uses enhanced colors
+ */
+export function hasEnhancedColors(role: RoleObject): boolean {
+  return role.colors.secondary_color !== null || role.colors.tertiary_color !== null;
+}
+
+/**
+ * Checks if a role has the IN_PROMPT flag
+ * @param role The role to check
+ * @returns true if the role can be selected in onboarding prompts
+ */
+export function isRoleInPrompt(role: RoleObject): boolean {
+  return (role.flags & RoleFlags.InPrompt) === RoleFlags.InPrompt;
 }

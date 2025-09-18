@@ -1,13 +1,10 @@
-import { BaseClass } from "../bases/index.js";
-import type { CamelCaseKeys } from "../utils/index.js";
-
 export enum SubscriptionStatus {
   Active = 0,
   Ending = 1,
   Inactive = 2,
 }
 
-export interface SubscriptionEntity {
+export interface SubscriptionObject {
   id: string;
   user_id: string;
   sku_ids: string[];
@@ -20,46 +17,48 @@ export interface SubscriptionEntity {
   country?: string;
 }
 
-export interface RESTSubscriptionQueryStringParams
-  extends Partial<Pick<SubscriptionEntity, "user_id">> {
+export interface ListSKUSubscriptionsQueryStringParams
+  extends Partial<Pick<SubscriptionObject, "user_id">> {
   before?: string;
   after?: string;
   limit?: number;
 }
 
-export const SubscriptionRoutes = {
-  listSKUSubscriptions: (skuId: string) => `/skus/${skuId}/subscriptions` as const,
-  getSKUSubscription: (skuId: string, subscriptionId: string) =>
-    `/skus/${skuId}/subscriptions/${subscriptionId}` as const,
-} as const satisfies RouteBuilder;
-
-export class SubscriptionRouter extends BaseRouter {
-  listSKUSubscriptions(
-    skuId: string,
-    query?: RESTSubscriptionQueryStringParams,
-  ): Promise<SubscriptionEntity[]> {
-    return this.rest.get(SubscriptionRoutes.listSKUSubscriptions(skuId), {
-      query,
-    });
-  }
-
-  getSKUSubscription(skuId: string, subscriptionId: string): Promise<SubscriptionEntity> {
-    return this.rest.get(SubscriptionRoutes.getSKUSubscription(skuId, subscriptionId));
-  }
+/**
+ * Checks if a subscription is currently active
+ * @param subscription The subscription to check
+ * @returns true if the subscription is active
+ */
+export function isActiveSubscription(subscription: SubscriptionObject): boolean {
+  return subscription.status === SubscriptionStatus.Active;
 }
 
-export class Subscription
-  extends BaseClass<SubscriptionEntity>
-  implements CamelCaseKeys<SubscriptionEntity>
-{
-  readonly id = this.rawData.id;
-  readonly userId = this.rawData.user_id;
-  readonly skuIds = this.rawData.sku_ids;
-  readonly entitlementIds = this.rawData.entitlement_ids;
-  readonly renewalSkuIds = this.rawData.renewal_sku_ids;
-  readonly currentPeriodStart = this.rawData.current_period_start;
-  readonly currentPeriodEnd = this.rawData.current_period_end;
-  readonly status = this.rawData.status;
-  readonly canceledAt = this.rawData.canceled_at;
-  readonly country = this.rawData.country;
+/**
+ * Checks if a subscription is ending (active but won't renew)
+ * @param subscription The subscription to check
+ * @returns true if the subscription is ending
+ */
+export function isEndingSubscription(subscription: SubscriptionObject): boolean {
+  return subscription.status === SubscriptionStatus.Ending;
+}
+
+/**
+ * Checks if a subscription has been canceled
+ * @param subscription The subscription to check
+ * @returns true if the subscription has been canceled
+ */
+export function isCanceledSubscription(subscription: SubscriptionObject): boolean {
+  return subscription.canceled_at !== null;
+}
+
+/**
+ * Checks if a subscription is currently in its active period
+ * @param subscription The subscription to check
+ * @returns true if the current date is within the subscription period
+ */
+export function isInCurrentPeriod(subscription: SubscriptionObject): boolean {
+  const now = new Date();
+  const start = new Date(subscription.current_period_start);
+  const end = new Date(subscription.current_period_end);
+  return now >= start && now <= end;
 }

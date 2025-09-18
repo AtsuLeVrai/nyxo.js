@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import { describe, expect, it } from "vitest";
-import { BitField } from "./bit-field.util.js";
+import { BitField } from "./bit-field.js";
 
 describe("BitField Utilities", () => {
   describe("constructor", () => {

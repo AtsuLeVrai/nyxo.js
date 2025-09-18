@@ -1,88 +1,74 @@
-import { BaseRouter } from "../bases/index.js";
-import type { RouteBuilder } from "../core/index.js";
+import type { SetNonNullable } from "type-fest";
+import type { AnyChannelEntity } from "./channel.js";
 
 export enum LobbyMemberFlags {
   CanLinkLobby = 1 << 0,
 }
 
-export interface LobbyMemberEntity {
+export interface LobbyMemberObject {
   id: string;
   metadata?: Record<string, string> | null;
   flags?: LobbyMemberFlags;
 }
 
-export interface LobbyEntity {
+export interface LobbyObject {
   id: string;
   application_id: string;
   metadata?: Record<string, string> | null;
-  members: LobbyMemberEntity[];
+  members: LobbyMemberObject[];
   linked_channel?: AnyChannelEntity | null;
 }
 
-export interface RESTCreateLobbyJSONParams
-  extends Partial<Pick<LobbyEntity, "metadata" | "members">> {
+export interface CreateLobbyJSONParams
+  extends Partial<SetNonNullable<Pick<LobbyObject, "metadata" | "members">>> {
   idle_timeout_seconds?: number;
 }
 
-export type RESTLobbyMemberJSONParams = Pick<LobbyMemberEntity, "metadata" | "flags">;
+export type ModifyLobbyJSONParams = CreateLobbyJSONParams;
 
-export const LobbyRoutes = {
-  createLobby: () => "/lobbies" as const,
-  getLobby: (lobbyId: string) => `/lobbies/${lobbyId}` as const,
-  addMemberLobby: (lobbyId: string, userId: string) =>
-    `/lobbies/${lobbyId}/members/${userId}` as const,
-  leaveLobby: (lobbyId: string) => `/lobbies/${lobbyId}/members/@me` as const,
-  linkChannelLobby: (lobbyId: string) => `/lobbies/${lobbyId}/channel-linking` as const,
-} as const satisfies RouteBuilder;
+export type LobbyMemberJSONParams = SetNonNullable<Pick<LobbyMemberObject, "metadata" | "flags">>;
 
-export class LobbyRouter extends BaseRouter {
-  createLobby(options: RESTCreateLobbyJSONParams): Promise<LobbyEntity> {
-    return this.rest.post(LobbyRoutes.createLobby(), {
-      body: JSON.stringify(options),
-    });
+export interface LinkChannelLobbyJSONParams {
+  channel_id?: string;
+}
+
+/**
+ * Checks if a lobby member can link channels
+ * @param member The lobby member to check
+ * @returns true if the member can link lobbies
+ */
+export function canLinkLobby(member: LobbyMemberObject): boolean {
+  if (!member.flags) {
+    return false;
   }
 
-  getLobby(lobbyId: string): Promise<LobbyEntity> {
-    return this.rest.get(LobbyRoutes.getLobby(lobbyId));
-  }
+  return (member.flags & LobbyMemberFlags.CanLinkLobby) === LobbyMemberFlags.CanLinkLobby;
+}
 
-  modifyLobby(lobbyId: string, options: RESTCreateLobbyJSONParams): Promise<LobbyEntity> {
-    return this.rest.patch(LobbyRoutes.getLobby(lobbyId), {
-      body: JSON.stringify(options),
-    });
-  }
+/**
+ * Checks if a lobby has a linked channel
+ * @param lobby The lobby to check
+ * @returns true if the lobby has a linked channel
+ */
+export function hasLinkedChannel(lobby: LobbyObject): boolean {
+  return lobby.linked_channel !== null && lobby.linked_channel !== undefined;
+}
 
-  deleteLobby(lobbyId: string): Promise<void> {
-    return this.rest.delete(LobbyRoutes.getLobby(lobbyId));
-  }
+/**
+ * Gets the number of members in a lobby
+ * @param lobby The lobby to count
+ * @returns number of members
+ */
+export function getLobbyMemberCount(lobby: LobbyObject): number {
+  return lobby.members.length;
+}
 
-  addMemberLobby(
-    lobbyId: string,
-    userId: string,
-    options: RESTLobbyMemberJSONParams,
-  ): Promise<LobbyMemberEntity> {
-    return this.rest.put(LobbyRoutes.addMemberLobby(lobbyId, userId), {
-      body: JSON.stringify(options),
-    });
-  }
-
-  removeMemberLobby(lobbyId: string, userId: string): Promise<void> {
-    return this.rest.delete(LobbyRoutes.addMemberLobby(lobbyId, userId));
-  }
-
-  leaveLobby(lobbyId: string): Promise<void> {
-    return this.rest.delete(LobbyRoutes.leaveLobby(lobbyId));
-  }
-
-  linkChannelLobby(lobbyId: string, channelId: string): Promise<LobbyEntity> {
-    return this.rest.patch(LobbyRoutes.linkChannelLobby(lobbyId), {
-      body: JSON.stringify({ channel_id: channelId }),
-    });
-  }
-
-  unlinkChannelLobby(lobbyId: string): Promise<LobbyEntity> {
-    return this.rest.patch(LobbyRoutes.linkChannelLobby(lobbyId), {
-      body: JSON.stringify({}),
-    });
-  }
+/**
+ * Checks if a user is a member of a lobby
+ * @param lobby The lobby to check
+ * @param userId The user ID to search for
+ * @returns true if the user is a member
+ */
+export function isLobbyMember(lobby: LobbyObject, userId: string): boolean {
+  return lobby.members.some((member) => member.id === userId);
 }

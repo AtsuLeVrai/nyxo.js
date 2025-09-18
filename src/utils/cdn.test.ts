@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Cdn } from "./cdn.util.js";
+import { Cdn } from "./cdn.js";
 
 describe("CDN Utilities", () => {
   describe("constants", () => {

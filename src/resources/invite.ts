@@ -93,32 +93,3 @@ export const InviteRoutes = {
   channelInvites: (channelId: string) => `/channels/${channelId}/invites` as const,
   guildInvites: (guildId: string) => `/guilds/${guildId}/invites` as const,
 } as const satisfies RouteBuilder;
-
-export class InviteRouter extends BaseRouter {
-  getInvite(code: string, params?: RESTGetInviteQueryStringParams): Promise<InviteEntity> {
-    return this.rest.get(InviteRoutes.invite(code), { query: params });
-  }
-
-  deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.rest.delete(InviteRoutes.invite(code), { reason });
-  }
-
-  getChannelInvites(channelId: string): Promise<InviteWithMetadataEntity[]> {
-    return this.rest.get(InviteRoutes.channelInvites(channelId));
-  }
-
-  createChannelInvite(
-    channelId: string,
-    options?: RESTPostChannelInviteJSONParams,
-    reason?: string,
-  ): Promise<InviteEntity> {
-    return this.rest.post(InviteRoutes.channelInvites(channelId), {
-      body: JSON.stringify(options),
-      reason,
-    });
-  }
-
-  getGuildInvites(guildId: string): Promise<InviteWithMetadataEntity[]> {
-    return this.rest.get(InviteRoutes.guildInvites(guildId));
-  }
-}
