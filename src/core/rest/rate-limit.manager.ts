@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { sleep } from "../../utils/index.js";
 
 export type RateLimitScope = "user" | "global" | "shared";
@@ -35,40 +34,29 @@ export const RATE_LIMIT_CONSTANTS = {
   },
 };
 
-export const RateLimitOptions = z.object({
-  maxInvalidRequests: z.int().positive().default(10000),
-  maxGlobalRequestsPerSecond: z.int().positive().default(50),
-});
-
 export class RateLimitManager {
-  readonly #invalidRequests: InvalidRequestTracking = {
+  private readonly invalidRequests: InvalidRequestTracking = {
+    count: 0,
+    windowStart: Date.now(),
+  };
+  private readonly globalRequests: GlobalRequestTracking = {
     count: 0,
     windowStart: Date.now(),
   };
 
-  readonly #globalRequests: GlobalRequestTracking = {
-    count: 0,
-    windowStart: Date.now(),
-  };
+  private readonly maxInvalidRequests: number;
+  private readonly maxGlobalRequestsPerSecond: number;
 
-  readonly #options: z.infer<typeof RateLimitOptions>;
-
-  constructor(options: z.input<typeof RateLimitOptions> = {}) {
-    try {
-      this.#options = RateLimitOptions.parse(options);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(z.prettifyError(error));
-      }
-      throw error;
-    }
+  constructor(maxInvalidRequests = 10000, maxGlobalRequestsPerSecond = 50) {
+    this.maxInvalidRequests = maxInvalidRequests;
+    this.maxGlobalRequestsPerSecond = maxGlobalRequestsPerSecond;
   }
 
   async checkRateLimit(path: string): Promise<RateLimitResult> {
     const now = Date.now();
 
     // Check Cloudflare limits first
-    const cloudflareCheck = this.#checkCloudflareLimit(now);
+    const cloudflareCheck = this.checkCloudflareLimit(now);
     if (!cloudflareCheck.canProceed) {
       if (cloudflareCheck.retryAfter && cloudflareCheck.retryAfter > 0) {
         await sleep(cloudflareCheck.retryAfter);
@@ -83,7 +71,7 @@ export class RateLimitManager {
     );
 
     if (!isGlobalExempt) {
-      const globalCheck = this.#checkGlobalLimit(now);
+      const globalCheck = this.checkGlobalLimit(now);
       if (!globalCheck.canProceed) {
         if (globalCheck.retryAfter && globalCheck.retryAfter > 0) {
           await sleep(globalCheck.retryAfter);
@@ -102,20 +90,20 @@ export class RateLimitManager {
   ): Promise<RateLimitResult> {
     const now = Date.now();
 
-    this.#updateGlobalCount(now);
+    this.updateGlobalCount(now);
 
     if (RATE_LIMIT_CONSTANTS.INVALID_STATUSES.includes(statusCode)) {
-      this.#updateInvalidCount(now);
+      this.updateInvalidCount(now);
     }
 
     if (statusCode === 429) {
-      return await this.#handle429Response(headers);
+      return await this.handle429Response(headers);
     }
 
     return { canProceed: true };
   }
 
-  async #handle429Response(headers: Record<string, string>): Promise<RateLimitResult> {
+  private async handle429Response(headers: Record<string, string>): Promise<RateLimitResult> {
     const retryAfterHeader = headers[RATE_LIMIT_CONSTANTS.HEADERS.RETRY_AFTER];
     const resetAfterHeader = headers[RATE_LIMIT_CONSTANTS.HEADERS.RESET_AFTER];
     const retryAfterSeconds = retryAfterHeader
@@ -126,7 +114,7 @@ export class RateLimitManager {
 
     const scope = headers[RATE_LIMIT_CONSTANTS.HEADERS.SCOPE] as RateLimitScope;
     if (scope !== "shared") {
-      this.#updateInvalidCount(Date.now());
+      this.updateInvalidCount(Date.now());
     }
 
     if (retryAfterMs > 0) {
@@ -140,15 +128,15 @@ export class RateLimitManager {
     };
   }
 
-  #checkCloudflareLimit(now: number): RateLimitResult {
+  private checkCloudflareLimit(now: number): RateLimitResult {
     const windowDuration = 10 * 60 * 1000;
-    if (now - this.#invalidRequests.windowStart >= windowDuration) {
-      this.#invalidRequests.count = 0;
-      this.#invalidRequests.windowStart = now;
+    if (now - this.invalidRequests.windowStart >= windowDuration) {
+      this.invalidRequests.count = 0;
+      this.invalidRequests.windowStart = now;
     }
 
-    if (this.#invalidRequests.count >= this.#options.maxInvalidRequests) {
-      const retryAfter = windowDuration - (now - this.#invalidRequests.windowStart);
+    if (this.invalidRequests.count >= this.maxInvalidRequests) {
+      const retryAfter = windowDuration - (now - this.invalidRequests.windowStart);
       return {
         canProceed: false,
         retryAfter,
@@ -160,15 +148,15 @@ export class RateLimitManager {
     return { canProceed: true };
   }
 
-  #checkGlobalLimit(now: number): RateLimitResult {
+  private checkGlobalLimit(now: number): RateLimitResult {
     const windowDuration = 1000;
-    if (now - this.#globalRequests.windowStart >= windowDuration) {
-      this.#globalRequests.count = 0;
-      this.#globalRequests.windowStart = now;
+    if (now - this.globalRequests.windowStart >= windowDuration) {
+      this.globalRequests.count = 0;
+      this.globalRequests.windowStart = now;
     }
 
-    if (this.#globalRequests.count >= this.#options.maxGlobalRequestsPerSecond) {
-      const retryAfter = windowDuration - (now - this.#globalRequests.windowStart);
+    if (this.globalRequests.count >= this.maxGlobalRequestsPerSecond) {
+      const retryAfter = windowDuration - (now - this.globalRequests.windowStart);
       return {
         canProceed: false,
         retryAfter,
@@ -180,23 +168,23 @@ export class RateLimitManager {
     return { canProceed: true };
   }
 
-  #updateInvalidCount(now: number): void {
+  private updateInvalidCount(now: number): void {
     const windowDuration = 10 * 60 * 1000;
-    if (now - this.#invalidRequests.windowStart >= windowDuration) {
-      this.#invalidRequests.count = 1;
-      this.#invalidRequests.windowStart = now;
+    if (now - this.invalidRequests.windowStart >= windowDuration) {
+      this.invalidRequests.count = 1;
+      this.invalidRequests.windowStart = now;
     } else {
-      this.#invalidRequests.count++;
+      this.invalidRequests.count++;
     }
   }
 
-  #updateGlobalCount(now: number): void {
+  private updateGlobalCount(now: number): void {
     const windowDuration = 1000;
-    if (now - this.#globalRequests.windowStart >= windowDuration) {
-      this.#globalRequests.count = 1;
-      this.#globalRequests.windowStart = now;
+    if (now - this.globalRequests.windowStart >= windowDuration) {
+      this.globalRequests.count = 1;
+      this.globalRequests.windowStart = now;
     } else {
-      this.#globalRequests.count++;
+      this.globalRequests.count++;
     }
   }
 }

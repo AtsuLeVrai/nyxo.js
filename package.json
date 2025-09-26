@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "nyxo.js",
-  "packageManager": "pnpm@10.16.1+sha512.0e155aa2629db8672b49e8475da6226aa4bdea85fdcdfdc15350874946d4f3c91faaf64cbdc4a5d1ab8002f473d5c3fcedcd197989cf0390f9badd3c04678706",
+  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
   "homepage": "https://github.com/nyxo-labs/nyxo.js",
   "readme": "README.md",
   "license": "Apache-2.0",
@@ -50,10 +50,10 @@
     "eventemitter3": "^5.0.1",
     "form-data": "^4.0.4",
     "mime-types": "^3.0.1",
-    "type-fest": "^5.0.0",
+    "quick-lru": "^7.2.0",
     "undici": "^7.16.0",
     "ws": "^8.18.3",
-    "zod": "^4.1.8"
+    "zod": "^4.1.11"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.9",
@@ -63,11 +63,11 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@types/mime-types": "^3.0.1",
-    "@types/node": "^24.5.0",
+    "@types/node": "^24.5.2",
     "@types/ws": "^8.18.1",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.6",
-    "tsdown": "^0.15.2",
+    "lint-staged": "^16.2.1",
+    "tsdown": "^0.15.4",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },

@@ -3,11 +3,16 @@ import { stat } from "node:fs/promises";
 import { basename } from "node:path";
 import FormData from "form-data";
 import { extension, lookup } from "mime-types";
-import { Pool } from "undici";
+import { request } from "undici";
 import { z } from "zod";
 import { ApiVersion } from "../../resources/index.js";
-import { RateLimitManager, RateLimitOptions } from "./rate-limit.manager.js";
-import { ResilienceManager, ResilienceOptions } from "./resilience.manager.js";
+import type {
+  ExtractQueryParams,
+  ExtractRequestBody,
+  ExtractResponseBody,
+  TypedRoute,
+} from "../../utils/index.js";
+import { RateLimitManager } from "./rate-limit.manager.js";
 import type {
   ApiErrorResponse,
   DataUri,
@@ -23,17 +28,6 @@ const DATA_URI_REGEX = /^data:(.+);base64,(.*)$/;
 
 export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
 
-export const PoolOptions = z.object({
-  connections: z.int().min(1).default(8),
-  headersTimeout: z.int().min(1000).default(10000),
-  bodyTimeout: z.int().min(1000).default(30000),
-  connectTimeout: z.int().min(1000).default(15000),
-  keepAliveTimeout: z.int().min(1000).default(60000),
-  keepAliveMaxTimeout: z.int().min(1000).default(300000),
-  maxRequestsPerClient: z.int().min(1).default(2000),
-  strictContentLength: z.boolean().default(false),
-});
-
 export const RestOptions = z.object({
   token: z.string(),
   authType: z.enum(["Bot", "Bearer"]).default("Bot"),
@@ -43,20 +37,17 @@ export const RestOptions = z.object({
     .regex(DISCORD_USER_AGENT_REGEX)
     .default("DiscordBot (https://github.com/AtsuLeVrai/nyxo.js, 1.0.0)"),
   baseUrl: z.url().default("https://discord.com"),
-  pool: PoolOptions.prefault({}),
-  rateLimit: RateLimitOptions.prefault({}),
-  resilience: ResilienceOptions.prefault({}),
+  maxInvalidRequests: z.int().positive().default(10000),
+  maxGlobalRequestsPerSecond: z.int().positive().default(50),
 });
 
 export class Rest {
-  readonly pool: Pool;
   readonly rateLimit: RateLimitManager;
-  readonly resilience: ResilienceManager;
-  readonly #options: z.infer<typeof RestOptions>;
+  private readonly options: z.infer<typeof RestOptions>;
 
   constructor(options: z.input<typeof RestOptions>) {
     try {
-      this.#options = RestOptions.parse(options);
+      this.options = RestOptions.parse(options);
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(z.prettifyError(error));
@@ -64,43 +55,39 @@ export class Rest {
       throw error;
     }
 
-    this.pool = new Pool(this.#options.baseUrl, this.#options.pool);
-    this.rateLimit = new RateLimitManager(this.#options.rateLimit);
-    this.resilience = new ResilienceManager(this.#options.resilience);
+    this.rateLimit = new RateLimitManager(
+      this.options.maxInvalidRequests,
+      this.options.maxGlobalRequestsPerSecond,
+    );
   }
 
-  request<T>(options: HttpRequestOptions): Promise<T> {
-    return this.resilience.executeWithResilience(
-      async () => {
-        const rateLimitCheck = await this.rateLimit.checkRateLimit(options.path);
-        if (!rateLimitCheck.canProceed) {
-          throw new Error(`Rate limit exceeded: ${rateLimitCheck.reason}`);
-        }
+  async request<T>(options: HttpRequestOptions): Promise<T> {
+    const rateLimitCheck = await this.rateLimit.checkRateLimit(options.path);
+    if (!rateLimitCheck.canProceed) {
+      throw new Error(`Rate limit exceeded: ${rateLimitCheck.reason}`);
+    }
 
-        const response = await this.#makeHttpRequest<T>(options);
-        await this.rateLimit.updateRateLimit(response.headers, response.statusCode);
-        return response.data as T;
-      },
-      `${options.method}:${options.path.split("/")[1] || "root"}`,
-    );
+    const response = await this.makeHttpRequest<T>(options);
+    await this.rateLimit.updateRateLimit(response.headers, response.statusCode);
+    return response.data as T;
   }
 
   get<T extends TypedRoute>(
     path: T,
     options?: Omit<HttpRequestOptions, "method" | "path"> & {
-      query?: ExtractQuery<T["__schema"]["GET"]>;
+      query?: ExtractQueryParams<T["__routeSchema"]["GET"]>;
     },
-  ): Promise<ExtractResponse<T["__schema"]["GET"]>> {
+  ): Promise<ExtractResponseBody<T["__routeSchema"]["GET"]>> {
     return this.request({ ...options, method: "GET", path: path as string });
   }
 
   post<T extends TypedRoute>(
     path: T,
     options?: Omit<HttpRequestOptions, "method" | "path" | "body"> & {
-      body?: ExtractRequestBody<T["__schema"]["POST"]>;
-      query?: ExtractQuery<T["__schema"]["POST"]>;
+      body?: ExtractRequestBody<T["__routeSchema"]["POST"]>;
+      query?: ExtractQueryParams<T["__routeSchema"]["POST"]>;
     },
-  ): Promise<ExtractResponse<T["__schema"]["POST"]>> {
+  ): Promise<ExtractResponseBody<T["__routeSchema"]["POST"]>> {
     return this.request({
       ...options,
       method: "POST",
@@ -112,10 +99,10 @@ export class Rest {
   patch<T extends TypedRoute>(
     path: T,
     options?: Omit<HttpRequestOptions, "method" | "path" | "body"> & {
-      body?: ExtractRequestBody<T["__schema"]["PATCH"]>;
-      query?: ExtractQuery<T["__schema"]["PATCH"]>;
+      body?: ExtractRequestBody<T["__routeSchema"]["PATCH"]>;
+      query?: ExtractQueryParams<T["__routeSchema"]["PATCH"]>;
     },
-  ): Promise<ExtractResponse<T["__schema"]["PATCH"]>> {
+  ): Promise<ExtractResponseBody<T["__routeSchema"]["PATCH"]>> {
     return this.request({
       ...options,
       method: "PATCH",
@@ -127,10 +114,10 @@ export class Rest {
   put<T extends TypedRoute>(
     path: T,
     options?: Omit<HttpRequestOptions, "method" | "path" | "body"> & {
-      body?: ExtractRequestBody<T["__schema"]["PUT"]>;
-      query?: ExtractQuery<T["__schema"]["PUT"]>;
+      body?: ExtractRequestBody<T["__routeSchema"]["PUT"]>;
+      query?: ExtractQueryParams<T["__routeSchema"]["PUT"]>;
     },
-  ): Promise<ExtractResponse<T["__schema"]["PUT"]>> {
+  ): Promise<ExtractResponseBody<T["__routeSchema"]["PUT"]>> {
     return this.request({
       ...options,
       method: "PUT",
@@ -142,15 +129,10 @@ export class Rest {
   delete<T extends TypedRoute>(
     path: T,
     options?: Omit<HttpRequestOptions, "method" | "path"> & {
-      query?: ExtractQuery<T["__schema"]["DELETE"]>;
+      query?: ExtractQueryParams<T["__routeSchema"]["DELETE"]>;
     },
-  ): Promise<ExtractResponse<T["__schema"]["DELETE"]>> {
+  ): Promise<ExtractResponseBody<T["__routeSchema"]["DELETE"]>> {
     return this.request({ ...options, method: "DELETE", path: path as string });
-  }
-
-  async destroy(): Promise<void> {
-    await this.pool.close();
-    this.resilience.clear();
   }
 
   async createFormData(
@@ -164,7 +146,7 @@ export class Rest {
 
     const form = new FormData();
     for (let i = 0; i < filesArray.length; i++) {
-      const processed = await this.#processFile(filesArray[i] as FileInput);
+      const processed = await this.processFile(filesArray[i] as FileInput);
       if (processed.size !== null && processed.size > MAX_FILE_SIZE) {
         throw new Error(`File too large: ${processed.size} bytes`);
       }
@@ -234,11 +216,11 @@ export class Rest {
       return input as DataUri;
     }
 
-    const processed = await this.#processFile(input);
+    const processed = await this.processFile(input);
     return `data:${processed.contentType};base64,${processed.data.toString("base64")}`;
   }
 
-  async #processFile(input: FileInput): Promise<FileAsset> {
+  private async processFile(input: FileInput): Promise<FileAsset> {
     let filename = "file.bin";
     if (typeof input === "string") {
       const dataUriMatch = input.match(DATA_URI_REGEX);
@@ -255,13 +237,12 @@ export class Rest {
     return { data, filename, contentType, size };
   }
 
-  async #makeHttpRequest<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
-    const preparedRequest = options.files ? await this.#handleFileUpload(options) : options;
-    const path = `/api/v${this.#options.version}/${preparedRequest.path.replace(/^\/+/, "")}`;
-    const headers = this.#buildRequestHeaders(preparedRequest);
+  private async makeHttpRequest<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
+    const preparedRequest = options.files ? await this.handleFileUpload(options) : options;
+    const path = `${this.options.baseUrl}/api/v${this.options.version}/${preparedRequest.path.replace(/^\/+/, "")}`;
+    const headers = this.buildRequestHeaders(preparedRequest);
 
-    const response = await this.pool.request<T>({
-      path,
+    const response = await request<T>(path, {
       method: preparedRequest.method,
       body: preparedRequest.body,
       query: preparedRequest.query,
@@ -271,9 +252,9 @@ export class Rest {
     const result = (await response.body.json()) as T;
 
     let reason = "";
-    if (response.statusCode >= 400 && this.#isJsonErrorEntity(result)) {
+    if (response.statusCode >= 400 && this.isJsonErrorEntity(result)) {
       const jsonError = result as ApiErrorResponse;
-      const formattedFieldErrors = this.#formatFieldErrors(jsonError.errors);
+      const formattedFieldErrors = this.formatFieldErrors(jsonError.errors);
       reason = formattedFieldErrors
         ? `${jsonError.message}. Details: ${formattedFieldErrors}`
         : jsonError.message;
@@ -287,7 +268,7 @@ export class Rest {
     };
   }
 
-  async #handleFileUpload(options: HttpRequestOptions): Promise<HttpRequestOptions> {
+  private async handleFileUpload(options: HttpRequestOptions): Promise<HttpRequestOptions> {
     if (!options.files) {
       throw new Error("Files are required for file upload");
     }
@@ -300,10 +281,10 @@ export class Rest {
     };
   }
 
-  #buildRequestHeaders(options: HttpRequestOptions): Record<string, string> {
+  private buildRequestHeaders(options: HttpRequestOptions): Record<string, string> {
     const headers: Record<string, string> = {
-      authorization: `${this.#options.authType} ${this.#options.token}`,
-      "user-agent": this.#options.userAgent,
+      authorization: `${this.options.authType} ${this.options.token}`,
+      "user-agent": this.options.userAgent,
       "x-ratelimit-precision": "millisecond",
     };
 
@@ -328,7 +309,7 @@ export class Rest {
     return headers;
   }
 
-  #isJsonErrorEntity(error: unknown): error is ApiErrorResponse {
+  private isJsonErrorEntity(error: unknown): error is ApiErrorResponse {
     return (
       typeof error === "object" &&
       error !== null &&
@@ -339,7 +320,7 @@ export class Rest {
     );
   }
 
-  #formatFieldErrors(errors?: Record<string, unknown>): string | undefined {
+  private formatFieldErrors(errors?: Record<string, unknown>): string | undefined {
     if (!errors) {
       return undefined;
     }

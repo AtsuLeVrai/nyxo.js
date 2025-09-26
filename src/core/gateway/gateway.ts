@@ -6,9 +6,10 @@ import {
   type GatewayCloseEventCodes,
   GatewayIntentBits,
   GatewayOpcodes,
-} from "../../enum/index.js";
-import type { HelloEntity, ReadyEntity } from "../../resources/index.js";
-import { BitField, safeModuleImport, sleep } from "../../utils/index.js";
+  type HelloEntity,
+  type ReadyEntity,
+} from "../../resources/index.js";
+import { BitField, Routes, safeModuleImport, sleep } from "../../utils/index.js";
 import type { Rest } from "../rest/index.js";
 import type {
   GatewayReceiveEvents,
@@ -21,7 +22,6 @@ import type {
   UpdatePresenceEntity,
   UpdateVoiceStateEntity,
 } from "./gateway.types.js";
-import { HeartbeatManager } from "./heartbeat.manager.js";
 
 export enum GatewayConnectionState {
   Idle = "idle",
@@ -51,17 +51,6 @@ export interface GatewayEvents {
   heartbeatAck: [timestamp: number, latency: number];
 }
 
-export const gatewayEventKeys = [
-  "stateChange",
-  "dispatch",
-  "wsOpen",
-  "wsClose",
-  "wsError",
-  "wsMessage",
-  "heartbeatSent",
-  "heartbeatAck",
-] as const satisfies (keyof GatewayEvents)[];
-
 const MAX_PAYLOAD_SIZE = 4096;
 const ZLIB_SYNC_FLUSH_SUFFIX = Buffer.from([0x00, 0x00, 0xff, 0xff]);
 
@@ -89,38 +78,41 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   readyAt: number | null = null;
   resumable = false;
 
-  readonly heartbeat: HeartbeatManager;
+  private heartbeatLatency = 0;
+  private heartbeatIntervalMs = 0;
+  private lastHeartbeatSend = 0;
+  private isHeartbeatAcked = true;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private heartbeatInitialTimeout: NodeJS.Timeout | null = null;
 
-  #erlpack: typeof import("erlpack") | null = null;
-  #zlibInflate: import("zlib-sync").Inflate | null = null;
-  #zlibBuffer: Buffer = Buffer.alloc(0);
+  private erlpack: typeof import("erlpack") | null = null;
+  private zlibInflate: import("zlib-sync").Inflate | null = null;
+  private zlibBuffer: Buffer = Buffer.alloc(0);
 
-  #ws: WebSocket | null = null;
-  #reconnectCount = 0;
-  #gatewayUrl: string | null = null;
+  private ws: WebSocket | null = null;
+  private reconnectCount = 0;
+  private gatewayUrl: string | null = null;
 
-  #rateLimitBucket = {
+  private rateLimitBucket = {
     count: 0,
     resetAt: 0,
   };
 
-  readonly #rest: Rest;
-  readonly #options: z.infer<typeof GatewayOptions>;
+  private readonly rest: Rest;
+  private readonly options: z.infer<typeof GatewayOptions>;
 
   constructor(rest: Rest, options: z.input<typeof GatewayOptions>) {
     super();
-    this.#rest = rest;
+    this.rest = rest;
 
     try {
-      this.#options = GatewayOptions.parse(options);
+      this.options = GatewayOptions.parse(options);
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(z.prettifyError(error));
       }
       throw error;
     }
-
-    this.heartbeat = new HeartbeatManager(this);
   }
 
   get isReady(): boolean {
@@ -129,10 +121,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   get uptime(): number {
     return this.readyAt ? Date.now() - this.readyAt : 0;
-  }
-
-  get latency(): number {
-    return this.heartbeat.latency;
   }
 
   get canResume(): boolean {
@@ -179,45 +167,45 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       return;
     }
 
-    this.#setState(GatewayConnectionState.Connecting);
+    this.setState(GatewayConnectionState.Connecting);
 
     try {
-      if (!this.#gatewayUrl) {
-        const gatewayInfo = await this.#rest.gateway.fetchBotGatewayInfo();
-        this.#gatewayUrl = gatewayInfo.url;
+      if (!this.gatewayUrl) {
+        const gatewayInfo = await this.rest.get(Routes.fetchBotGatewayInfo());
+        this.gatewayUrl = gatewayInfo.url;
       }
 
-      await this.#connectToGateway();
+      await this.connectToGateway();
     } catch (error) {
-      this.#setState(GatewayConnectionState.Failed);
+      this.setState(GatewayConnectionState.Failed);
       throw error;
     }
   }
 
   send<T extends keyof GatewaySendEvents>(opcode: T, data: GatewaySendEvents[T]): void {
-    if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error("WebSocket not open");
     }
 
     const now = Date.now();
-    if (now >= this.#rateLimitBucket.resetAt) {
-      this.#rateLimitBucket.count = 0;
-      this.#rateLimitBucket.resetAt = now + 60000; // 60 secondes
+    if (now >= this.rateLimitBucket.resetAt) {
+      this.rateLimitBucket.count = 0;
+      this.rateLimitBucket.resetAt = now + 60000; // 60 secondes
     }
 
-    if (this.#rateLimitBucket.count >= 120) {
+    if (this.rateLimitBucket.count >= 120) {
       throw new Error("Rate limit exceeded: 120 events per minute");
     }
 
-    const encoded = this.#encodePayload({
+    const encoded = this.encodePayload({
       op: opcode,
       d: data,
       s: null,
       t: null,
     });
 
-    this.#ws.send(encoded);
-    this.#rateLimitBucket.count++;
+    this.ws.send(encoded);
+    this.rateLimitBucket.count++;
   }
 
   setShard(shardId: number, shardCount: number): void {
@@ -225,7 +213,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       throw new Error("Invalid shard configuration");
     }
 
-    this.#options.shard = [shardId, shardCount];
+    this.options.shard = [shardId, shardCount];
   }
 
   disconnect(code = 1000, reason = "Normal closure"): void {
@@ -233,11 +221,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       return;
     }
 
-    this.#setState(GatewayConnectionState.Disconnecting);
-    this.#closeWebSocket(code, reason);
+    this.setState(GatewayConnectionState.Disconnecting);
+    this.closeWebSocket(code, reason);
 
     if (code === 1000 || code === 1001) {
-      this.#resetSession();
+      this.resetSession();
     }
   }
 
@@ -246,28 +234,83 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       return;
     }
 
-    this.#setState(GatewayConnectionState.Disconnecting);
-    this.#closeWebSocket(1000);
-    this.#resetSession();
-    this.heartbeat.destroy();
-    this.#erlpack = null;
-    this.#zlibInflate = null;
-    this.#zlibBuffer = Buffer.alloc(0);
+    this.setState(GatewayConnectionState.Disconnecting);
+    this.closeWebSocket(1000);
+    this.resetSession();
+    this.destroyHeartbeat();
+    this.erlpack = null;
+    this.zlibInflate = null;
+    this.zlibBuffer = Buffer.alloc(0);
     this.removeAllListeners();
-    this.#setState(GatewayConnectionState.Disconnected);
+    this.setState(GatewayConnectionState.Disconnected);
   }
 
-  async #setupCodecs(): Promise<void> {
-    if (this.#options.encodingType === "etf") {
+  #startHeartbeat(interval: number): void {
+    if (this.heartbeatInterval !== null) {
+      throw new Error("Heartbeat service is already running");
+    }
+
+    this.destroyHeartbeat();
+    this.heartbeatIntervalMs = interval;
+
+    const initialDelay = interval * Math.random();
+
+    this.heartbeatInitialTimeout = setTimeout(() => {
+      this.sendHeartbeat();
+      this.heartbeatInterval = setInterval(() => this.sendHeartbeat(), this.heartbeatIntervalMs);
+    }, initialDelay);
+  }
+
+  private destroyHeartbeat(): void {
+    this.heartbeatLatency = 0;
+    this.missedHeartbeats = 0;
+    this.lastHeartbeatSend = 0;
+    this.heartbeatIntervalMs = 0;
+    this.isHeartbeatAcked = true;
+
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+
+    if (this.heartbeatInitialTimeout) {
+      clearTimeout(this.heartbeatInitialTimeout);
+      this.heartbeatInitialTimeout = null;
+    }
+  }
+
+  private ackHeartbeat(): void {
+    const now = Date.now();
+    this.isHeartbeatAcked = true;
+    this.missedHeartbeats = 0;
+    this.heartbeatLatency = now - this.lastHeartbeatSend;
+    this.emit("heartbeatAck", now, this.heartbeatLatency);
+  }
+
+  private sendHeartbeat(): void {
+    this.lastHeartbeatSend = Date.now();
+
+    if (!this.isHeartbeatAcked) {
+      this.missedHeartbeats++;
+      return;
+    }
+
+    this.isHeartbeatAcked = false;
+    this.send(GatewayOpcodes.Heartbeat, this.sequence);
+    this.emit("heartbeatSent", this.lastHeartbeatSend, this.sequence);
+  }
+
+  private async setupCodecs(): Promise<void> {
+    if (this.options.encodingType === "etf") {
       const result = await safeModuleImport<typeof import("erlpack")>("erlpack");
       if (!result.success) {
         throw new Error("erlpack is required for ETF encoding. Install with: npm install erlpack");
       }
 
-      this.#erlpack = result.module;
+      this.erlpack = result.module;
     }
 
-    if (this.#options.compressionType === "zlib-stream") {
+    if (this.options.compressionType === "zlib-stream") {
       const result = await safeModuleImport<typeof import("zlib-sync")>("zlib-sync");
       if (!result.success) {
         throw new Error(
@@ -275,95 +318,95 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         );
       }
 
-      this.#zlibInflate = new result.module.Inflate();
+      this.zlibInflate = new result.module.Inflate();
     }
   }
 
-  async #connectToGateway(): Promise<void> {
-    await this.#setupCodecs();
+  private async connectToGateway(): Promise<void> {
+    await this.setupCodecs();
 
-    const wsUrl = this.#buildGatewayUrl();
-    this.#ws = new WebSocket(wsUrl);
+    const wsUrl = this.buildGatewayUrl();
+    this.ws = new WebSocket(wsUrl);
 
-    this.#ws.on("message", this.#handleMessage.bind(this));
-    this.#ws.on("close", this.#handleClose.bind(this));
-    this.#ws.on("open", () => this.emit("wsOpen"));
-    this.#ws.on("error", (error) => this.emit("wsError", error));
+    this.ws.on("message", this.handleMessage.bind(this));
+    this.ws.on("close", this.handleClose.bind(this));
+    this.ws.on("open", () => this.emit("wsOpen"));
+    this.ws.on("error", (error) => this.emit("wsError", error));
 
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error("Connection timeout")), 15000);
 
-      this.#ws?.once("open", () => {
+      this.ws?.once("open", () => {
         clearTimeout(timeout);
-        this.#setState(GatewayConnectionState.Connected);
+        this.setState(GatewayConnectionState.Connected);
         resolve();
       });
 
-      this.#ws?.once("error", (err) => {
+      this.ws?.once("error", (err) => {
         clearTimeout(timeout);
-        this.#setState(GatewayConnectionState.Failed);
+        this.setState(GatewayConnectionState.Failed);
         reject(err);
       });
     });
   }
 
-  #buildGatewayUrl(): string {
+  private buildGatewayUrl(): string {
     const params = new URLSearchParams({
-      v: String(this.#options.version),
-      encoding: this.#options.encodingType,
+      v: String(this.options.version),
+      encoding: this.options.encodingType,
     });
 
-    if (this.#options.compressionType) {
-      params.append("compress", this.#options.compressionType);
+    if (this.options.compressionType) {
+      params.append("compress", this.options.compressionType);
     }
 
-    return `${this.#gatewayUrl}?${params}`;
+    return `${this.gatewayUrl}?${params}`;
   }
 
-  #decompressZlib(data: Buffer): Buffer | null {
-    if (!this.#zlibInflate) {
+  private decompressZlib(data: Buffer): Buffer | null {
+    if (!this.zlibInflate) {
       throw new Error("Zlib not initialized");
     }
 
-    this.#zlibBuffer = Buffer.concat([this.#zlibBuffer, data]);
+    this.zlibBuffer = Buffer.concat([this.zlibBuffer, data]);
 
-    if (!this.#hasZlibSyncFlush(this.#zlibBuffer)) {
+    if (!this.hasZlibSyncFlush(this.zlibBuffer)) {
       return null;
     }
 
     try {
-      this.#zlibInflate.push(this.#zlibBuffer, 2);
+      this.zlibInflate.push(this.zlibBuffer, 2);
 
-      if (this.#zlibInflate.err < 0) {
-        this.#zlibBuffer = Buffer.alloc(0);
-        const errorMessage = this.#zlibInflate.msg || `Zlib error code: ${this.#zlibInflate.err}`;
+      if (this.zlibInflate.err < 0) {
+        this.zlibBuffer = Buffer.alloc(0);
+        const errorMessage = this.zlibInflate.msg || `Zlib error code: ${this.zlibInflate.err}`;
         throw new Error(`Zlib decompression failed: ${errorMessage}`);
       }
 
-      const decompressed = Buffer.from(this.#zlibInflate.result || []);
-      this.#zlibBuffer = Buffer.alloc(0);
+      const decompressed = Buffer.from(this.zlibInflate.result || []);
+      this.zlibBuffer = Buffer.alloc(0);
       return decompressed;
     } catch (error) {
-      this.#zlibBuffer = Buffer.alloc(0);
+      this.zlibBuffer = Buffer.alloc(0);
       throw error;
     }
   }
 
-  #encodePayload(data: PayloadEntity): Buffer | string {
+  private encodePayload(data: PayloadEntity): Buffer | string {
     let result: Buffer | string;
 
-    switch (this.#options.encodingType) {
+    switch (this.options.encodingType) {
       case "etf":
-        if (!this.#erlpack) {
+        if (!this.erlpack) {
           throw new Error("Erlpack not initialized");
         }
-        result = this.#erlpack.pack(data);
+        result = this.erlpack.pack(data);
         break;
       case "json":
         result = JSON.stringify(data);
         break;
       default:
-        throw new Error(`Unsupported encoding type: ${this.#options.encodingType}`);
+        throw new Error(`Unsupported encoding type: ${this.options.encodingType}`);
     }
 
     const size = Buffer.isBuffer(result) ? result.length : Buffer.byteLength(result);
@@ -374,134 +417,134 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     return result;
   }
 
-  #decodePayload(data: Buffer | string): PayloadEntity {
-    switch (this.#options.encodingType) {
+  private decodePayload(data: Buffer | string): PayloadEntity {
+    switch (this.options.encodingType) {
       case "etf":
-        if (!this.#erlpack) {
+        if (!this.erlpack) {
           throw new Error("Erlpack not initialized");
         }
-        return this.#erlpack.unpack(Buffer.isBuffer(data) ? data : Buffer.from(data));
+        return this.erlpack.unpack(Buffer.isBuffer(data) ? data : Buffer.from(data));
       case "json":
         return JSON.parse(typeof data === "string" ? data : data.toString("utf-8"));
       default:
-        throw new Error(`Unsupported encoding type: ${this.#options.encodingType}`);
+        throw new Error(`Unsupported encoding type: ${this.options.encodingType}`);
     }
   }
 
-  async #handleMessage(data: Buffer): Promise<void> {
+  private async handleMessage(data: Buffer): Promise<void> {
     this.emit("wsMessage", data);
     let processedData = data;
 
-    if (this.#options.compressionType === "zlib-stream") {
-      const decompressed = this.#decompressZlib(data);
+    if (this.options.compressionType === "zlib-stream") {
+      const decompressed = this.decompressZlib(data);
       if (!decompressed) return;
       processedData = decompressed;
     }
 
-    const payload = this.#decodePayload(processedData);
+    const payload = this.decodePayload(processedData);
 
     if (payload.s !== null && payload.s > this.sequence) {
       this.sequence = payload.s;
     }
 
-    await this.#processPayload(payload);
+    await this.processPayload(payload);
   }
 
-  async #processPayload(payload: PayloadEntity): Promise<void> {
+  private async processPayload(payload: PayloadEntity): Promise<void> {
     switch (payload.op) {
       case GatewayOpcodes.Dispatch:
-        this.#handleDispatch(payload);
+        this.handleDispatch(payload);
         break;
       case GatewayOpcodes.Heartbeat:
-        this.heartbeat.sendHeartbeat();
+        this.sendHeartbeat();
         break;
       case GatewayOpcodes.Reconnect:
-        await this.#handleReconnect();
+        await this.handleReconnect();
         break;
       case GatewayOpcodes.InvalidSession:
-        await this.#handleInvalidSession(Boolean(payload.d));
+        await this.handleInvalidSession(Boolean(payload.d));
         break;
       case GatewayOpcodes.Hello:
-        this.#handleHello(payload.d as HelloEntity);
+        this.handleHello(payload.d as HelloEntity);
         break;
       case GatewayOpcodes.HeartbeatAck:
-        this.heartbeat.ackHeartbeat();
+        this.ackHeartbeat();
         break;
     }
   }
 
-  #handleDispatch(payload: PayloadEntity): void {
+  private handleDispatch(payload: PayloadEntity): void {
     if (!payload.t) return;
 
     switch (payload.t) {
       case "READY":
-        this.#handleReady(payload.d as ReadyEntity);
+        this.handleReady(payload.d as ReadyEntity);
         break;
       case "RESUMED":
-        this.#handleResumed();
+        this.handleResumed();
         break;
     }
 
     this.emit("dispatch", payload.t, payload.d as GatewayReceiveEvents[keyof GatewayReceiveEvents]);
   }
 
-  #handleReady(data: ReadyEntity): void {
+  private handleReady(data: ReadyEntity): void {
     this.sessionId = data.session_id;
     this.resumeUrl = data.resume_gateway_url;
     this.readyAt = Date.now();
     this.resumable = true;
-    this.#reconnectCount = 0;
+    this.reconnectCount = 0;
 
-    this.#setState(GatewayConnectionState.Ready);
+    this.setState(GatewayConnectionState.Ready);
   }
 
-  #handleResumed(): void {
+  private handleResumed(): void {
     this.readyAt = Date.now();
     this.resumable = true;
-    this.#reconnectCount = 0;
+    this.reconnectCount = 0;
 
-    this.#setState(GatewayConnectionState.Ready);
+    this.setState(GatewayConnectionState.Ready);
   }
 
-  #handleHello(data: HelloEntity): void {
-    this.heartbeat.start(data.heartbeat_interval);
+  private handleHello(data: HelloEntity): void {
+    this.#startHeartbeat(data.heartbeat_interval);
 
     if (this.canResume) {
-      this.#setState(GatewayConnectionState.Resuming);
-      this.#sendResume();
+      this.setState(GatewayConnectionState.Resuming);
+      this.sendResume();
     } else {
-      this.#setState(GatewayConnectionState.Identifying);
-      this.#sendIdentify();
+      this.setState(GatewayConnectionState.Identifying);
+      this.sendIdentify();
     }
 
-    this.#setState(GatewayConnectionState.Authenticating);
+    this.setState(GatewayConnectionState.Authenticating);
   }
 
-  #sendIdentify(): void {
+  private sendIdentify(): void {
     const payload: IdentifyEntity = {
-      token: this.#options.token,
+      token: this.options.token,
       properties: {
         os: process.platform,
         browser: "nyxo.js",
         device: "nyxo.js",
       },
-      compress: this.#options.compressionType === "zlib-stream",
-      large_threshold: this.#options.largeThreshold,
-      intents: this.#options.intents,
+      compress: this.options.compressionType === "zlib-stream",
+      large_threshold: this.options.largeThreshold,
+      intents: this.options.intents,
     };
 
-    if (this.#options.shard) {
-      payload.shard = this.#options.shard;
+    if (this.options.shard) {
+      payload.shard = this.options.shard;
     }
 
     this.send(GatewayOpcodes.Identify, payload);
   }
 
-  #sendResume(): void {
+  private sendResume(): void {
     if (!this.sessionId) return;
 
     const payload: ResumeEntity = {
-      token: this.#options.token,
+      token: this.options.token,
       session_id: this.sessionId,
       seq: this.sequence,
     };
@@ -509,93 +552,93 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.send(GatewayOpcodes.Resume, payload);
   }
 
-  async #handleInvalidSession(resumable: boolean): Promise<void> {
+  private async handleInvalidSession(resumable: boolean): Promise<void> {
     this.resumable = resumable;
 
     if (!resumable) {
-      this.#resetSession();
+      this.resetSession();
     }
 
     await sleep(1000 + Math.random() * 4000);
 
     if (resumable && this.canResume) {
-      this.#setState(GatewayConnectionState.Resuming);
-      this.#sendResume();
-      this.#setState(GatewayConnectionState.Authenticating);
+      this.setState(GatewayConnectionState.Resuming);
+      this.sendResume();
+      this.setState(GatewayConnectionState.Authenticating);
     } else {
-      this.#closeWebSocket();
+      this.closeWebSocket();
       await this.connect();
     }
   }
 
-  async #handleReconnect(): Promise<void> {
+  private async handleReconnect(): Promise<void> {
     const canResume = this.canResume;
-    this.#setState(GatewayConnectionState.Reconnecting);
-    this.#closeWebSocket(4000);
+    this.setState(GatewayConnectionState.Reconnecting);
+    this.closeWebSocket(4000);
     await sleep(500);
 
     if (canResume) {
-      await this.#attemptResume();
+      await this.attemptResume();
     } else {
       await this.connect();
     }
   }
 
-  async #handleClose(code: number, reason: string): Promise<void> {
+  private async handleClose(code: number, reason: string): Promise<void> {
     this.emit("wsClose", code, reason);
-    this.heartbeat.destroy();
+    this.destroyHeartbeat();
 
     if (code === 1000 || code === 1001 || [4004, 4010, 4011, 4012, 4013, 4014].includes(code)) {
-      this.#resetSession();
-      this.#setState(GatewayConnectionState.Disconnected);
+      this.resetSession();
+      this.setState(GatewayConnectionState.Disconnected);
       return;
     }
 
     if (this.state !== GatewayConnectionState.Disconnecting) {
-      this.#setState(GatewayConnectionState.Reconnecting);
-      this.#reconnectCount++;
-      const delay = this.#getReconnectionDelay();
+      this.setState(GatewayConnectionState.Reconnecting);
+      this.reconnectCount++;
+      const delay = this.getReconnectionDelay();
       await sleep(delay);
 
       if (this.canResume && ![4004, 4010, 4011, 4012, 4013, 4014].includes(code)) {
-        await this.#attemptResume();
+        await this.attemptResume();
       } else {
         await this.connect();
       }
     } else {
-      this.#setState(GatewayConnectionState.Disconnected);
+      this.setState(GatewayConnectionState.Disconnected);
     }
   }
 
-  async #attemptResume(): Promise<void> {
+  private async attemptResume(): Promise<void> {
     if (!this.canResume || !this.resumeUrl) {
       await this.connect();
       return;
     }
 
-    const oldUrl = this.#gatewayUrl;
+    const oldUrl = this.gatewayUrl;
     try {
-      this.#setState(GatewayConnectionState.Resuming);
-      this.#gatewayUrl = this.resumeUrl;
-      await this.#connectToGateway();
+      this.setState(GatewayConnectionState.Resuming);
+      this.gatewayUrl = this.resumeUrl;
+      await this.connectToGateway();
     } catch {
-      this.#gatewayUrl = oldUrl;
-      this.#resetSession();
+      this.gatewayUrl = oldUrl;
+      this.resetSession();
       await this.connect();
     }
   }
 
-  #closeWebSocket(code?: number, reason?: string): void {
-    if (!this.#ws) return;
+  private closeWebSocket(code?: number, reason?: string): void {
+    if (!this.ws) return;
 
-    this.#ws.removeAllListeners();
+    this.ws.removeAllListeners();
     try {
-      this.#ws.close(code, reason);
+      this.ws.close(code, reason);
     } catch {}
-    this.#ws = null;
+    this.ws = null;
   }
 
-  #resetSession(): void {
+  private resetSession(): void {
     this.sessionId = null;
     this.resumeUrl = null;
     this.sequence = 0;
@@ -603,8 +646,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.resumable = false;
   }
 
-  #setState(newState: GatewayConnectionState): void {
-    if (!this.#isValidTransition(this.state, newState)) {
+  private setState(newState: GatewayConnectionState): void {
+    if (!this.isValidTransition(this.state, newState)) {
       throw new Error(`Invalid state transition: ${this.state} -> ${newState}`);
     }
 
@@ -613,7 +656,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.emit("stateChange", oldState, newState);
   }
 
-  #isValidTransition(from: GatewayConnectionState, to: GatewayConnectionState): boolean {
+  private isValidTransition(from: GatewayConnectionState, to: GatewayConnectionState): boolean {
     const transitions: Record<GatewayConnectionState, GatewayConnectionState[]> = {
       [GatewayConnectionState.Idle]: [
         GatewayConnectionState.Connecting,
@@ -672,14 +715,14 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     return transitions[from]?.includes(to) ?? false;
   }
 
-  #getReconnectionDelay(): number {
+  private getReconnectionDelay(): number {
     const delays = [1000, 5000, 10000];
-    const index = Math.min(this.#reconnectCount - 1, delays.length - 1);
+    const index = Math.min(this.reconnectCount - 1, delays.length - 1);
     const baseDelay = (delays[index] as number) ?? (delays[delays.length - 1] as number);
     return Math.min(baseDelay * (0.8 + Math.random() * 0.4), 30000);
   }
 
-  #hasZlibSyncFlush(buffer: Buffer): boolean {
+  private hasZlibSyncFlush(buffer: Buffer): boolean {
     if (buffer.length < 4) {
       return false;
     }

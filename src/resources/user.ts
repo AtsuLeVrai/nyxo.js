@@ -1,5 +1,5 @@
-import type { SetNonNullable } from "type-fest";
 import type { FileInput } from "../core/index.js";
+import type { SetNonNullable } from "../utils/index.js";
 import type { ActivityData } from "./activity.js";
 import type { Locale } from "./constants.js";
 import type { GuildMemberEntity, IntegrationEntity } from "./guild.js";
@@ -78,110 +78,110 @@ export enum UserFlags {
 }
 
 export interface AvatarDecorationDataObject {
-  asset: string;
-  sku_id: string;
+  readonly asset: string;
+  readonly sku_id: string;
 }
 
 export interface NameplateObject {
-  asset: string;
-  label: string;
-  palette: NameplatePalettes;
-  sku_id: string;
+  readonly asset: string;
+  readonly label: string;
+  readonly palette: NameplatePalettes;
+  readonly sku_id: string;
 }
 
 export interface CollectiblesObject {
-  nameplate?: NameplateObject;
+  readonly nameplate?: NameplateObject;
 }
 
 export interface UserPrimaryGuildEntity {
-  badge?: string | null;
-  identity_enabled?: boolean | null;
-  identity_guild_id?: string | null;
-  tag?: string | null;
+  readonly badge?: string | null;
+  readonly identity_enabled?: boolean | null;
+  readonly identity_guild_id?: string | null;
+  readonly tag?: string | null;
 }
 
 export interface UserObject {
-  id: string;
-  username: string;
-  discriminator: string;
-  global_name: string | null;
-  avatar: string | null;
-  bot?: boolean;
-  system?: boolean;
-  mfa_enabled?: boolean;
-  banner?: string | null;
-  accent_color?: number | null;
-  locale?: Locale;
-  verified?: boolean;
-  email?: string | null;
-  flags?: UserFlags;
-  premium_type?: PremiumTypes;
-  public_flags?: UserFlags;
-  avatar_decoration_data?: AvatarDecorationDataObject | null;
-  collectibles?: CollectiblesObject | null;
-  primary_guild?: UserPrimaryGuildEntity | null;
+  readonly id: string;
+  readonly username: string;
+  readonly discriminator: string;
+  readonly global_name: string | null;
+  readonly avatar: string | null;
+  readonly bot?: boolean;
+  readonly system?: boolean;
+  readonly mfa_enabled?: boolean;
+  readonly banner?: string | null;
+  readonly accent_color?: number | null;
+  readonly locale?: Locale;
+  readonly verified?: boolean;
+  readonly email?: string | null;
+  readonly flags?: UserFlags;
+  readonly premium_type?: PremiumTypes;
+  readonly public_flags?: UserFlags;
+  readonly avatar_decoration_data?: AvatarDecorationDataObject | null;
+  readonly collectibles?: CollectiblesObject | null;
+  readonly primary_guild?: UserPrimaryGuildEntity | null;
 }
 
 export interface ConnectionObject {
-  id: string;
-  name: string;
-  type: Services;
-  revoked?: boolean;
-  integrations?: Partial<IntegrationEntity>[];
-  verified: boolean;
-  friend_sync: boolean;
-  show_activity: boolean;
-  two_way_link: boolean;
-  visibility: ConnectionVisibilityTypes;
+  readonly id: string;
+  readonly name: string;
+  readonly type: Services;
+  readonly revoked?: boolean;
+  readonly integrations?: Partial<IntegrationEntity>[];
+  readonly verified: boolean;
+  readonly friend_sync: boolean;
+  readonly show_activity: boolean;
+  readonly two_way_link: boolean;
+  readonly visibility: ConnectionVisibilityTypes;
 }
 
 export interface ApplicationRoleConnectionObject {
-  platform_name: string | null;
-  platform_username: string | null;
-  metadata: Record<string, string>;
+  readonly platform_name: string | null;
+  readonly platform_username: string | null;
+  readonly metadata: Record<string, string>;
 }
 
 export interface TypingStartObject {
-  channel_id: string;
-  guild_id?: string;
-  user_id: string;
-  timestamp: number;
-  member?: GuildMemberEntity;
+  readonly channel_id: string;
+  readonly guild_id?: string;
+  readonly user_id: string;
+  readonly timestamp: number;
+  readonly member?: GuildMemberEntity;
 }
 
 export interface ClientStatusObject {
-  desktop?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
-  mobile?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
-  web?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
+  readonly desktop?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
+  readonly mobile?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
+  readonly web?: Omit<UpdatePresenceStatusType, "invisible" | "offline">;
 }
 
 export interface PresenceUpdateObject {
-  user: UserObject;
-  guild_id: string;
-  status: Omit<UpdatePresenceStatusType, "invisible">;
-  activities: ActivityData[];
-  client_status: ClientStatusObject;
+  readonly user: UserObject;
+  readonly guild_id: string;
+  readonly status: Omit<UpdatePresenceStatusType, "invisible">;
+  readonly activities: ActivityData[];
+  readonly client_status: ClientStatusObject;
 }
 
 export interface ModifyCurrentUserJSONParams extends Partial<Pick<UserObject, "username">> {
-  avatar?: FileInput | null;
-  banner?: FileInput | null;
+  readonly avatar?: FileInput | null;
+  readonly banner?: FileInput | null;
 }
 
 export interface GetCurrentUserGuildsQueryStringParams {
-  before?: string;
-  after?: string;
-  limit?: number;
-  with_counts?: boolean;
+  readonly before?: string;
+  readonly after?: string;
+  readonly limit?: number;
+  readonly with_counts?: boolean;
 }
 
 export interface CreateDMJSONParams {
-  recipient_id: string;
+  readonly recipient_id: string;
 }
 
 export interface CreateGroupDMJSONParams {
-  access_tokens: string[];
-  nicks: Record<string, string>;
+  readonly access_tokens: string[];
+  readonly nicks: Record<string, string>;
 }
 
 export type UpdateCurrentUserApplicationRoleConnectionJSONParams = Partial<
@@ -189,52 +189,3 @@ export type UpdateCurrentUserApplicationRoleConnectionJSONParams = Partial<
 >;
 
 export type UpdatePresenceStatusType = "online" | "dnd" | "idle" | "invisible" | "offline";
-
-/**
- * Validates a Discord username according to Discord's rules
- * @param username The username to validate
- * @returns true if the username is valid, false otherwise
- */
-export function isValidUsername(username: string): boolean {
-  if (!username || username.length < 2 || username.length > 32) {
-    return false;
-  }
-
-  const forbiddenSubstrings = ["@", "#", ":", "```", "discord"];
-  const forbiddenNames = ["everyone", "here"];
-
-  for (const substring of forbiddenSubstrings) {
-    if (username.includes(substring)) {
-      return false;
-    }
-  }
-
-  return !forbiddenNames.includes(username.toLowerCase());
-}
-
-/**
- * Checks if a user has a specific flag
- * @param userFlags The user's flags value
- * @param flag The flag to check for
- * @returns true if the user has the flag
- */
-export function hasUserFlag(userFlags: number, flag: UserFlags): boolean {
-  return (userFlags & flag) === flag;
-}
-
-/**
- * Gets all flags that a user has
- * @param userFlags The user's flags value
- * @returns Array of UserFlags that the user has
- */
-export function getUserFlags(userFlags: number): UserFlags[] {
-  const flags: UserFlags[] = [];
-
-  for (const flag of Object.values(UserFlags)) {
-    if (typeof flag === "number" && hasUserFlag(userFlags, flag)) {
-      flags.push(flag);
-    }
-  }
-
-  return flags;
-}

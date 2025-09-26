@@ -1,5 +1,5 @@
 import type { ReadStream } from "node:fs";
-import type { HttpResponseCodes, JsonErrorCodes } from "../../enum/index.js";
+import type { HttpResponseCodes, JsonErrorCodes } from "../../resources/index.js";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type DataUri = `data:${string};base64,${string}`;
