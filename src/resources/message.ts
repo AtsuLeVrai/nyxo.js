@@ -465,27 +465,3 @@ export type RESTEditMessageJSONParams = RESTEditMessageV1JSONParams | RESTEditMe
 export interface RESTBulkDeleteMessagesJSONParams {
   messages: string[];
 }
-
-export function isComponentsV2Schema(
-  schema: RESTCreateMessageJSONParams | RESTEditMessageJSONParams,
-): schema is RESTCreateMessageV2JSONParams {
-  return schema.flags !== undefined && (Number(schema.flags) & MessageFlags.IsComponentsV2) !== 0;
-}
-
-export const MessageRoutes = {
-  channelMessages: (channelId: string) => `/channels/${channelId}/messages` as const,
-  channelMessage: (channelId: string, messageId: string) =>
-    `/channels/${channelId}/messages/${messageId}` as const,
-  crosspostMessage: (channelId: string, messageId: string) =>
-    `/channels/${channelId}/messages/${messageId}/crosspost` as const,
-  messageReactions: (channelId: string, messageId: string, emoji: string) =>
-    `/channels/${channelId}/messages/${messageId}/reactions/${emoji}` as const,
-  userReaction: (channelId: string, messageId: string, emoji: string, userId = "@me") =>
-    `/channels/${channelId}/messages/${messageId}/reactions/${emoji}/${userId}` as const,
-  allMessageReactions: (channelId: string, messageId: string) =>
-    `/channels/${channelId}/messages/${messageId}/reactions` as const,
-  bulkDeleteMessages: (channelId: string) => `/channels/${channelId}/messages/bulk-delete` as const,
-  pinnedMessages: (channelId: string) => `/channels/${channelId}/messages/pins` as const,
-  pinMessage: (channelId: string, messageId: string) =>
-    `/channels/${channelId}/messages/pins/${messageId}` as const,
-} as const satisfies RouteBuilder;

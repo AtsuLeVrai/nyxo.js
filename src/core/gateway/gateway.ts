@@ -10,7 +10,7 @@ import {
   type ReadyEntity,
 } from "../../resources/index.js";
 import { BitField, Routes, safeModuleImport, sleep } from "../../utils/index.js";
-import type { Rest } from "../rest/index.js";
+import type { Rest } from "../rest.js";
 import type {
   GatewayReceiveEvents,
   GatewaySendEvents,

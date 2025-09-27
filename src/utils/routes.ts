@@ -1,4 +1,5 @@
 import type {
+  ApplicationEntity,
   ApplicationRoleConnectionObject,
   ConnectionObject,
   CreateApplicationEmojiJSONParams,
@@ -13,6 +14,7 @@ import type {
   CreateLobbyJSONParams,
   CreateStageInstanceJSONParams,
   CreateTestEntitlementJSONParams,
+  CurrentAuthorizationInformationObject,
   DMChannelEntity,
   EmojiObject,
   EntitlementObject,
@@ -21,16 +23,18 @@ import type {
   GetCurrentUserGuildsQueryStringParams,
   GetGuildScheduledEventQueryStringParams,
   GetGuildScheduledEventUsersQueryStringParams,
+  GetInviteQueryStringParams,
   GuildEntity,
   GuildMemberEntity,
   GuildScheduledEventObject,
   GuildScheduledEventUserObject,
   GuildTemplateObject,
   HttpResponseCodes,
+  InviteObject,
   LinkChannelLobbyJSONParams,
   ListApplicationEmojisResponse,
   ListEntitlementsQueryStringParams,
-  ListScheduledEventsGuildQueryStringParams,
+  ListScheduledEventsForGuildQueryStringParams,
   ListSKUSubscriptionsQueryStringParams,
   ListStickerPacksResponse,
   LobbyMemberJSONParams,
@@ -106,20 +110,6 @@ export type ExtractQueryParams<T extends HttpOperationDefinition | undefined> =
       : never
     : never;
 
-export type ExtractRequestHeaders<T extends HttpOperationDefinition | undefined> =
-  T extends HttpOperationDefinition
-    ? T extends { readonly headers: infer THeaders }
-      ? THeaders
-      : never
-    : never;
-
-export type ExtractResponseHeaders<T extends HttpOperationDefinition | undefined> =
-  T extends HttpOperationDefinition
-    ? T extends { readonly responseHeaders: infer THeaders }
-      ? THeaders
-      : never
-    : never;
-
 export const Routes = {
   guildEmojis: (guildId: string) =>
     `/guilds/${guildId}/emojis` as TypedRoute<{
@@ -167,7 +157,7 @@ export const Routes = {
   guildScheduledEvents: (guildId: string) =>
     `/guilds/${guildId}/scheduled-events` as TypedRoute<{
       GET: {
-        query?: ListScheduledEventsGuildQueryStringParams;
+        query?: ListScheduledEventsForGuildQueryStringParams;
         response: GuildScheduledEventObject[];
       };
       POST: { body: CreateGuildScheduledEventJSONParams; response: GuildScheduledEventObject };
@@ -384,4 +374,145 @@ export const Routes = {
     `/skus/${skuId}/subscriptions/${subscriptionId}` as TypedRoute<{
       GET: { response: SubscriptionObject };
     }>,
+
+  invites: (code: string) =>
+    `/invites/${code}` as TypedRoute<{
+      GET: { query?: GetInviteQueryStringParams; response: InviteObject };
+      DELETE: { response: InviteObject };
+    }>,
+
+  oauth2Applications: () =>
+    `/oauth2/applications/@me` as TypedRoute<{
+      GET: { response: ApplicationEntity };
+    }>,
+
+  oauth2CurrentAuthorizationInformation: () =>
+    `/oauth2/@me` as TypedRoute<{
+      GET: { response: CurrentAuthorizationInformationObject };
+    }>,
+
+  channelWebhooks: (channelId: string) => `/channels/${channelId}/webhooks` as TypedRoute<{}>,
+  guildWebhooks: (guildId: string) => `/guilds/${guildId}/webhooks` as TypedRoute<{}>,
+  webhook: (webhookId: string) => `/webhooks/${webhookId}` as TypedRoute<{}>,
+  webhookWithToken: (webhookId: string, token: string) =>
+    `/webhooks/${webhookId}/${token}` as TypedRoute<{}>,
+  slackWebhook: (webhookId: string, token: string) =>
+    `/webhooks/${webhookId}/${token}/slack` as TypedRoute<{}>,
+  githubWebhook: (webhookId: string, token: string) =>
+    `/webhooks/${webhookId}/${token}/github` as TypedRoute<{}>,
+  webhookMessage: (webhookId: string, token: string, messageId: string) =>
+    `/webhooks/${webhookId}/${token}/messages/${messageId}` as TypedRoute<{}>,
+  channelMessages: (channelId: string) => `/channels/${channelId}/messages` as TypedRoute<{}>,
+  channelMessage: (channelId: string, messageId: string) =>
+    `/channels/${channelId}/messages/${messageId}` as TypedRoute<{}>,
+  crosspostMessage: (channelId: string, messageId: string) =>
+    `/channels/${channelId}/messages/${messageId}/crosspost` as TypedRoute<{}>,
+  messageReactions: (channelId: string, messageId: string, emoji: string) =>
+    `/channels/${channelId}/messages/${messageId}/reactions/${emoji}` as TypedRoute<{}>,
+  userReaction: (channelId: string, messageId: string, emoji: string, userId = "@me") =>
+    `/channels/${channelId}/messages/${messageId}/reactions/${emoji}/${userId}` as TypedRoute<{}>,
+  allMessageReactions: (channelId: string, messageId: string) =>
+    `/channels/${channelId}/messages/${messageId}/reactions` as TypedRoute<{}>,
+  bulkDeleteMessages: (channelId: string) =>
+    `/channels/${channelId}/messages/bulk-delete` as TypedRoute<{}>,
+  pinnedMessages: (channelId: string) => `/channels/${channelId}/messages/pins` as TypedRoute<{}>,
+  pinMessage: (channelId: string, messageId: string) =>
+    `/channels/${channelId}/messages/pins/${messageId}` as TypedRoute<{}>,
+  createResponse: (interactionId: string, interactionToken: string) =>
+    `/interactions/${interactionId}/${interactionToken}/callback` as TypedRoute<{}>,
+  getOriginalResponse: (applicationId: string, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/@original` as TypedRoute<{}>,
+  editOriginalResponse: (applicationId: string, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/@original` as TypedRoute<{}>,
+  deleteOriginalResponse: (applicationId: string, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/@original` as TypedRoute<{}>,
+  createFollowupMessage: (applicationId: string, interactionToken: string) =>
+    `/webhooks/${applicationId}/${interactionToken}` as TypedRoute<{}>,
+  getFollowupMessage: (applicationId: string, interactionToken: string, messageId: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as TypedRoute<{}>,
+  editFollowupMessage: (applicationId: string, interactionToken: string, messageId: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as TypedRoute<{}>,
+  deleteFollowupMessage: (applicationId: string, interactionToken: string, messageId: string) =>
+    `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as TypedRoute<{}>,
+  guilds: () => "/guilds" as TypedRoute<{}>,
+  guild: (guildId: string) => `/guilds/${guildId}` as TypedRoute<{}>,
+  guildPreview: (guildId: string) => `/guilds/${guildId}/preview` as TypedRoute<{}>,
+  guildChannels: (guildId: string) => `/guilds/${guildId}/channels` as TypedRoute<{}>,
+  guildActiveThreads: (guildId: string) => `/guilds/${guildId}/threads/active` as TypedRoute<{}>,
+  guildMembers: (guildId: string) => `/guilds/${guildId}/members` as TypedRoute<{}>,
+  guildMembersSearch: (guildId: string) => `/guilds/${guildId}/members/search` as TypedRoute<{}>,
+  guildMember: (guildId: string, userId: string) =>
+    `/guilds/${guildId}/members/${userId}` as TypedRoute<{}>,
+  guildCurrentMember: (guildId: string) => `/guilds/${guildId}/members/@me` as TypedRoute<{}>,
+  guildCurrentMemberNickname: (guildId: string) =>
+    `/guilds/${guildId}/members/@me/nick` as TypedRoute<{}>,
+  guildMemberRole: (guildId: string, userId: string, roleId: string) =>
+    `/guilds/${guildId}/members/${userId}/roles/${roleId}` as TypedRoute<{}>,
+  guildBans: (guildId: string) => `/guilds/${guildId}/bans` as TypedRoute<{}>,
+  guildBan: (guildId: string, userId: string) =>
+    `/guilds/${guildId}/bans/${userId}` as TypedRoute<{}>,
+  guildBulkBan: (guildId: string) => `/guilds/${guildId}/bulk-ban` as TypedRoute<{}>,
+  guildRoles: (guildId: string) => `/guilds/${guildId}/roles` as TypedRoute<{}>,
+  guildRole: (guildId: string, roleId: string) =>
+    `/guilds/${guildId}/roles/${roleId}` as TypedRoute<{}>,
+  guildMfa: (guildId: string) => `/guilds/${guildId}/mfa` as TypedRoute<{}>,
+  guildPrune: (guildId: string) => `/guilds/${guildId}/prune` as TypedRoute<{}>,
+  guildRegions: (guildId: string) => `/guilds/${guildId}/regions` as TypedRoute<{}>,
+  guildInvites: (guildId: string) => `/guilds/${guildId}/invites` as TypedRoute<{}>,
+  guildIntegrations: (guildId: string) => `/guilds/${guildId}/integrations` as TypedRoute<{}>,
+  guildIntegration: (guildId: string, integrationId: string) =>
+    `/guilds/${guildId}/integrations/${integrationId}` as TypedRoute<{}>,
+  guildWidgetSettings: (guildId: string) => `/guilds/${guildId}/widget` as TypedRoute<{}>,
+  guildWidget: (guildId: string) => `/guilds/${guildId}/widget.json` as TypedRoute<{}>,
+  guildVanityUrl: (guildId: string) => `/guilds/${guildId}/vanity-url` as TypedRoute<{}>,
+  guildWidgetImage: (guildId: string) => `/guilds/${guildId}/widget.png` as TypedRoute<{}>,
+  guildWelcomeScreen: (guildId: string) => `/guilds/${guildId}/welcome-screen` as TypedRoute<{}>,
+  guildOnboarding: (guildId: string) => `/guilds/${guildId}/onboarding` as TypedRoute<{}>,
+  standardGateway: () => "/gateway" as TypedRoute<{}>,
+  botGateway: () => "/gateway/bot" as TypedRoute<{}>,
+  channel: (channelId: string) => `/channels/${channelId}` as TypedRoute<{}>,
+  channelPermission: (channelId: string, overwriteId: string) =>
+    `/channels/${channelId}/permissions/${overwriteId}` as TypedRoute<{}>,
+  channelInvites: (channelId: string) => `/channels/${channelId}/invites` as TypedRoute<{}>,
+  channelThreadMembers: (channelId: string) =>
+    `/channels/${channelId}/thread-members` as TypedRoute<{}>,
+  channelThreadMember: (channelId: string, userId: string) =>
+    `/channels/${channelId}/thread-members/${userId}` as TypedRoute<{}>,
+  channelStartThreadWithoutMessage: (channelId: string) =>
+    `/channels/${channelId}/threads` as TypedRoute<{}>,
+  channelPublicArchivedThreads: (channelId: string) =>
+    `/channels/${channelId}/threads/archived/public` as TypedRoute<{}>,
+  channelPrivateArchivedThreads: (channelId: string) =>
+    `/channels/${channelId}/threads/archived/private` as TypedRoute<{}>,
+  channelJoinedPrivateArchivedThreads: (channelId: string) =>
+    `/channels/${channelId}/users/@me/threads/archived/private` as TypedRoute<{}>,
+  channelStartThreadFromMessage: (channelId: string, messageId: string) =>
+    `/channels/${channelId}/messages/${messageId}/threads` as TypedRoute<{}>,
+  channelStartThreadInForumOrMediaChannel: (channelId: string) =>
+    `/channels/${channelId}/threads` as TypedRoute<{}>,
+  channelRecipients: (channelId: string, userId: string) =>
+    `/channels/${channelId}/recipients/${userId}` as TypedRoute<{}>,
+  channelFollowers: (channelId: string) => `/channels/${channelId}/followers` as TypedRoute<{}>,
+  channelTyping: (channelId: string) => `/channels/${channelId}/typing` as TypedRoute<{}>,
+  guildRules: (guildId: string) => `/guilds/${guildId}/auto-moderation/rules` as TypedRoute<{}>,
+  guildRuleById: (guildId: string, ruleId: string) =>
+    `/guilds/${guildId}/auto-moderation/rules/${ruleId}` as TypedRoute<{}>,
+  guildAuditLogs: (guildId: string) => `/guilds/${guildId}/audit-logs` as TypedRoute<{}>,
+  roleConnectionsMetadata: (applicationId: string) =>
+    `/applications/${applicationId}/role-connections/metadata` as TypedRoute<{}>,
+  globalCommands: (applicationId: string) =>
+    `/applications/${applicationId}/commands` as TypedRoute<{}>,
+  globalCommandById: (applicationId: string, commandId: string) =>
+    `/applications/${applicationId}/commands/${commandId}` as TypedRoute<{}>,
+  guildCommands: (applicationId: string, guildId: string) =>
+    `/applications/${applicationId}/guilds/${guildId}/commands` as TypedRoute<{}>,
+  guildCommandById: (applicationId: string, guildId: string, commandId: string) =>
+    `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}` as TypedRoute<{}>,
+  allGuildCommandPermissions: (applicationId: string, guildId: string) =>
+    `/applications/${applicationId}/guilds/${guildId}/commands/permissions` as TypedRoute<{}>,
+  guildCommandPermissionsById: (applicationId: string, guildId: string, commandId: string) =>
+    `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as TypedRoute<{}>,
+  currentApplication: () => "/applications/@me" as TypedRoute<{}>,
+  getActivityInstance: (applicationId: string, instanceId: string) =>
+    `/applications/${applicationId}/activity-instances/${instanceId}` as TypedRoute<{}>,
 } as const satisfies Record<string, (...args: readonly string[]) => TypedRoute>;

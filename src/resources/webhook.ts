@@ -95,17 +95,3 @@ export type RESTWebhookMessageEditJSONParams =
 export interface RESTWebhookMessageQueryStringParams {
   thread_id?: string;
 }
-
-export const WebhookRoutes = {
-  channelWebhooks: (channelId: string) => `/channels/${channelId}/webhooks` as const,
-  guildWebhooks: (guildId: string) => `/guilds/${guildId}/webhooks` as const,
-  webhook: (webhookId: string) => `/webhooks/${webhookId}` as const,
-  webhookWithToken: (webhookId: string, token: string) =>
-    `/webhooks/${webhookId}/${token}` as const,
-  slackWebhook: (webhookId: string, token: string) =>
-    `/webhooks/${webhookId}/${token}/slack` as const,
-  githubWebhook: (webhookId: string, token: string) =>
-    `/webhooks/${webhookId}/${token}/github` as const,
-  webhookMessage: (webhookId: string, token: string, messageId: string) =>
-    `/webhooks/${webhookId}/${token}/messages/${messageId}` as const,
-} as const satisfies RouteBuilder;

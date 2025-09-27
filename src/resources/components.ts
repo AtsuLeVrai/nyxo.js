@@ -1,5 +1,5 @@
-import type { ChannelType } from "../channel/index.js";
-import type { EmojiEntity } from "../emoji/index.js";
+import type { ChannelType } from "./channel.js";
+import type { EmojiObject } from "./emoji.js";
 
 export enum ComponentType {
   ActionRow = 1,
@@ -52,7 +52,7 @@ export interface SelectMenuOptionEntity {
   label: string;
   value: string;
   description?: string;
-  emoji?: Pick<EmojiEntity, "id" | "name" | "animated">;
+  emoji?: Pick<EmojiObject, "id" | "name" | "animated">;
   default?: boolean;
 }
 
@@ -61,7 +61,7 @@ export interface ButtonEntity {
   id?: number;
   style: ButtonStyle;
   label?: string;
-  emoji?: Pick<EmojiEntity, "id" | "name" | "animated">;
+  emoji?: Pick<EmojiObject, "id" | "name" | "animated">;
   custom_id?: string;
   sku_id?: string;
   url?: string;

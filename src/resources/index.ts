@@ -1,4 +1,3 @@
-export * from "./activity.js";
 export * from "./application.js";
 export * from "./application-commands.js";
 export * from "./application-connection.js";

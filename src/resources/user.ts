@@ -1,5 +1,4 @@
 import type { FileInput, SetNonNullable } from "../utils/index.js";
-import type { ActivityData } from "./activity.js";
 import type { Locale } from "./constants.js";
 import type { GuildMemberEntity, IntegrationEntity } from "./guild.js";
 
@@ -123,6 +122,54 @@ export enum UserFlags {
   BotHttpInteractions = 1 << 19,
   /** Active Developer badge */
   ActiveDeveloper = 1 << 22,
+}
+
+/**
+ * Discord activity types categorizing different kinds of user presence activities.
+ * Determines how activities are displayed in user profiles and presence indicators.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-types} for activity types specification
+ */
+export enum ActivityTypes {
+  /** Playing a game - "Playing {name}" */
+  Game = 0,
+  /** Streaming content - "Streaming {details}" */
+  Streaming = 1,
+  /** Listening to audio - "Listening to {name}" */
+  Listening = 2,
+  /** Watching content - "Watching {name}" */
+  Watching = 3,
+  /** Custom status with emoji and text - "{emoji} {state}" */
+  Custom = 4,
+  /** Competing in an event - "Competing in {name}" */
+  Competing = 5,
+}
+
+/**
+ * Bitfield flags describing activity payload contents and Rich Presence features.
+ * Controls what functionality is available and how the activity should be processed.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-flags} for activity flags specification
+ */
+export enum ActivityFlags {
+  /** Activity is an instanced game session */
+  Instance = 1 << 0,
+  /** Activity supports joining */
+  Join = 1 << 1,
+  /** Activity supports spectating */
+  Spectate = 1 << 2,
+  /** Activity supports join requests */
+  JoinRequest = 1 << 3,
+  /** Activity should be synced */
+  Sync = 1 << 4,
+  /** Activity can be played */
+  Play = 1 << 5,
+  /** Party privacy set to friends only */
+  PartyPrivacyFriends = 1 << 6,
+  /** Party privacy set to voice channel only */
+  PartyPrivacyVoiceChannel = 1 << 7,
+  /** Activity is an embedded application */
+  Embedded = 1 << 8,
 }
 
 /**
@@ -322,9 +369,142 @@ export interface PresenceUpdateObject {
   /** User's overall online status */
   readonly status: Omit<UpdatePresenceStatusType, "invisible">;
   /** List of user's current activities */
-  readonly activities: ActivityData[];
+  readonly activities: ActivityObject[];
   /** Platform-specific status information */
   readonly client_status: ClientStatusObject;
+}
+
+/**
+ * Custom button configuration for Rich Presence activities.
+ * Allows up to 2 clickable buttons with custom labels and URLs.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-buttons} for activity buttons specification
+ */
+export interface ActivityButtonsObject {
+  /** Button text displayed to users (1-32 characters) */
+  readonly label: string;
+  /** URL opened when button is clicked (1-512 characters) */
+  readonly url: string;
+}
+
+/**
+ * Secret tokens for Rich Presence joining and spectating functionality.
+ * Enables users to join games or spectate matches through Discord integration.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-secrets} for activity secrets specification
+ */
+export interface ActivitySecretsObject {
+  /** Secret for joining a party or game session */
+  readonly join?: string;
+  /** Secret for spectating a game */
+  readonly spectate?: string;
+  /** Secret for a specific instanced match */
+  readonly match?: string;
+}
+
+/**
+ * Asset configuration for Rich Presence images and hover text.
+ * Supports both application assets and external images via media proxy.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-assets} for activity assets specification
+ */
+export interface ActivityAssetsObject {
+  /** Text displayed when hovering over the large image */
+  readonly large_text?: string;
+  /** Large image asset ID or media proxy URL */
+  readonly large_image?: string;
+  /** URL opened when clicking on the large image */
+  readonly large_url?: string;
+  /** Text displayed when hovering over the small image */
+  readonly small_text?: string;
+  /** Small image asset ID or media proxy URL */
+  readonly small_image?: string;
+  /** URL opened when clicking on the small image */
+  readonly small_url?: string;
+}
+
+/**
+ * Party information for multiplayer Rich Presence activities.
+ * Displays current party size and maximum capacity for group activities.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-party} for activity party specification
+ */
+export interface ActivityPartyObject {
+  /** Unique identifier for the party session */
+  readonly id?: string;
+  /** Current and maximum party size as [current_size, max_size] */
+  readonly size?: [currentSize: number, maxSize: number];
+}
+
+/**
+ * Emoji data for custom status activities.
+ * Supports both standard Unicode emoji and custom guild emoji.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-emoji} for activity emoji specification
+ */
+export interface ActivityEmojiObject {
+  /** Name of the emoji (Unicode character or custom emoji name) */
+  readonly name: string;
+  /** Custom emoji ID (null for Unicode emoji) */
+  readonly id?: string;
+  /** Whether the custom emoji is animated */
+  readonly animated?: boolean;
+}
+
+/**
+ * Timestamp information for activity duration and progress tracking.
+ * Enables time-based displays like elapsed time or remaining duration.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-timestamps} for activity timestamps specification
+ */
+export interface ActivityTimestampsObject {
+  /** Unix timestamp (in milliseconds) when the activity started */
+  readonly start?: number;
+  /** Unix timestamp (in milliseconds) when the activity will end */
+  readonly end?: number;
+}
+
+/**
+ * Discord activity object representing user presence and Rich Presence data.
+ * Activities show what users are doing and provide interactive features for games.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object} for activity object specification
+ */
+export interface ActivityObject {
+  /** Activity name displayed in presence */
+  readonly name: string;
+  /** Type of activity determining display format */
+  readonly type: ActivityTypes;
+  /** Stream URL (validated when type is Streaming) */
+  readonly url?: string | null;
+  /** Unix timestamp (in milliseconds) when activity was added to session */
+  readonly created_at: number;
+  /** Start and end timestamps for activity duration */
+  readonly timestamps?: ActivityTimestampsObject;
+  /** Application ID for the activity */
+  readonly application_id?: string;
+  /** What the user is currently doing in the activity */
+  readonly details?: string | null;
+  /** URL linked when clicking on details text */
+  readonly details_url?: string | null;
+  /** User's current party status or custom status text */
+  readonly state?: string | null;
+  /** URL linked when clicking on state text */
+  readonly state_url?: string | null;
+  /** Emoji used for custom status activities */
+  readonly emoji?: ActivityEmojiObject | null;
+  /** Information about the user's current party */
+  readonly party?: ActivityPartyObject;
+  /** Images and hover texts for Rich Presence */
+  readonly assets?: ActivityAssetsObject;
+  /** Secrets for Rich Presence joining and spectating */
+  readonly secrets?: ActivitySecretsObject;
+  /** Whether activity is an instanced game session */
+  readonly instance?: boolean;
+  /** Activity flags describing payload contents */
+  readonly flags?: ActivityFlags;
+  /** Custom buttons for Rich Presence (max 2) */
+  readonly buttons?: ActivityButtonsObject[];
 }
 
 /**

@@ -1,9 +1,3 @@
-import type { FileInput, Rest } from "../core/index.js";
-import type { OAuth2Scope } from "../enum/index.js";
-import type { GuildEntity } from "./guild/index.js";
-import type { TeamEntity } from "./team/index.js";
-import type { UserEntity } from "./user/index.js";
-
 export enum ApplicationFlags {
   ApplicationAutoModerationRuleCreateBadge = 1 << 6,
   GatewayPresence = 1 << 12,
@@ -111,39 +105,4 @@ export interface ApplicationUpdateOptions {
     | ApplicationEventWebhookStatus.Disabled
     | ApplicationEventWebhookStatus.Enabled;
   event_webhooks_types?: string[];
-}
-
-export class ApplicationRouter {
-  static readonly Routes = {
-    currentApplicationEndpoint: () => "/applications/@me" as const,
-    getActivityInstanceEndpoint: (applicationId: string, instanceId: string) =>
-      `/applications/${applicationId}/activity-instances/${instanceId}` as const,
-  } as const satisfies Record<string, (...args: any[]) => string>;
-  readonly #rest: Rest;
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-  fetchCurrentApplication(): Promise<ApplicationEntity> {
-    return this.#rest.get(ApplicationRouter.Routes.currentApplicationEndpoint());
-  }
-  async updateCurrentApplication(options: ApplicationUpdateOptions): Promise<ApplicationEntity> {
-    const processedOptions = { ...options };
-    if (processedOptions.icon) {
-      processedOptions.icon = await this.#rest.toDataUri(processedOptions.icon);
-    }
-    if (processedOptions.cover_image) {
-      processedOptions.cover_image = await this.#rest.toDataUri(processedOptions.cover_image);
-    }
-    return this.#rest.patch(ApplicationRouter.Routes.currentApplicationEndpoint(), {
-      body: JSON.stringify(processedOptions),
-    });
-  }
-  fetchActivityInstance(
-    applicationId: string,
-    instanceId: string,
-  ): Promise<ActivityInstanceEntity> {
-    return this.#rest.get(
-      ApplicationRouter.Routes.getActivityInstanceEndpoint(applicationId, instanceId),
-    );
-  }
 }

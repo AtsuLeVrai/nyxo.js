@@ -1,5 +1,4 @@
 import { EventEmitter } from "eventemitter3";
-import QuickLRU from "quick-lru";
 import { z } from "zod";
 import type {
   GuildCreateEntity,
@@ -7,7 +6,7 @@ import type {
   UnavailableGuildEntity,
 } from "../../resources/index.js";
 import { sleep } from "../../utils/index.js";
-import type { Rest } from "../rest/index.js";
+import type { Rest } from "../rest.js";
 import { Gateway, GatewayConnectionState, type GatewayOptions } from "./gateway.js";
 import type {
   GatewayReceiveEvents,
@@ -56,7 +55,7 @@ export class ShardManager extends EventEmitter<ShardManagerEvents> {
   readonly #gatewayOptions: z.input<typeof GatewayOptions>;
   readonly #shardOptions: z.infer<typeof ShardManagerOptions>;
 
-  #shards = new QuickLRU<number, ShardInfo>({ maxSize: 16 });
+  #shards = new Map<number, ShardInfo>();
   #maxConcurrency = 1;
   #isSpawning = false;
 
@@ -77,14 +76,6 @@ export class ShardManager extends EventEmitter<ShardManagerEvents> {
       }
       throw error;
     }
-  }
-
-  get shards(): QuickLRU<number, ShardInfo> {
-    return this.#shards;
-  }
-
-  get totalShards(): number {
-    return this.#shards.size;
   }
 
   get readyShards(): number {
