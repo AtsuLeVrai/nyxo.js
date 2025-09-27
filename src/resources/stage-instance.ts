@@ -1,55 +1,62 @@
-import type { SetNonNullable } from "type-fest";
+import type { SetNonNullable } from "../utils/index.js";
 
+/**
+ * Privacy levels that control visibility and discovery of Stage instances.
+ * Determines who can view and participate in live Stage channel events.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object-privacy-level} for privacy level specification
+ */
 export enum PrivacyLevel {
+  /** Stage instance is visible publicly (deprecated, no longer recommended) */
   Public = 1,
+  /** Stage instance is visible only to guild members */
   GuildOnly = 2,
 }
 
+/**
+ * Live Stage instance containing information about an active Stage channel event.
+ * Represents ongoing presentations, discussions, or performances in Stage channels.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object} for stage instance specification
+ */
 export interface StageInstanceObject {
-  id: string;
-  guild_id: string;
-  channel_id: string;
-  topic: string;
-  privacy_level: PrivacyLevel;
-  discoverable_disabled: boolean;
-  guild_scheduled_event_id: string | null;
+  /** Unique identifier for this Stage instance */
+  readonly id: string;
+  /** Guild containing the Stage channel */
+  readonly guild_id: string;
+  /** Stage channel where this instance is active */
+  readonly channel_id: string;
+  /** Topic or title of the Stage instance (1-120 characters) */
+  readonly topic: string;
+  /** Privacy level controlling instance visibility */
+  readonly privacy_level: PrivacyLevel;
+  /** Whether Stage Discovery is disabled (deprecated feature) */
+  readonly discoverable_disabled: boolean;
+  /** Associated scheduled event ID if created from an event */
+  readonly guild_scheduled_event_id: string | null;
 }
 
+/**
+ * Parameters for creating a new Stage instance on a Stage channel.
+ * Requires moderator permissions and supports optional notification settings.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance} for create stage instance endpoint
+ */
 export interface CreateStageInstanceJSONParams
   extends Pick<StageInstanceObject, "channel_id" | "topic">,
     Partial<
       SetNonNullable<Pick<StageInstanceObject, "privacy_level" | "guild_scheduled_event_id">>
     > {
-  send_start_notification?: boolean;
+  /** Whether to notify @everyone that Stage instance has started (requires MENTION_EVERYONE permission) */
+  readonly send_start_notification?: boolean;
 }
 
+/**
+ * Parameters for modifying an existing Stage instance.
+ * Supports partial updates to topic and privacy level only.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance} for modify stage instance endpoint
+ */
 export type ModifyStageInstanceJSONParams = Partial<
   Pick<CreateStageInstanceJSONParams, "topic" | "privacy_level">
 >;
-
-/**
- * Checks if a stage instance is discoverable
- * @param stageInstance The stage instance to check
- * @returns true if discovery is not disabled
- */
-export function isStageDiscoverable(stageInstance: StageInstanceObject): boolean {
-  return !stageInstance.discoverable_disabled;
-}
-
-/**
- * Checks if a stage instance is public
- * @param stageInstance The stage instance to check
- * @returns true if the stage is public (deprecated)
- */
-export function isStagePublic(stageInstance: StageInstanceObject): boolean {
-  return stageInstance.privacy_level === PrivacyLevel.Public;
-}
-
-/**
- * Checks if a stage instance has an associated scheduled event
- * @param stageInstance The stage instance to check
- * @returns true if there's an associated scheduled event
- */
-export function hasScheduledEvent(stageInstance: StageInstanceObject): boolean {
-  return stageInstance.guild_scheduled_event_id !== null;
-}

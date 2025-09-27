@@ -1,66 +1,52 @@
+/**
+ * Bitfield flags defining SKU availability and subscription access levels.
+ * Controls purchase availability and determines subscription scope (user vs guild).
+ *
+ * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-flags} for SKU flags specification
+ */
 export enum SKUFlags {
+  /** SKU is available for purchase */
   Available = 1 << 2,
+  /** Recurring SKU purchasable by user and applied to single server (all server members get benefits) */
   GuildSubscription = 1 << 7,
+  /** Recurring SKU purchased by user for themselves (benefits apply in every server) */
   UserSubscription = 1 << 8,
 }
 
+/**
+ * Categories of premium offerings available through Discord's monetization system.
+ * Defines purchase behavior, durability, and subscription characteristics.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-types} for SKU types specification
+ */
 export enum SKUTypes {
+  /** One-time purchase that persists permanently */
   Durable = 2,
+  /** One-time purchase that can be consumed/used up */
   Consumable = 3,
+  /** Recurring subscription with periodic billing */
   Subscription = 5,
+  /** System-generated group for subscription SKUs (not used directly) */
   SubscriptionGroup = 6,
 }
 
+/**
+ * Stock Keeping Unit representing a premium offering for Discord applications.
+ * Defines purchasable content, features, or subscriptions available to users or guilds.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/sku#sku-object} for SKU object specification
+ */
 export interface SKUObject {
-  id: string;
-  type: SKUTypes;
-  application_id: string;
-  name: string;
-  slug: string;
-  flags: SKUFlags;
-}
-
-/**
- * Checks if an SKU is available for purchase
- * @param sku The SKU to check
- * @returns true if the SKU is available
- */
-export function isSKUAvailable(sku: SKUObject): boolean {
-  return (sku.flags & SKUFlags.Available) === SKUFlags.Available;
-}
-
-/**
- * Checks if an SKU is a guild subscription
- * @param sku The SKU to check
- * @returns true if it's a guild subscription
- */
-export function isGuildSubscription(sku: SKUObject): boolean {
-  return (sku.flags & SKUFlags.GuildSubscription) === SKUFlags.GuildSubscription;
-}
-
-/**
- * Checks if an SKU is a user subscription
- * @param sku The SKU to check
- * @returns true if it's a user subscription
- */
-export function isUserSubscription(sku: SKUObject): boolean {
-  return (sku.flags & SKUFlags.UserSubscription) === SKUFlags.UserSubscription;
-}
-
-/**
- * Checks if an SKU is a subscription type
- * @param sku The SKU to check
- * @returns true if the SKU is any kind of subscription
- */
-export function isSubscriptionSKU(sku: SKUObject): boolean {
-  return sku.type === SKUTypes.Subscription || sku.type === SKUTypes.SubscriptionGroup;
-}
-
-/**
- * Checks if an SKU is a one-time purchase
- * @param sku The SKU to check
- * @returns true if the SKU is durable or consumable
- */
-export function isOneTimePurchase(sku: SKUObject): boolean {
-  return sku.type === SKUTypes.Durable || sku.type === SKUTypes.Consumable;
+  /** Unique identifier for the SKU */
+  readonly id: string;
+  /** Category defining purchase behavior and subscription characteristics */
+  readonly type: SKUTypes;
+  /** Parent application that owns this SKU */
+  readonly application_id: string;
+  /** Customer-facing name of the premium offering */
+  readonly name: string;
+  /** System-generated URL slug based on SKU name */
+  readonly slug: string;
+  /** Bitfield of availability and subscription access level flags */
+  readonly flags: SKUFlags;
 }

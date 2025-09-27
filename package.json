@@ -48,9 +48,6 @@
   },
   "dependencies": {
     "eventemitter3": "^5.0.1",
-    "form-data": "^4.0.4",
-    "mime-types": "^3.0.1",
-    "quick-lru": "^7.2.0",
     "undici": "^7.16.0",
     "ws": "^8.18.3",
     "zod": "^4.1.11"
@@ -62,12 +59,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
-    "@types/mime-types": "^3.0.1",
     "@types/node": "^24.5.2",
     "@types/ws": "^8.18.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.1",
-    "tsdown": "^0.15.4",
+    "tsdown": "^0.15.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },

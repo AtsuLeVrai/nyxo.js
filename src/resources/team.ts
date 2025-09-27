@@ -1,79 +1,74 @@
 import type { UserObject } from "./user.js";
 
+/**
+ * User membership status within a Discord developer team.
+ * Indicates whether a team invitation has been accepted or is still pending.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/teams#data-models-membership-state-enum} for membership state specification
+ */
 export enum MembershipState {
+  /** User has been invited to the team but has not yet accepted */
   Invited = 1,
+  /** User has accepted the team invitation and is an active member */
   Accepted = 2,
 }
 
+/**
+ * Role types that define access levels and permissions within a Discord developer team.
+ * Each role inherits permissions from roles below it in the hierarchy.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/teams#team-member-roles-team-member-role-types} for role permissions specification
+ */
 export enum TeamMemberRole {
+  /**
+   * Admin role with extensive permissions except destructive actions.
+   * Can manage team members and configure team-owned applications.
+   */
   Admin = "admin",
+  /**
+   * Developer role with application access and limited configuration permissions.
+   * Can access secrets and configure interaction endpoints but cannot manage team.
+   */
   Developer = "developer",
+  /**
+   * Read-only role with view-only access to team and application information.
+   * Can export payout records and invite bots from private team-owned apps.
+   */
   ReadOnly = "read_only",
 }
 
+/**
+ * Individual team member information including user details, role, and membership status.
+ * Contains partial user data and team-specific membership information.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-member-object} for team member specification
+ */
 export interface TeamMemberObject {
-  membership_state: MembershipState;
-  team_id: string;
-  user: Pick<UserObject, "id" | "username" | "discriminator" | "avatar">;
-  role: TeamMemberRole;
+  /** Current membership status indicating invitation or acceptance state */
+  readonly membership_state: MembershipState;
+  /** Unique identifier of the parent team */
+  readonly team_id: string;
+  /** Partial user object containing essential identity information */
+  readonly user: Pick<UserObject, "id" | "username" | "discriminator" | "avatar">;
+  /** Team role determining permissions and access level */
+  readonly role: TeamMemberRole;
 }
 
+/**
+ * Discord developer team containing collaborative access to applications and settings.
+ * Teams enable multiple developers to share app management, configuration, and payout access.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-object} for team object specification
+ */
 export interface TeamObject {
-  icon: string | null;
-  id: string;
-  members: TeamMemberObject[];
-  name: string;
-  owner_user_id: string;
-}
-
-/**
- * Checks if a team member has admin privileges (Admin or Owner)
- * @param teamMember The team member to check
- * @param team The team object to check ownership
- * @returns true if the member is an admin or owner
- */
-export function hasAdminPrivileges(teamMember: TeamMemberObject, team: TeamObject): boolean {
-  return teamMember.role === TeamMemberRole.Admin || teamMember.user.id === team.owner_user_id;
-}
-
-/**
- * Checks if a team member is the team owner
- * @param teamMember The team member to check
- * @param team The team object to check ownership
- * @returns true if the member is the team owner
- */
-export function isTeamOwner(teamMember: TeamMemberObject, team: TeamObject): boolean {
-  return teamMember.user.id === team.owner_user_id;
-}
-
-/**
- * Checks if a team member has accepted their invitation
- * @param teamMember The team member to check
- * @returns true if the member has accepted their invitation
- */
-export function hasAcceptedInvitation(teamMember: TeamMemberObject): boolean {
-  return teamMember.membership_state === MembershipState.Accepted;
-}
-
-/**
- * Gets the team member with developer privileges or higher
- * @param team The team to check
- * @returns array of team members with developer, admin, or owner privileges
- */
-export function getDeveloperMembers(team: TeamObject): TeamMemberObject[] {
-  return team.members.filter(
-    (member) =>
-      member.role === TeamMemberRole.Developer ||
-      member.role === TeamMemberRole.Admin ||
-      member.user.id === team.owner_user_id,
-  );
-}
-
-/**
- * Gets all active (accepted) team members
- * @param team The team to check
- * @returns array of team members who have accepted their invitation
- */
-export function getActiveMembers(team: TeamObject): TeamMemberObject[] {
-  return team.members.filter((member) => member.membership_state === MembershipState.Accepted);
+  /** Team icon hash for image formatting (null if no icon set) */
+  readonly icon: string | null;
+  /** Unique identifier for the team */
+  readonly id: string;
+  /** Array of all team members with their roles and status */
+  readonly members: TeamMemberObject[];
+  /** Display name of the team */
+  readonly name: string;
+  /** User ID of the team owner with full administrative privileges */
+  readonly owner_user_id: string;
 }

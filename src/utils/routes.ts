@@ -26,6 +26,7 @@ import type {
   GuildScheduledEventObject,
   GuildScheduledEventUserObject,
   GuildTemplateObject,
+  HttpResponseCodes,
   LinkChannelLobbyJSONParams,
   ListApplicationEmojisResponse,
   ListEntitlementsQueryStringParams,
@@ -66,7 +67,7 @@ export interface HttpOperationDefinition {
   readonly headers?: Record<string, string>;
   readonly response?: object;
   readonly responseHeaders?: Record<string, string>;
-  readonly statusCodes?: readonly number[];
+  readonly statusCodes?: HttpResponseCodes[];
 }
 
 export type HttpRouteSchema<
@@ -75,16 +76,12 @@ export type HttpRouteSchema<
   TPut extends HttpOperationDefinition = HttpOperationDefinition,
   TPatch extends HttpOperationDefinition = HttpOperationDefinition,
   TDelete extends HttpOperationDefinition = HttpOperationDefinition,
-  THead extends HttpOperationDefinition = HttpOperationDefinition,
-  TOptions extends HttpOperationDefinition = HttpOperationDefinition,
 > = {
   readonly GET?: TGet;
   readonly POST?: TPost;
   readonly PUT?: TPut;
   readonly PATCH?: TPatch;
   readonly DELETE?: TDelete;
-  readonly HEAD?: THead;
-  readonly OPTIONS?: TOptions;
 };
 
 export type TypedRoute<TSchema extends HttpRouteSchema = HttpRouteSchema> = string & {
@@ -92,33 +89,36 @@ export type TypedRoute<TSchema extends HttpRouteSchema = HttpRouteSchema> = stri
   readonly __brand: "TypedRoute";
 };
 
-export type ExtractRequestBody<T extends HttpOperationDefinition> = T extends { body: infer TBody }
-  ? TBody
-  : never;
+export type ExtractRequestBody<T extends HttpOperationDefinition | undefined> =
+  T extends HttpOperationDefinition ? (T extends { body: infer TBody } ? TBody : never) : never;
 
-export type ExtractResponseBody<T extends HttpOperationDefinition> = T extends {
-  response: infer TResponse;
-}
-  ? TResponse
-  : never;
+export type ExtractResponseBody<T extends HttpOperationDefinition | undefined> =
+  T extends HttpOperationDefinition
+    ? T extends { readonly response: infer TResponse }
+      ? TResponse
+      : never
+    : never;
 
-export type ExtractQueryParams<T extends HttpOperationDefinition> = T extends {
-  query: infer TQuery;
-}
-  ? TQuery
-  : never;
+export type ExtractQueryParams<T extends HttpOperationDefinition | undefined> =
+  T extends HttpOperationDefinition
+    ? T extends { readonly query: infer TQuery }
+      ? TQuery
+      : never
+    : never;
 
-export type ExtractRequestHeaders<T extends HttpOperationDefinition> = T extends {
-  headers: infer THeaders;
-}
-  ? THeaders
-  : never;
+export type ExtractRequestHeaders<T extends HttpOperationDefinition | undefined> =
+  T extends HttpOperationDefinition
+    ? T extends { readonly headers: infer THeaders }
+      ? THeaders
+      : never
+    : never;
 
-export type ExtractResponseHeaders<T extends HttpOperationDefinition> = T extends {
-  responseHeaders: infer THeaders;
-}
-  ? THeaders
-  : never;
+export type ExtractResponseHeaders<T extends HttpOperationDefinition | undefined> =
+  T extends HttpOperationDefinition
+    ? T extends { readonly responseHeaders: infer THeaders }
+      ? THeaders
+      : never
+    : never;
 
 export const Routes = {
   guildEmojis: (guildId: string) =>
