@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "@nyxojs/types",
+  "homepage": "https://github.com/nyxo-labs/nyxo.js",
+  "readme": "README.md",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nyxo-labs/nyxo.js"
+  },
+  "bugs": {
+    "url": "https://github.com/nyxo-labs/nyxo.js/issues"
+  },
+  "author": {
+    "name": "AtsuLeVrai",
+    "url": "https://github.com/AtsuLeVrai"
+  },
+  "scripts": {
+    "dev": "tsc -p tsconfig.json",
+    "build": "tsdown",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.2",
+    "tsdown": "^0.15.6",
+    "typescript": "^5.9.3"
+  }
+}

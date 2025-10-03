@@ -1,20 +1,47 @@
 {
-  "name": "my-turborepo",
+  "$schema": "https://json.schemastore.org/package",
+  "name": "@nyxojs/root",
   "private": true,
+  "packageManager": "pnpm@10.18.0",
+  "homepage": "https://github.com/nyxo-labs/nyxo.js",
+  "readme": "README.md",
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nyxo-labs/nyxo.js"
+  },
+  "bugs": {
+    "url": "https://github.com/nyxo-labs/nyxo.js/issues"
+  },
+  "author": {
+    "name": "AtsuLeVrai",
+    "url": "https://github.com/AtsuLeVrai"
+  },
   "scripts": {
-    "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "build": "turbo run build",
+    "type-check": "turbo run type-check",
+    "test": "vitest run",
+    "biome:check": "biome check --unsafe --write",
+    "submodules:init": "git submodule update --init --recursive",
+    "submodules:update": "git submodule update --force --remote",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
+    "@biomejs/biome": "^2.2.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.3",
     "turbo": "^2.5.8",
-    "typescript": "5.9.2"
+    "vitest": "^3.2.4"
   },
-  "packageManager": "pnpm@9.0.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=24",
+    "pnpm": ">=10"
+  },
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --unsafe --write"
+    ]
   }
 }

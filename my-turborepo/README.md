@@ -1,135 +1,239 @@
-# Turborepo starter
+# Nyxo.js
 
-This Turborepo starter is maintained by the Turborepo core team.
+**Ultra-Fast Bare Metal Discord Library for TypeScript**
 
-## Using this example
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/nyxo-labs/nyxo.js/blob/main/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24+-green.svg)](https://nodejs.org/)
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
-```
+## Philosophy
 
-## What's inside?
+Nyxo.js is designed for developers who demand **maximum performance** and **complete control** over their Discord
+applications. Unlike traditional Discord libraries, Nyxo.js provides zero-overhead access to the Discord API with no
+hidden abstractions or automatic caching.
 
-This Turborepo includes the following packages/apps:
+**Core Principles:**
 
-### Apps and Packages
+- **Bare Metal Performance**: Zero overhead, direct access to raw Discord payloads
+- **Total User Control**: You decide what to cache, how to store state, and when to process events
+- **No Magic**: Every operation is explicit and predictable
+- **Production Ready**: Built-in rate limiting, circuit breakers, and automatic reconnection
+- **Memory Efficient**: No classes consuming memory, only pure functions when needed
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Architecture
 
-### Utilities
+### Pure Event System
 
-This Turborepo has some additional tools already setup for you:
+Raw Discord gateway events are delivered directly to your handlers with zero processing overhead. No wrapper classes, no
+automatic caching, just the raw JSON payloads from Discord.
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### Organized HTTP Routers
 
-### Build
+Clean, organized routers for Discord's REST API endpoints. Rate limiting and resilience patterns are handled
+transparently while maintaining direct access to all Discord features.
 
-To build all apps and packages, run the following command:
+### Utility Helpers
 
-```
-cd my-turborepo
+Pure functions for common operations like permission calculations, snowflake parsing, and data formatting. Use only what
+you need, when you need it.
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+### Intelligent Gateway Management
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+Automatic WebSocket reconnection, heartbeat management, and session resumption with minimal configuration. The gateway
+stays connected while giving you complete control over event handling.
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+## Key Features
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+### 🚀 Zero-Overhead Events
 
-### Develop
+- Direct access to raw Discord payloads
+- No wrapper classes or automatic processing
+- Optional event filtering for maximum efficiency
+- Predictable memory usage
 
-To develop all apps and packages, run the following command:
+### ⚡ HTTP Performance
 
-```
-cd my-turborepo
+- Advanced rate limiting with bucket management
+- Circuit breaker patterns for resilience
+- Automatic retry with exponential backoff
+- Connection pooling for optimal throughput
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+### 🎯 Developer Experience
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+- Complete TypeScript coverage with strict null safety
+- ESM-only modern architecture
+- Comprehensive Discord API type definitions
+- Minimal learning curve for Discord API veterans
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### 🛡️ Production Hardened
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+- Battle-tested rate limiting algorithms
+- Intelligent WebSocket reconnection
+- Memory leak prevention
+- Graceful error handling and recovery
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+---
 
-### Remote Caching
+## Use Cases
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+### High-Performance Bots
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+Perfect for bots handling thousands of guilds where every millisecond matters. No automatic caching means you can
+implement exactly the caching strategy your application needs.
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+### Microservices
 
-```
-cd my-turborepo
+Ideal for Discord-integrated microservices where you need lightweight, focused functionality without the overhead of a
+full-featured Discord client.
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+### Custom Applications
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+Built for developers who understand the Discord API and want direct access without layers of abstraction getting in the
+way.
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Analytics and Monitoring
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+Excellent for applications that process large volumes of Discord events where performance and memory efficiency are
+critical.
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
+---
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
+## Quick Start
 
-## Useful Links
+### 1. Event-Driven Approach
 
-Learn more about the power of Turborepo:
+Register pure event handlers that receive raw Discord payloads. You decide what to do with the data - cache it, process
+it, or ignore it entirely.
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+### 2. HTTP Operations
+
+Use organized routers to interact with Discord's REST API. Rate limiting and error handling are transparent, but you
+maintain full control over request timing and data processing.
+
+### 3. State Management
+
+Implement your own caching and state management. Use Redis, SQLite, in-memory Maps, or any storage solution that fits
+your needs.
+
+### 4. Helper Functions
+
+Leverage pure utility functions for common operations like permission checks, snowflake parsing, and data formatting.
+
+---
+
+## Performance Characteristics
+
+### Memory Usage
+
+- **Events**: Zero allocation overhead - raw payloads only
+- **HTTP**: Connection pooling with configurable limits
+- **Caching**: User-controlled - implement exactly what you need
+- **Types**: Compile-time only - no runtime overhead
+
+### Throughput
+
+- **Events**: Handle thousands of events per second
+- **HTTP**: Intelligent rate limiting prevents 429 errors
+- **Gateway**: Automatic reconnection with exponential backoff
+- **Scaling**: Shard management for large applications
+
+---
+
+## Advanced Features
+
+### Rate Limiting
+
+Sophisticated rate limiting that respects Discord's global and per-route limits. Automatic handling of 429 responses
+with intelligent backoff strategies.
+
+### Circuit Breakers
+
+Built-in circuit breaker patterns prevent cascade failures and provide graceful degradation when Discord's API is
+experiencing issues.
+
+### Shard Management
+
+Automatic shard calculation and management for large bots. Handle guild distribution and cross-shard communication with
+ease.
+
+### Type Safety
+
+Comprehensive TypeScript definitions for all Discord API objects, ensuring type safety throughout your application.
+
+---
+
+## Comparison
+
+| Feature                  | Nyxo.js                        | Traditional Libraries   |
+|--------------------------|--------------------------------|-------------------------|
+| **Memory Overhead**      | Zero                           | High (classes, caches)  |
+| **Event Processing**     | Raw payloads                   | Wrapped objects         |
+| **Caching Strategy**     | User-controlled                | Automatic               |
+| **Performance**          | Maximum                        | Good                    |
+| **Learning Curve**       | Discord API knowledge required | Abstracted              |
+| **Flexibility**          | Complete control               | Limited by abstractions |
+| **Production Readiness** | Built-in resilience            | Varies                  |
+
+---
+
+## Architecture Decisions
+
+### Why No Automatic Caching?
+
+Automatic caching creates memory pressure and forces architectural decisions on your application. Nyxo.js lets you
+implement exactly the caching strategy your use case requires.
+
+### Why Raw Events?
+
+Processing Discord events into wrapper classes consumes CPU cycles and memory. Raw events give you maximum performance
+and the flexibility to process only what you need.
+
+### Why Routers Instead of Methods?
+
+Organized routers provide better IntelliSense, clearer organization, and easier maintenance while preserving direct
+access to all Discord API features.
+
+### Why Pure Functions?
+
+Pure helper functions have no state, consume no memory when not in use, and are easily testable and debuggable.
+
+---
+
+## Contributing
+
+We welcome contributions that align with our performance-first philosophy. Please ensure all contributions maintain
+zero-overhead principles and provide meaningful performance benefits.
+
+### Development Principles
+
+- Performance over convenience
+- Explicit over implicit
+- User control over automation
+- Type safety throughout
+
+---
+
+## License
+
+Apache License 2.0 - See [LICENSE](LICENSE) for details.
+
+---
+
+## Support
+
+- **Documentation**: Coming soon
+- **Issues**: [GitHub Issues](https://github.com/nyxo-labs/nyxo.js/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/nyxo-labs/nyxo.js/discussions)
+
+---
+
+*"Maximum performance, zero compromise. Built for developers who understand the Discord API and demand complete control
+over their applications."*
+
+**AtsuLeVrai** - 2025
