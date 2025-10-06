@@ -216,15 +216,17 @@ export async function createFormData(
 ): Promise<FormData> {
   const filesArray = Array.isArray(files) ? files : [files];
 
-  validateFileCount(filesArray);
+  if (files.length > MAX_FILE_COUNT) {
+    throw new Error(`Too many files: ${files.length} (max: ${MAX_FILE_COUNT})`);
+  }
 
   const form = new FormData();
 
   for (let i = 0; i < filesArray.length; i++) {
     const processed = await processFile(filesArray[i] as FileInput);
 
-    if (processed.size !== null) {
-      validateFileSize(processed.size);
+    if (processed.size !== null && processed.size > MAX_FILE_SIZE) {
+      throw new Error(`File too large: ${processed.size} bytes (max: ${MAX_FILE_SIZE})`);
     }
 
     const fieldName = filesArray.length === 1 ? "file" : `files[${i}]`;
@@ -250,30 +252,4 @@ export async function createFormData(
   }
 
   return form;
-}
-
-/**
- * Validates that file count does not exceed Discord API limits.
- * Prevents requests that would be rejected due to too many attachments.
- *
- * @param files - Array of files to validate
- * @throws {Error} When file count exceeds MAX_FILE_COUNT limit
- */
-export function validateFileCount(files: FileInput[]): void {
-  if (files.length > MAX_FILE_COUNT) {
-    throw new Error(`Too many files: ${files.length} (max: ${MAX_FILE_COUNT})`);
-  }
-}
-
-/**
- * Validates that individual file size does not exceed Discord API limits.
- * Prevents uploads that would be rejected due to size constraints.
- *
- * @param size - File size in bytes to validate
- * @throws {Error} When file size exceeds MAX_FILE_SIZE limit
- */
-export function validateFileSize(size: number): void {
-  if (size > MAX_FILE_SIZE) {
-    throw new Error(`File too large: ${size} bytes (max: ${MAX_FILE_SIZE})`);
-  }
 }

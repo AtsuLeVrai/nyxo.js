@@ -1,7 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "nyxo.js",
-  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
+  "gypfile": true,
+  "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34",
   "homepage": "https://github.com/nyxo-labs/nyxo.js",
   "readme": "README.md",
   "license": "Apache-2.0",
@@ -37,9 +38,11 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
+    "install": "node-gyp rebuild",
     "biome:check": "biome check --unsafe --write",
     "build:dev": "tsc -p tsconfig.json",
     "build:prod": "tsdown",
+    "build:native": "node-gyp configure build",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "submodules:init": "git submodule update --init --recursive",
@@ -47,24 +50,35 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "deepmerge-ts": "^7.1.5",
     "eventemitter3": "^5.0.1",
+    "file-type": "^21.0.0",
+    "mime-types": "^3.0.1",
+    "node-addon-api": "^8.5.0",
+    "prism-media": "^1.3.5",
+    "quick-lru": "^7.2.0",
+    "reflect-metadata": "^0.2.2",
+    "sharp": "^0.34.4",
+    "type-fest": "^5.0.1",
     "undici": "^7.16.0",
     "ws": "^8.18.3",
-    "zod": "^4.1.11"
+    "zod": "^4.1.12"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.9",
     "erlpack": "^0.1.4",
-    "zlib-sync": "^0.1.10"
+    "ffmpeg-static": "^5.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
-    "@types/node": "^24.5.2",
+    "@biomejs/biome": "^2.2.5",
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^24.7.0",
     "@types/ws": "^8.18.1",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.1",
-    "tsdown": "^0.15.5",
-    "typescript": "^5.9.2",
+    "lint-staged": "^16.2.3",
+    "node-gyp": "^11.4.2",
+    "tsdown": "^0.15.6",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
   "lint-staged": {

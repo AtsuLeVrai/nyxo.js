@@ -1,4 +1,4 @@
-import { request } from "undici";
+import { Pool } from "undici";
 import { z } from "zod";
 import { ApiVersion, type HttpResponseCodes } from "../resources/index.js";
 import {
@@ -57,12 +57,14 @@ export const RestOptions = z.object({
     .regex(DISCORD_USER_AGENT_REGEX)
     .default("DiscordBot (https://github.com/AtsuLeVrai/nyxo.js, 1.0.0)"),
   baseUrl: z.url().default("https://discord.com"),
+  timeout: z.number().positive().default(15000),
   maxInvalidRequestsPer10Min: z.int().positive().default(10000),
   maxGlobalRequestsPerSecond: z.int().positive().default(50),
   respectRateLimits: z.boolean().default(true),
 });
 
 export class Rest {
+  private readonly pool: Pool;
   private readonly options: z.infer<typeof RestOptions>;
 
   private readonly buckets = new Map<string, BucketState>();
@@ -81,6 +83,8 @@ export class Rest {
       }
       throw error;
     }
+
+    this.pool = new Pool(this.options.baseUrl);
   }
 
   async request<T>(options: HttpRequestOptions): Promise<T> {
@@ -160,7 +164,8 @@ export class Rest {
     return this.request({ ...options, method: "DELETE", path: path as string });
   }
 
-  destroy(): void {
+  async destroy(): Promise<void> {
+    await this.pool.destroy();
     this.buckets.clear();
     this.globalTracking.count = 0;
     this.globalTracking.windowStart = Date.now();
@@ -323,29 +328,37 @@ export class Rest {
   }
 
   private async makeHttpRequest<T>(options: HttpRequestOptions): Promise<HttpResponse<T>> {
-    const path = `${this.options.baseUrl}/api/v${this.options.version}/${options.path.replace(/^\/+/, "")}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.options.timeout);
+    const path = `/api/v${this.options.version}/${options.path.replace(/^\/+/, "")}`;
     const headers = this.buildRequestHeaders(options);
 
-    const response = await request<T>(path, {
-      method: options.method,
-      body: options.body,
-      query: options.query,
-      headers: headers,
-    });
+    try {
+      const response = await this.pool.request<T>({
+        path,
+        method: options.method,
+        body: options.body,
+        query: options.query,
+        headers: headers,
+        signal: controller.signal,
+      });
 
-    const result = (await response.body.json()) as T;
+      const result = (await response.body.json()) as T;
 
-    let reason = "";
-    if (response.statusCode >= 400 && isDiscordErrorResponse(result)) {
-      reason = formatDiscordError(result as DiscordErrorResponse);
+      let reason = "";
+      if (response.statusCode >= 400 && isDiscordErrorResponse(result)) {
+        reason = formatDiscordError(result as DiscordErrorResponse);
+      }
+
+      return {
+        data: result,
+        statusCode: response.statusCode,
+        headers: response.headers as Record<string, string>,
+        reason,
+      };
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return {
-      data: result,
-      statusCode: response.statusCode,
-      headers: response.headers as Record<string, string>,
-      reason,
-    };
   }
 
   private buildRequestHeaders(options: HttpRequestOptions): Record<string, string> {

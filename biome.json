@@ -32,7 +32,8 @@
       "complexity": {
         "recommended": true,
         "noUselessConstructor": "error",
-        "useFlatMap": "error"
+        "useFlatMap": "error",
+        "useLiteralKeys": "off"
       },
       "correctness": {
         "recommended": true,

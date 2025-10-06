@@ -1,4 +1,6 @@
 onlyBuiltDependencies:
   - bufferutil
   - erlpack
+  - ffmpeg-static
+  - sharp
   - zlib-sync
