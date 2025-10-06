@@ -5,7 +5,7 @@ import { loadNativeAddon } from "../utils/index.js";
  * Native zlib module bindings from C++ addon
  */
 const native = loadNativeAddon<NativeZlibModule>({
-  name: "zlib",
+  name: "nyxojs",
   requiredExports: ["ZlibStream", "ZLIB_SUFFIX", "DEFAULT_CHUNK_SIZE", "ZLIB_VERSION"],
   validate: (addon) => {
     const a = addon as Record<string, unknown>;

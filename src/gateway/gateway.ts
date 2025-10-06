@@ -1,6 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { z } from "zod";
+import { ZLIB_SUFFIX, ZlibStream, ZstdStream } from "../native/index.js";
 import {
   ApiVersion,
   type GatewayCloseEventCodes,
@@ -8,9 +9,9 @@ import {
   GatewayOpcodes,
   type HelloEntity,
   type ReadyEntity,
-} from "../../resources/index.js";
-import { BitField, Routes, safeModuleImport, sleep } from "../../utils/index.js";
-import type { Rest } from "../rest.js";
+} from "../resources/index.js";
+import type { Rest } from "../rest/index.js";
+import { BitField, clearAddonCache, Routes, sleep } from "../utils/index.js";
 import type {
   GatewayReceiveEvents,
   GatewaySendEvents,
@@ -52,7 +53,6 @@ export interface GatewayEvents {
 }
 
 const MAX_PAYLOAD_SIZE = 4096;
-const ZLIB_SYNC_FLUSH_SUFFIX = Buffer.from([0x00, 0x00, 0xff, 0xff]);
 
 export const GatewayOptions = z.object({
   token: z.string(),
@@ -65,7 +65,7 @@ export const GatewayOptions = z.object({
   version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
   largeThreshold: z.int().min(50).max(250).default(50),
   encodingType: z.enum(["json", "etf"]).default("json"),
-  compressionType: z.enum(["zlib-stream"]).optional(),
+  compressionType: z.enum(["zlib-stream", "zstd-stream"]).optional(),
   shard: z.tuple([z.int().nonnegative(), z.int().nonnegative()]).optional(),
 });
 
@@ -86,8 +86,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   private heartbeatInitialTimeout: NodeJS.Timeout | null = null;
 
   private erlpack: typeof import("erlpack") | null = null;
-  private zlibInflate: import("zlib-sync").Inflate | null = null;
-  private zlibBuffer: Buffer = Buffer.alloc(0);
+  private zlibStream: ZlibStream | null = null;
+  private zstdStream: ZstdStream | null = null;
+  private compressionBuffer: Buffer = Buffer.alloc(0);
 
   private ws: WebSocket | null = null;
   private reconnectCount = 0;
@@ -171,7 +172,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     try {
       if (!this.gatewayUrl) {
-        const gatewayInfo = await this.rest.get(Routes.fetchBotGatewayInfo());
+        const gatewayInfo = (await this.rest.get(Routes.botGateway())) as any;
         this.gatewayUrl = gatewayInfo.url;
       }
 
@@ -238,10 +239,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.closeWebSocket(1000);
     this.resetSession();
     this.destroyHeartbeat();
+    this.destroyCompression();
     this.erlpack = null;
-    this.zlibInflate = null;
-    this.zlibBuffer = Buffer.alloc(0);
     this.removeAllListeners();
+    clearAddonCache();
     this.setState(GatewayConnectionState.Disconnected);
   }
 
@@ -263,7 +264,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   private destroyHeartbeat(): void {
     this.heartbeatLatency = 0;
-    this.missedHeartbeats = 0;
     this.lastHeartbeatSend = 0;
     this.heartbeatIntervalMs = 0;
     this.isHeartbeatAcked = true;
@@ -279,10 +279,23 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
   }
 
+  private destroyCompression(): void {
+    if (this.zlibStream) {
+      this.zlibStream.close();
+      this.zlibStream = null;
+    }
+
+    if (this.zstdStream) {
+      this.zstdStream.close();
+      this.zstdStream = null;
+    }
+
+    this.compressionBuffer = Buffer.alloc(0);
+  }
+
   private ackHeartbeat(): void {
     const now = Date.now();
     this.isHeartbeatAcked = true;
-    this.missedHeartbeats = 0;
     this.heartbeatLatency = now - this.lastHeartbeatSend;
     this.emit("heartbeatAck", now, this.heartbeatLatency);
   }
@@ -291,7 +304,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.lastHeartbeatSend = Date.now();
 
     if (!this.isHeartbeatAcked) {
-      this.missedHeartbeats++;
       return;
     }
 
@@ -302,23 +314,17 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   private async setupCodecs(): Promise<void> {
     if (this.options.encodingType === "etf") {
-      const result = await safeModuleImport<typeof import("erlpack")>("erlpack");
-      if (!result.success) {
+      try {
+        this.erlpack = await import("erlpack");
+      } catch {
         throw new Error("erlpack is required for ETF encoding. Install with: npm install erlpack");
       }
-
-      this.erlpack = result.module;
     }
 
     if (this.options.compressionType === "zlib-stream") {
-      const result = await safeModuleImport<typeof import("zlib-sync")>("zlib-sync");
-      if (!result.success) {
-        throw new Error(
-          "zlib-sync is required for zlib-stream compression. Install with: npm install zlib-sync",
-        );
-      }
-
-      this.zlibInflate = new result.module.Inflate();
+      this.zlibStream = new ZlibStream();
+    } else if (this.options.compressionType === "zstd-stream") {
+      this.zstdStream = new ZstdStream();
     }
   }
 
@@ -363,31 +369,77 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     return `${this.gatewayUrl}?${params}`;
   }
 
-  private decompressZlib(data: Buffer): Buffer | null {
-    if (!this.zlibInflate) {
-      throw new Error("Zlib not initialized");
+  private decompressData(data: Buffer): Buffer | null {
+    if (this.options.compressionType === "zlib-stream") {
+      return this.decompressZlib(data);
+    } else if (this.options.compressionType === "zstd-stream") {
+      return this.decompressZstd(data);
     }
 
-    this.zlibBuffer = Buffer.concat([this.zlibBuffer, data]);
+    return data;
+  }
 
-    if (!this.hasZlibSyncFlush(this.zlibBuffer)) {
+  private decompressZlib(data: Buffer): Buffer | null {
+    if (!this.zlibStream) {
+      throw new Error("Zlib stream not initialized");
+    }
+
+    this.compressionBuffer = Buffer.concat([this.compressionBuffer, data]);
+
+    // Vérifier si on a un frame complet (suffix zlib)
+    if (!this.hasZlibSuffix(this.compressionBuffer)) {
       return null;
     }
 
     try {
-      this.zlibInflate.push(this.zlibBuffer, 2);
+      const processed = this.zlibStream.push(this.compressionBuffer);
 
-      if (this.zlibInflate.err < 0) {
-        this.zlibBuffer = Buffer.alloc(0);
-        const errorMessage = this.zlibInflate.msg || `Zlib error code: ${this.zlibInflate.err}`;
+      if (this.zlibStream.error !== 0) {
+        this.compressionBuffer = Buffer.alloc(0);
+        const errorMessage = this.zlibStream.message || `Zlib error code: ${this.zlibStream.error}`;
         throw new Error(`Zlib decompression failed: ${errorMessage}`);
       }
 
-      const decompressed = Buffer.from(this.zlibInflate.result || []);
-      this.zlibBuffer = Buffer.alloc(0);
-      return decompressed;
+      if (processed) {
+        const decompressed = this.zlibStream.getBuffer();
+        this.zlibStream.clearBuffer();
+        this.compressionBuffer = Buffer.alloc(0);
+        return decompressed;
+      }
+
+      return null;
     } catch (error) {
-      this.zlibBuffer = Buffer.alloc(0);
+      this.compressionBuffer = Buffer.alloc(0);
+      throw error;
+    }
+  }
+
+  private decompressZstd(data: Buffer): Buffer | null {
+    if (!this.zstdStream) {
+      throw new Error("Zstd stream not initialized");
+    }
+
+    this.compressionBuffer = Buffer.concat([this.compressionBuffer, data]);
+
+    try {
+      const processed = this.zstdStream.push(this.compressionBuffer);
+
+      if (this.zstdStream.error !== 0) {
+        this.compressionBuffer = Buffer.alloc(0);
+        const errorMessage = this.zstdStream.message || `Zstd error code: ${this.zstdStream.error}`;
+        throw new Error(`Zstd decompression failed: ${errorMessage}`);
+      }
+
+      if (processed) {
+        const decompressed = this.zstdStream.getBuffer();
+        this.zstdStream.clearBuffer();
+        this.compressionBuffer = Buffer.alloc(0);
+        return decompressed;
+      }
+
+      return null;
+    } catch (error) {
+      this.compressionBuffer = Buffer.alloc(0);
       throw error;
     }
   }
@@ -433,12 +485,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   private async handleMessage(data: Buffer): Promise<void> {
     this.emit("wsMessage", data);
-    let processedData = data;
+    let processedData: Buffer | null = data;
 
-    if (this.options.compressionType === "zlib-stream") {
-      const decompressed = this.decompressZlib(data);
-      if (!decompressed) return;
-      processedData = decompressed;
+    if (this.options.compressionType) {
+      processedData = this.decompressData(data);
+      if (!processedData) return;
     }
 
     const payload = this.decodePayload(processedData);
@@ -528,7 +579,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         browser: "nyxo.js",
         device: "nyxo.js",
       },
-      compress: this.options.compressionType === "zlib-stream",
+      compress: Boolean(this.options.compressionType),
       large_threshold: this.options.largeThreshold,
       intents: this.options.intents,
     };
@@ -722,11 +773,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     return Math.min(baseDelay * (0.8 + Math.random() * 0.4), 30000);
   }
 
-  private hasZlibSyncFlush(buffer: Buffer): boolean {
-    if (buffer.length < 4) {
+  private hasZlibSuffix(buffer: Buffer): boolean {
+    if (buffer.length < ZLIB_SUFFIX.length) {
       return false;
     }
 
-    return buffer.subarray(-4).equals(ZLIB_SYNC_FLUSH_SUFFIX);
+    return buffer.subarray(-ZLIB_SUFFIX.length).equals(ZLIB_SUFFIX);
   }
 }

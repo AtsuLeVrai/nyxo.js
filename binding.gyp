@@ -3,6 +3,7 @@
     {
       "target_name": "nyxojs",
       "sources": [
+        "src/native/addon.cpp",
         "src/native/zlib.cpp",
         "src/native/zstd.cpp",
         "deps/zstd/lib/common/entropy_common.c",

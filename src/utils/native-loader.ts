@@ -128,7 +128,7 @@ function validateRequiredExports(
 export function loadNativeAddon<T = unknown>(options: NativeAddonLoadOptions): T {
   const {
     name,
-    baseDir = join(__dirname, ".."),
+    baseDir = join(__dirname, "..", ".."),
     searchPaths,
     requiredExports = [],
     validate,

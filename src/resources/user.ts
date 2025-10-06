@@ -1,4 +1,19 @@
-import type { FileInput, SetNonNullable } from "../utils/index.js";
+import type { CamelCasedProperties, OverrideProperties } from "type-fest";
+import { BaseClass } from "../bases/index.js";
+import {
+  BitField,
+  Cdn,
+  type CdnOptions,
+  type DefaultUserAvatarUrl,
+  type DynamicImageFormat,
+  type FileInput,
+  type FormattedUser,
+  formatUser,
+  Routes,
+  type SetNonNullable,
+  type UserAvatarUrl,
+  type UserBannerUrl,
+} from "../utils/index.js";
 import type { Locale } from "./constants.js";
 import type { GuildMemberEntity, IntegrationEntity } from "./guild.js";
 
@@ -275,6 +290,298 @@ export interface UserObject {
   readonly collectibles?: CollectiblesObject | null;
   /** User's primary guild identity configuration */
   readonly primary_guild?: UserPrimaryGuildEntity | null;
+}
+
+/**
+ * Discord user entity wrapper with lazy-loaded enhanced properties and utility methods.
+ * Provides type-safe access to user data with performance-optimized property transformations.
+ *
+ * @see {@link UserObject} for raw API property documentation
+ * @see {@link https://discord.com/developers/docs/resources/user} for Discord user API reference
+ */
+export class User
+  extends BaseClass<UserObject>
+  implements
+    OverrideProperties<
+      CamelCasedProperties<UserObject>,
+      {
+        flags: BitField<UserFlags>;
+        publicFlags: BitField<UserFlags>;
+      }
+    >
+{
+  readonly id = this.data.id;
+  readonly username = this.data.username;
+  readonly discriminator = this.data.discriminator;
+  readonly globalName = this.data.global_name;
+  readonly avatar = this.data.avatar;
+  readonly bot = this.data.bot;
+  readonly system = this.data.system;
+  readonly mfaEnabled = this.data.mfa_enabled;
+  readonly banner = this.data.banner;
+  readonly accentColor = this.data.accent_color;
+  readonly locale = this.data.locale;
+  readonly verified = this.data.verified;
+  readonly email = this.data.email;
+  readonly premiumType = this.data.premium_type;
+  readonly avatarDecorationData = this.data.avatar_decoration_data;
+  readonly collectibles = this.data.collectibles;
+  readonly primaryGuild = this.data.primary_guild;
+
+  /**
+   * @private
+   * Cached BitField instance for user flags
+   */
+  private _flags?: BitField<UserFlags>;
+
+  /**
+   * User account flags with bitwise manipulation capabilities.
+   * Lazy-loaded on first access for performance optimization.
+   *
+   * @returns BitField wrapper for user flags
+   * @see {@link UserFlags} for available flag definitions
+   */
+  get flags(): BitField<UserFlags> {
+    if (!this._flags) {
+      this._flags = new BitField(this.data.flags);
+    }
+    return this._flags;
+  }
+
+  /**
+   * @private
+   * Cached BitField instance for public flags
+   */
+  private _publicFlags?: BitField<UserFlags>;
+
+  /**
+   * Publicly visible user account flags with bitwise manipulation capabilities.
+   * Lazy-loaded on first access for performance optimization.
+   *
+   * @returns BitField wrapper for public user flags
+   * @see {@link UserFlags} for available flag definitions
+   */
+  get publicFlags(): BitField<UserFlags> {
+    if (!this._publicFlags) {
+      this._publicFlags = new BitField(this.data.public_flags);
+    }
+    return this._publicFlags;
+  }
+
+  /**
+   * User's display name using Discord's priority system.
+   * Returns global name if set, otherwise falls back to username.
+   *
+   * @returns Preferred display name for the user
+   */
+  get displayName(): string {
+    return this.globalName ?? this.username;
+  }
+
+  /**
+   * User's full tag in legacy format (username#discriminator).
+   *
+   * @returns Formatted user tag
+   * @deprecated Discord is phasing out discriminators. Use displayName instead.
+   */
+  get tag(): `${string}#${string}` {
+    return `${this.username}#${this.discriminator}`;
+  }
+
+  /**
+   * Checks if user account is a bot account.
+   *
+   * @returns True if user is a bot, false otherwise
+   */
+  get isBot(): boolean {
+    return this.bot ?? false;
+  }
+
+  /**
+   * Checks if user account is an official Discord system user.
+   *
+   * @returns True if user is a system account, false otherwise
+   */
+  get isSystem(): boolean {
+    return this.system ?? false;
+  }
+
+  /**
+   * Generates CDN URL for user's avatar image with customizable options.
+   *
+   * @param options - Image format and size configuration
+   * @returns Complete CDN URL for avatar, or null if no avatar set
+   * @see {@link https://discord.com/developers/docs/reference#image-formatting} for format specifications
+   */
+  getAvatarURL(options?: CdnOptions<DynamicImageFormat>): UserAvatarUrl | null {
+    if (!this.avatar) {
+      return null;
+    }
+
+    return Cdn.userAvatarUrl(this.id, this.avatar, options);
+  }
+
+  /**
+   * Generates default Discord avatar URL based on discriminator.
+   * Used when user has no custom avatar set.
+   *
+   * @returns CDN URL for default avatar
+   */
+  getDefaultAvatarURL(): DefaultUserAvatarUrl {
+    return Cdn.defaultAvatarByUserId(this.id);
+  }
+
+  /**
+   * Generates CDN URL for user's banner image with customizable options.
+   *
+   * @param options - Image format and size configuration
+   * @returns Complete CDN URL for banner, or null if no banner set
+   * @see {@link https://discord.com/developers/docs/reference#image-formatting} for format specifications
+   */
+  getBannerURL(options?: CdnOptions<DynamicImageFormat>): UserBannerUrl | null {
+    if (!this.banner) {
+      return null;
+    }
+
+    return Cdn.userBanner(this.id, this.banner, options);
+  }
+  /**
+   * Modifies the current user's account settings.
+   * Only works for the authenticated user (@me).
+   *
+   * @param params - User properties to update (username, avatar, banner)
+   * @returns Promise resolving to updated User instance with fresh data
+   * @throws {DiscordAPIError} When modification fails, unauthorized, or not current user
+   * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user} for endpoint documentation
+   */
+  async edit(params: ModifyCurrentUserJSONParams): Promise<User> {
+    const updated = await this.rest.patch(Routes.currentUser(), {
+      body: params,
+    });
+
+    return new User(this.rest, updated);
+  }
+
+  /**
+   * Fetches fresh user data from the Discord API.
+   * Updates and returns a new User instance with latest information.
+   *
+   * @returns Promise resolving to updated User instance
+   * @throws {DiscordAPIError} When user not found or request fails
+   * @see {@link https://discord.com/developers/docs/resources/user#get-user} for endpoint documentation
+   */
+  async fetch(): Promise<User> {
+    const fresh = await this.rest.get(Routes.user(this.id));
+    return new User(this.rest, fresh);
+  }
+
+  /**
+   * Retrieves list of guilds the current user is a member of.
+   * Only works for the authenticated user (@me).
+   *
+   * @param query - Pagination and filtering options
+   * @returns Promise resolving to array of partial Guild objects
+   * @throws {DiscordAPIError} When request fails, unauthorized, or not current user
+   * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds} for endpoint documentation
+   */
+  getGuilds(query?: GetCurrentUserGuildsQueryStringParams): Promise<Guild[]> {
+    // @ts-expect-error
+    return this.rest.get(Routes.currentUserGuilds(), { query });
+  }
+
+  /**
+   * Retrieves the current user's member object for a specific guild.
+   * Only works for the authenticated user (@me).
+   *
+   * @param guildId - Guild identifier to get member data from
+   * @returns Promise resolving to GuildMember instance
+   * @throws {DiscordAPIError} When guild not found, user not a member, or not current user
+   * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member} for endpoint documentation
+   */
+  getGuildMember(guildId: string): Promise<GuildMemberEntity> {
+    return this.rest.get(Routes.currentUserGuildMember(guildId));
+  }
+
+  /**
+   * Removes the current user from a guild (leaves the server).
+   * Only works for the authenticated user (@me).
+   *
+   * @param guildId - Guild identifier to leave
+   * @returns Promise resolving when successfully left
+   * @throws {DiscordAPIError} When guild not found, user not a member, or not current user
+   * @see {@link https://discord.com/developers/docs/resources/user#leave-guild} for endpoint documentation
+   */
+  async leaveGuild(guildId: string): Promise<void> {
+    await this.rest.delete(Routes.leaveGuild(guildId));
+  }
+
+  /**
+   * Creates a direct message channel with this user.
+   * Returns existing DM channel if one already exists.
+   *
+   * @returns Promise resolving to DM Channel instance
+   * @throws {DiscordAPIError} When DM creation fails
+   * @see {@link https://discord.com/developers/docs/resources/user#create-dm} for endpoint documentation
+   */
+  createDM(): Promise<DMChannel> {
+    return this.rest.post(Routes.userChannels(), {
+      body: { recipient_id: this.id },
+    });
+  }
+
+  /**
+   * Retrieves list of connected third-party accounts for the current user.
+   * Only works for the authenticated user (@me) with connections OAuth2 scope.
+   *
+   * @returns Promise resolving to array of Connection objects
+   * @throws {DiscordAPIError} When request fails, unauthorized, or not current user
+   * @see {@link https://discord.com/developers/docs/resources/user#get-user-connections} for endpoint documentation
+   */
+  getConnections(): Promise<ConnectionObject[]> {
+    return this.rest.get(Routes.currentUserConnections());
+  }
+
+  /**
+   * Retrieves application role connection metadata for the current user.
+   * Only works for the authenticated user (@me).
+   *
+   * @param applicationId - Application identifier to get role connection for
+   * @returns Promise resolving to ApplicationRoleConnection object
+   * @throws {DiscordAPIError} When application not found, unauthorized, or not current user
+   * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-application-role-connection} for endpoint documentation
+   */
+  getApplicationRoleConnection(applicationId: string): Promise<ApplicationRoleConnectionObject> {
+    return this.rest.get(Routes.currentUserApplicationRoleConnection(applicationId));
+  }
+
+  /**
+   * Updates application role connection metadata for the current user.
+   * Only works for the authenticated user (@me).
+   *
+   * @param applicationId - Application identifier to update role connection for
+   * @param params - Role connection properties to update
+   * @returns Promise resolving to updated ApplicationRoleConnection object
+   * @throws {DiscordAPIError} When application not found, update fails, or not current user
+   * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection} for endpoint documentation
+   */
+  updateApplicationRoleConnection(
+    applicationId: string,
+    params: UpdateCurrentUserApplicationRoleConnectionJSONParams,
+  ): Promise<ApplicationRoleConnectionObject> {
+    return this.rest.put(Routes.currentUserApplicationRoleConnection(applicationId), {
+      body: params,
+    });
+  }
+
+  /**
+   * Generates mention string for use in Discord messages.
+   *
+   * @returns Formatted user mention string
+   * @override
+   */
+  override toString(): FormattedUser<string> {
+    return formatUser(this.id);
+  }
 }
 
 /**

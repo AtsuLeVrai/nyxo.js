@@ -5,7 +5,7 @@ import { loadNativeAddon } from "../utils/index.js";
  * Native zstd module bindings from C++ addon
  */
 const native = loadNativeAddon<NativeZstdModule>({
-  name: "zstd",
+  name: "nyxojs",
   requiredExports: [
     "ZstdStream",
     "DEFAULT_IN_BUFFER_SIZE",
