@@ -7,7 +7,6 @@ export * from "./import.js";
 export * from "./markdown.js";
 export * from "./native-loader.js";
 export * from "./proxy.js";
-export * from "./routes.js";
 export * from "./sleep.js";
 export * from "./snowflake.js";
 export * from "./types.js";

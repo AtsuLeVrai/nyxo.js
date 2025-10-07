@@ -191,7 +191,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const now = Date.now();
     if (now >= this.rateLimitBucket.resetAt) {
       this.rateLimitBucket.count = 0;
-      this.rateLimitBucket.resetAt = now + 60000; // 60 secondes
+      this.rateLimitBucket.resetAt = now + 60000;
     }
 
     if (this.rateLimitBucket.count >= 120) {
@@ -386,7 +386,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     this.compressionBuffer = Buffer.concat([this.compressionBuffer, data]);
 
-    // Vérifier si on a un frame complet (suffix zlib)
     if (!this.hasZlibSuffix(this.compressionBuffer)) {
       return null;
     }

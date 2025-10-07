@@ -25,6 +25,6 @@ export * from "./stage-instance.js";
 export * from "./sticker.js";
 export * from "./subscription.js";
 export * from "./team.js";
-export * from "./user.js";
+export * from "./users/index.js";
 export * from "./voice.js";
 export * from "./webhook.js";

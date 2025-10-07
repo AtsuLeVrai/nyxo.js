@@ -182,9 +182,7 @@ export class Rest {
       return;
     }
 
-    const bucketHash = path
-      .replace(/\/\d+/g, "/:id") // Replace IDs with placeholder
-      .replace(/\/\d{17,19}/g, "/:id");
+    const bucketHash = path.replace(/\/\d+/g, "/:id").replace(/\/\d{17,19}/g, "/:id");
     if (bucketHash) {
       const bucketWait = this.checkBucketLimit(bucketHash, now);
       if (bucketWait > 0) {
@@ -296,7 +294,7 @@ export class Rest {
     const limit = Number.parseInt(headers[RATE_LIMIT_HEADERS.LIMIT] || "1", 10);
 
     this.buckets.set(bucketHash, {
-      remaining: Math.max(0, remaining - 1), // Account for current request
+      remaining: Math.max(0, remaining - 1),
       resetAt: Date.now() + resetAfter * 1000,
       limit,
     });
