@@ -61,7 +61,7 @@ export class UserAPI {
     return `/users/@me/guilds/${guildId}/member` as const;
   }
 
-  static leaveGuild(guildId: string): `/users/@me/guilds/${string}` {
+  static currentUserGuild(guildId: string): `/users/@me/guilds/${string}` {
     return `/users/@me/guilds/${guildId}` as const;
   }
 
@@ -102,7 +102,7 @@ export class UserAPI {
   }
 
   async leaveGuild(guildId: string): Promise<void> {
-    await this.rest.delete(UserAPI.leaveGuild(guildId));
+    await this.rest.delete(UserAPI.currentUserGuild(guildId));
   }
 
   createDM(params: CreateDMJSONParams): Promise<DMChannelEntity> {
