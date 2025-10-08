@@ -11,14 +11,28 @@ import {
   type UserAvatarUrl,
   type UserBannerUrl,
 } from "../../utils/index.js";
+import type { DMChannelEntity } from "../channel.js";
+import type { GuildEntity, GuildMemberEntity } from "../guild.js";
+import type {
+  CreateDMParams,
+  CreateGroupDMParams,
+  GetCurrentUserGuildsQuery,
+  ModifyCurrentUserParams,
+  UpdateCurrentUserApplicationRoleConnectionParams,
+  UserAPI,
+} from "./user.api.js";
 import type { UserFlags } from "./user.enums.js";
-import type { UserObject } from "./user.types.js";
+import type {
+  ApplicationRoleConnectionObject,
+  ConnectionObject,
+  UserObject,
+} from "./user.types.js";
 
 export class User
   extends BaseClass<UserObject>
   implements
     OverrideProperties<
-      CamelCasedProperties<UserObject>,
+      CamelCasedProperties<UserObject> & UserAPI,
       {
         flags: BitField<UserFlags>;
         publicFlags: BitField<UserFlags>;
@@ -95,6 +109,55 @@ export class User
     }
 
     return Cdn.userBanner(this.id, this.banner, options);
+  }
+
+  getUser(_userId: string): Promise<UserObject> {
+    throw new Error("Method not implemented.");
+  }
+
+  getCurrentUser(): Promise<UserObject> {
+    throw new Error("Method not implemented.");
+  }
+
+  modifyCurrentUser(_params: ModifyCurrentUserParams): Promise<UserObject> {
+    throw new Error("Method not implemented.");
+  }
+
+  getCurrentUserGuilds(_query?: GetCurrentUserGuildsQuery): Promise<Partial<GuildEntity>[]> {
+    throw new Error("Method not implemented.");
+  }
+
+  getCurrentUserGuildMember(_guildId: string): Promise<GuildMemberEntity> {
+    throw new Error("Method not implemented.");
+  }
+
+  leaveGuild(_guildId: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  createDM(_params: CreateDMParams): Promise<DMChannelEntity> {
+    throw new Error("Method not implemented.");
+  }
+
+  createGroupDM(_params: CreateGroupDMParams): Promise<DMChannelEntity> {
+    throw new Error("Method not implemented.");
+  }
+
+  getCurrentUserConnections(): Promise<ConnectionObject[]> {
+    throw new Error("Method not implemented.");
+  }
+
+  getCurrentUserApplicationRoleConnection(
+    _applicationId: string,
+  ): Promise<ApplicationRoleConnectionObject> {
+    throw new Error("Method not implemented.");
+  }
+
+  updateCurrentUserApplicationRoleConnection(
+    _applicationId: string,
+    _paramss: UpdateCurrentUserApplicationRoleConnectionParams,
+  ): Promise<ApplicationRoleConnectionObject> {
+    throw new Error("Method not implemented.");
   }
 
   override toString(): FormattedUser<string> {

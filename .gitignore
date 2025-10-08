@@ -50,8 +50,6 @@ Thumbs.db
 *.seed
 *.pid.lock
 
-.vscode/
-.idea/
 *.swp
 *.swo
 *~

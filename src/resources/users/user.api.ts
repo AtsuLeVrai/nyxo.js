@@ -8,33 +8,28 @@ import type {
   UserObject,
 } from "./user.types.js";
 
-export interface ModifyCurrentUserJSONParams extends Partial<Pick<UserObject, "username">> {
+export interface ModifyCurrentUserParams extends Partial<Pick<UserObject, "username">> {
   readonly avatar?: FileInput | null;
-
   readonly banner?: FileInput | null;
 }
 
-export interface GetCurrentUserGuildsQueryStringParams {
+export interface GetCurrentUserGuildsQuery {
   readonly before?: string;
-
   readonly after?: string;
-
   readonly limit?: number;
-
   readonly with_counts?: boolean;
 }
 
-export interface CreateDMJSONParams {
+export interface CreateDMParams {
   readonly recipient_id: string;
 }
 
-export interface CreateGroupDMJSONParams {
+export interface CreateGroupDMParams {
   readonly access_tokens: string[];
-
   readonly nicks: Record<string, string>;
 }
 
-export type UpdateCurrentUserApplicationRoleConnectionJSONParams = Partial<
+export type UpdateCurrentUserApplicationRoleConnectionParams = Partial<
   SetNonNullable<ApplicationRoleConnectionObject>
 >;
 
@@ -87,13 +82,11 @@ export class UserAPI {
     return this.rest.get(UserAPI.currentUser());
   }
 
-  modifyCurrentUser(params: ModifyCurrentUserJSONParams): Promise<UserObject> {
+  modifyCurrentUser(params: ModifyCurrentUserParams): Promise<UserObject> {
     return this.rest.patch(UserAPI.currentUser(), { body: params });
   }
 
-  getCurrentUserGuilds(
-    query?: GetCurrentUserGuildsQueryStringParams,
-  ): Promise<Partial<GuildEntity>[]> {
+  getCurrentUserGuilds(query?: GetCurrentUserGuildsQuery): Promise<Partial<GuildEntity>[]> {
     return this.rest.get(UserAPI.currentUserGuilds(), { query });
   }
 
@@ -105,11 +98,11 @@ export class UserAPI {
     await this.rest.delete(UserAPI.currentUserGuild(guildId));
   }
 
-  createDM(params: CreateDMJSONParams): Promise<DMChannelEntity> {
+  createDM(params: CreateDMParams): Promise<DMChannelEntity> {
     return this.rest.post(UserAPI.userChannels(), { body: params });
   }
 
-  createGroupDM(params: CreateGroupDMJSONParams): Promise<DMChannelEntity> {
+  createGroupDM(params: CreateGroupDMParams): Promise<DMChannelEntity> {
     return this.rest.post(UserAPI.userChannels(), { body: params });
   }
 
@@ -125,7 +118,7 @@ export class UserAPI {
 
   updateCurrentUserApplicationRoleConnection(
     applicationId: string,
-    params: UpdateCurrentUserApplicationRoleConnectionJSONParams,
+    params: UpdateCurrentUserApplicationRoleConnectionParams,
   ): Promise<ApplicationRoleConnectionObject> {
     return this.rest.put(UserAPI.currentUserApplicationRoleConnection(applicationId), {
       body: params,
