@@ -1,239 +1,136 @@
-# Nyxo.js
-
-**Ultra-Fast Bare Metal Discord Library for TypeScript**
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/nyxo-labs/nyxo.js/blob/main/LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-24+-green.svg)](https://nodejs.org/)
-
----
-
-## Philosophy
-
-Nyxo.js is designed for developers who demand **maximum performance** and **complete control** over their Discord
-applications. Unlike traditional Discord libraries, Nyxo.js provides zero-overhead access to the Discord API with no
-hidden abstractions or automatic caching.
-
-**Core Principles:**
-
-- **Bare Metal Performance**: Zero overhead, direct access to raw Discord payloads
-- **Total User Control**: You decide what to cache, how to store state, and when to process events
-- **No Magic**: Every operation is explicit and predictable
-- **Production Ready**: Built-in rate limiting, circuit breakers, and automatic reconnection
-- **Memory Efficient**: No classes consuming memory, only pure functions when needed
+<div align="center">
+  <h1>🌌 Nyxo.js</h1>
+  <h3>Ultra-Fast Discord Library for TypeScript</h3>
+  
+  <p align="center">
+    <a href="https://github.com/AtsuLeVrai/nyxo.js/blob/main/LICENSE">
+      <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge" alt="License">
+    </a>
+    <a href="https://www.typescriptlang.org/">
+      <img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
+    </a>
+    <a href="https://nodejs.org/">
+      <img src="https://img.shields.io/badge/Node.js-24+-green.svg?style=for-the-badge&logo=node.js" alt="Node.js">
+    </a>
+  </p>
+  <br />
+</div>
 
 ---
 
-## Architecture
+## 📢 Project Status: Archived
 
-### Pure Event System
+> **Development Paused - October 2025**
 
-Raw Discord gateway events are delivered directly to your handlers with zero processing overhead. No wrapper classes, no
-automatic caching, just the raw JSON payloads from Discord.
+After **700+ commits** and **5 complete refactors** over several years, this project is being paused indefinitely.
 
-### Organized HTTP Routers
+### Why?
 
-Clean, organized routers for Discord's REST API endpoints. Rate limiting and resilience patterns are handled
-transparently while maintaining direct access to all Discord features.
+This project was an **incredible learning journey** that pushed my TypeScript skills to their absolute limits:
+- ✅ Enterprise-grade architecture
+- ✅ Zero memory leaks
+- ✅ Native C++ addons for compression
+- ✅ Advanced type safety
+- ✅ Production-ready patterns
 
-### Utility Helpers
+**But here's the truth:** After years of development, I realized I was building this more out of obligation than passion. The codebase became too complex, too verbose, and the goal posts kept moving with each refactor.
 
-Pure functions for common operations like permission calculations, snowflake parsing, and data formatting. Use only what
-you need, when you need it.
+**This isn't a failure.** This is me choosing mental health over perfectionism.
 
-### Intelligent Gateway Management
+### 🏆 The Legacy Branch
 
-Automatic WebSocket reconnection, heartbeat management, and session resumption with minimal configuration. The gateway
-stays connected while giving you complete control over event handling.
+If you want to see what "enterprise-grade Discord library" really means, check out the **[legacy-enterprise](https://github.com/AtsuLeVrai/nyxo.js/tree/legacy-enterprise)** branch. 
 
----
-
-## Key Features
-
-### 🚀 Zero-Overhead Events
-
-- Direct access to raw Discord payloads
-- No wrapper classes or automatic processing
-- Optional event filtering for maximum efficiency
-- Predictable memory usage
-
-### ⚡ HTTP Performance
-
-- Advanced rate limiting with bucket management
-- Circuit breaker patterns for resilience
-- Automatic retry with exponential backoff
-- Connection pooling for optimal throughput
-
-### 🎯 Developer Experience
-
-- Complete TypeScript coverage with strict null safety
-- ESM-only modern architecture
-- Comprehensive Discord API type definitions
-- Minimal learning curve for Discord API veterans
-
-### 🛡️ Production Hardened
-
-- Battle-tested rate limiting algorithms
-- Intelligent WebSocket reconnection
-- Memory leak prevention
-- Graceful error handling and recovery
+It represents the most polished, complete, and professional iteration of this project. Consider it the "final form" before I decided to step back.
 
 ---
 
-## Use Cases
+## 💭 What I Learned
 
-### High-Performance Bots
+This project taught me more about software engineering than any course or book ever could:
 
-Perfect for bots handling thousands of guilds where every millisecond matters. No automatic caching means you can
-implement exactly the caching strategy your application needs.
+**Technical Skills:**
+- Advanced TypeScript patterns (conditional types, template literals, discriminated unions)
+- Native addon development (C++ ↔ TypeScript bindings)
+- WebSocket protocols and Discord Gateway internals
+- Memory management and performance optimization
+- Zero-overhead abstractions
 
-### Microservices
-
-Ideal for Discord-integrated microservices where you need lightweight, focused functionality without the overhead of a
-full-featured Discord client.
-
-### Custom Applications
-
-Built for developers who understand the Discord API and want direct access without layers of abstraction getting in the
-way.
-
-### Analytics and Monitoring
-
-Excellent for applications that process large volumes of Discord events where performance and memory efficiency are
-critical.
+**Life Skills:**
+- When to let go of a project
+- The difference between "perfect" and "done"
+- That learning happens even in "unfinished" projects
+- Technical skill ≠ motivation to finish
 
 ---
 
-## Quick Start
+## 🎯 Philosophy (That I Actually Achieved)
 
-### 1. Event-Driven Approach
+Nyxo.js was designed around three core principles:
 
-Register pure event handlers that receive raw Discord payloads. You decide what to do with the data - cache it, process
-it, or ignore it entirely.
+### 1. **Bare Metal Performance**
+- Zero-overhead event system with raw Discord payloads
+- Native C++ compression (zlib, zstd) for maximum speed
+- No automatic caching - you control memory usage
+- Direct API access without abstraction layers
 
-### 2. HTTP Operations
+### 2. **Total Developer Control**
+- You decide what to cache and how
+- Explicit error handling, no magic
+- Full access to Discord's internals
+- Predictable behavior at every level
 
-Use organized routers to interact with Discord's REST API. Rate limiting and error handling are transparent, but you
-maintain full control over request timing and data processing.
-
-### 3. State Management
-
-Implement your own caching and state management. Use Redis, SQLite, in-memory Maps, or any storage solution that fits
-your needs.
-
-### 4. Helper Functions
-
-Leverage pure utility functions for common operations like permission checks, snowflake parsing, and data formatting.
-
----
-
-## Performance Characteristics
-
-### Memory Usage
-
-- **Events**: Zero allocation overhead - raw payloads only
-- **HTTP**: Connection pooling with configurable limits
-- **Caching**: User-controlled - implement exactly what you need
-- **Types**: Compile-time only - no runtime overhead
-
-### Throughput
-
-- **Events**: Handle thousands of events per second
-- **HTTP**: Intelligent rate limiting prevents 429 errors
-- **Gateway**: Automatic reconnection with exponential backoff
-- **Scaling**: Shard management for large applications
+### 3. **Production Ready**
+- Built-in rate limiting with intelligent bucket management
+- Circuit breakers for resilience
+- Automatic reconnection with exponential backoff
+- Comprehensive TypeScript definitions
 
 ---
 
-## Advanced Features
+## 🚀 What Actually Works
 
-### Rate Limiting
+Despite being unfinished, significant portions are production-ready:
 
-Sophisticated rate limiting that respects Discord's global and per-route limits. Automatic handling of 429 responses
-with intelligent backoff strategies.
-
-### Circuit Breakers
-
-Built-in circuit breaker patterns prevent cascade failures and provide graceful degradation when Discord's API is
-experiencing issues.
-
-### Shard Management
-
-Automatic shard calculation and management for large bots. Handle guild distribution and cross-shard communication with
-ease.
-
-### Type Safety
-
-Comprehensive TypeScript definitions for all Discord API objects, ensuring type safety throughout your application.
+- ✅ **Gateway Connection** - Full WebSocket implementation with heartbeat
+- ✅ **Native Compression** - zlib-stream and zstd-stream via C++ addons
+- ✅ **Rate Limiting** - Smart bucket management and 429 handling
+- ✅ **REST API** - Complete route definitions with TypeScript types
+- ✅ **Shard Manager** - Multi-shard support with automatic distribution
+- ✅ **Type Safety** - 100% of Discord API v10 typed
 
 ---
 
-## Comparison
+## 📚 Use This For Learning
 
-| Feature                  | Nyxo.js                        | Traditional Libraries   |
-|--------------------------|--------------------------------|-------------------------|
-| **Memory Overhead**      | Zero                           | High (classes, caches)  |
-| **Event Processing**     | Raw payloads                   | Wrapped objects         |
-| **Caching Strategy**     | User-controlled                | Automatic               |
-| **Performance**          | Maximum                        | Good                    |
-| **Learning Curve**       | Discord API knowledge required | Abstracted              |
-| **Flexibility**          | Complete control               | Limited by abstractions |
-| **Production Readiness** | Built-in resilience            | Varies                  |
+If you're building your own Discord library or want to understand how they work:
+
+**Don't copy-paste.** Understand the patterns, then build your own.
 
 ---
 
-## Architecture Decisions
+## 🙏 Thank You
 
-### Why No Automatic Caching?
+To everyone who starred, contributed ideas, or showed interest in this project: **thank you**.
 
-Automatic caching creates memory pressure and forces architectural decisions on your application. Nyxo.js lets you
-implement exactly the caching strategy your use case requires.
-
-### Why Raw Events?
-
-Processing Discord events into wrapper classes consumes CPU cycles and memory. Raw events give you maximum performance
-and the flexibility to process only what you need.
-
-### Why Routers Instead of Methods?
-
-Organized routers provide better IntelliSense, clearer organization, and easier maintenance while preserving direct
-access to all Discord API features.
-
-### Why Pure Functions?
-
-Pure helper functions have no state, consume no memory when not in use, and are easily testable and debuggable.
+This project might be paused, but the knowledge gained is permanent.
 
 ---
 
-## Contributing
+## 📜 License
 
-We welcome contributions that align with our performance-first philosophy. Please ensure all contributions maintain
-zero-overhead principles and provide meaningful performance benefits.
+Nyxo.js is [Apache 2.0 licensed](LICENSE).
 
-### Development Principles
-
-- Performance over convenience
-- Explicit over implicit
-- User control over automation
-- Type safety throughout
+Feel free to learn from the code, fork it, or use patterns in your own projects.
 
 ---
 
-## License
-
-Apache License 2.0 - See [LICENSE](LICENSE) for details.
-
----
-
-## Support
-
-- **Documentation**: Coming soon
-- **Issues**: [GitHub Issues](https://github.com/nyxo-labs/nyxo.js/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/nyxo-labs/nyxo.js/discussions)
-
----
-
-*"Maximum performance, zero compromise. Built for developers who understand the Discord API and demand complete control
-over their applications."*
-
-**AtsuLeVrai** - 2025
+<div align="center">
+  <h3>💙 Sometimes the journey matters more than the destination</h3>
+  <p>
+    <b>AtsuLeVrai</b> - October 2025
+  </p>
+  <p>
+    <i>"After 700 commits, I learned when to stop."</i>
+  </p>
+</div>
